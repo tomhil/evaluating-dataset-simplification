@@ -120,7 +120,15 @@ def histogram(values: Sequence[float], *, bins: int = 30) -> dict:
     arr = _clean(values)
     if arr.size == 0:
         return {"counts": [], "edges": [], "n": 0}
-    counts, edges = np.histogram(arr, bins=bins)
+    lo, hi = float(np.min(arr)), float(np.max(arr))
+    if hi <= lo:
+        # Degenerate range (all values equal): emit a single unit-width bin.
+        return {
+            "counts": [int(arr.size)],
+            "edges": [lo - 0.5, lo + 0.5],
+            "n": int(arr.size),
+        }
+    counts, edges = np.histogram(arr, bins=bins, range=(lo, hi))
     return {"counts": counts.tolist(), "edges": edges.tolist(), "n": int(arr.size)}
 
 

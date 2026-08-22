@@ -60,6 +60,15 @@ class RunConfig:
     tau_sweep: list[float] = field(default_factory=lambda: [0.4, 0.5, 0.6])
     nli_threshold: float = 0.5
     jargon_terms: list[str] = field(default_factory=list)
+    # Model backends. 'sbert'/'nli' use real models (network download on first
+    # use); 'hashing'/'lexical' are deterministic offline stand-ins for tests
+    # and smoke runs.
+    embedder: str = "sbert"
+    embed_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    nli_backend: str = "nli"
+    nli_model: str = "microsoft/deberta-large-mnli"
+    # Primary tau used for the alignment that feeds M5/M6 (M4 itself sweeps).
+    m6_tau: float = 0.5
     # M5 optional scorers. NLI always runs (unless heuristic_only); these gate
     # the fragile extras.
     alignscore: bool = False
@@ -156,6 +165,13 @@ def parse_config(raw: dict) -> Config:
         tau_sweep=list(run_raw.get("tau_sweep", [0.4, 0.5, 0.6])),
         nli_threshold=float(run_raw.get("nli_threshold", 0.5)),
         jargon_terms=list(run_raw.get("jargon_terms", []) or []),
+        embedder=str(run_raw.get("embedder", "sbert")),
+        embed_model=str(
+            run_raw.get("embed_model", "sentence-transformers/all-MiniLM-L6-v2")
+        ),
+        nli_backend=str(run_raw.get("nli_backend", "nli")),
+        nli_model=str(run_raw.get("nli_model", "microsoft/deberta-large-mnli")),
+        m6_tau=float(run_raw.get("m6_tau", 0.5)),
         alignscore=bool(run_raw.get("alignscore", False)),
         summac=bool(run_raw.get("summac", False)),
         heuristic_only=bool(run_raw.get("heuristic_only", False)),
