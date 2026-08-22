@@ -1,0 +1,19 @@
+# Fully offline smoke config: deterministic stand-in backends, no model
+# downloads. Runs every module end-to-end on data/smoke.jsonl.
+dataset:
+  adapter: jsonl
+  path: data/smoke.jsonl
+  source_field: reference
+  target_field: summary
+run:
+  sample_size: null
+  seed: 13
+  language: en
+  cache_dir: .cache/
+  bootstrap_resamples: 200
+  embedder: hashing        # offline hashed bag-of-words embeddings
+  nli_backend: lexical     # offline content-word grounding
+  nli_threshold: 0.5
+  tau_sweep: [0.4, 0.5, 0.6]
+  m6_tau: 0.5
+modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile]
