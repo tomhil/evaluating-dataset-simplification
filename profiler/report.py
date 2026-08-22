@@ -270,6 +270,25 @@ def _caveats(config, results: dict[str, ModuleResult], meta: dict) -> str:
     out = [_h(2, "Caveats (confounds that apply to this run)")]
     items: list[str] = []
 
+    # Stand-in backends are not real semantics — flag loudly and first.
+    stand_in = []
+    if config.run.embedder != "sbert" and any(
+        m in results for m in ("alignment", "deletion_profile")
+    ):
+        stand_in.append(f"embedder='{config.run.embedder}' (not SBERT)")
+    if config.run.nli_backend != "nli" and "elaboration" in results and not config.run.heuristic_only:
+        stand_in.append(f"nli_backend='{config.run.nli_backend}' (not an entailment model)")
+    if stand_in:
+        items.append(
+            "**Stand-in backends — M4/M5/M6 semantics are NOT real.** This run used "
+            + " and ".join(stand_in)
+            + ". These are deterministic lexical/hashing placeholders, not semantic "
+            "models: alignment, content-preservation, elaboration and deletion-basis "
+            "numbers derived from them are structurally valid but semantically "
+            "unreliable. Re-run with embedder=sbert and nli_backend=nli for real values. "
+            "M1, M2 and M3 do not depend on these backends and are real."
+        )
+
     n_sample = meta.get("n_sample")
     if isinstance(n_sample, int) and n_sample < 1000:
         items.append(

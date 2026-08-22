@@ -9,3 +9,6 @@ runs/
 .pytest_cache/
 .venv/
 venv/
+
+# Fetched dataset files (reproduce with scripts/fetch_cochrane.py)
+data/cochrane/

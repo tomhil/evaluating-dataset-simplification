@@ -1,0 +1,52 @@
+# Cochrane (Devaraj et al. 2021) — plain-language summarization, a PRD s5 anchor.
+# Data fetched from the paper's public GitHub repo (data/data-1024/*.source|.target).
+#
+# M1–M3 use REAL backends (textstat, wordfreq, spaCy en_core_web_sm).
+# M4–M6 use OFFLINE STAND-IN backends (hashing embeddings, lexical grounding)
+# because SBERT/NLI weights on Hugging Face are blocked by this environment's
+# egress policy. The report flags those modules as semantically unreliable.
+dataset:
+  adapter: jsonl
+  path: data/cochrane/train_600.jsonl
+  source_field: source
+  target_field: target
+run:
+  dataset_label: cochrane
+  sample_size: 300         # M4–M6 sample; M1–M3 run on all 600
+  seed: 13
+  language: en
+  cache_dir: .cache/
+  bootstrap_resamples: 1000
+  embedder: hashing        # STAND-IN (SBERT blocked)
+  nli_backend: lexical     # STAND-IN (NLI blocked)
+  nli_threshold: 0.5
+  tau_sweep: [0.4, 0.5, 0.6]
+  m6_tau: 0.5
+  # Small illustrative medical term list to activate jargon_rate (M3b/M6).
+  jargon_terms:
+    - randomised
+    - randomized
+    - placebo
+    - trial
+    - trials
+    - meta-analysis
+    - systematic
+    - efficacy
+    - intervention
+    - interventions
+    - outcome
+    - outcomes
+    - clinical
+    - dose
+    - dosage
+    - adverse
+    - mortality
+    - morbidity
+    - prognosis
+    - incidence
+    - prevalence
+    - cohort
+    - baseline
+    - statistically
+    - significance
+modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile]
