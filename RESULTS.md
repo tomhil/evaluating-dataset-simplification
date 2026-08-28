@@ -36,9 +36,10 @@ Three findings survive scrutiny, and one widely-quoted metric does not.
 1. **M4 alignment separates the tasks cleanly.** Deletion versus splitting sorts
    summarization from simplification better than any other measure here.
 2. **Compression reproduces the literature** — once you use the right statistic.
-3. **Surface readability formulas are unreliable**, exactly as the pipeline's
-   design predicted. On Cochrane, FKGL reports the *opposite* of the published
-   direction, for a traceable reason.
+3. **Surface readability formulas are fragile.** A sentence-segmentation
+   defect made Cochrane's FKGL report the *opposite* of its published
+   direction; after the fix it matches. Even corrected, the formulas
+   contradict each other on the same corpus.
 4. **M5's not-entailed rate carries almost no signal** as currently measured.
 
 ---
@@ -107,60 +108,68 @@ as compression rises and carries no independent information here.
 
 ## M3 — Readability
 
-> **⚠ The M3a table below is stale.** These runs predate the segmentation fix
-> described underneath it. The defect has since been corrected in
-> `profiler/readability.py` (M3a now uses the same spaCy segmentation as
-> M1/M3b/M3c), and re-measured Cochrane values are **14.09 → 12.79, delta
-> −1.31**, against a published 14.4 → 12.9 (−1.5) — the sign is no longer
-> inverted. The tables are reproduced here as they were measured; M1, M2, M3b,
-> M3c, M4 and M5 are unaffected. M6's `fkgl` feature shared the defect and was
-> fixed with it, but it never ranked above 4th in any corpus.
+> **Segmentation fix applied.** M3a originally took its sentence counts from
+> `textstat`, which treats every period — including decimals — as a sentence
+> end. Cochrane, PLOS, D-Wikipedia and CNN/DailyMail were re-run after the fix;
+> **PLOS's M3 figures below are still pre-fix** and are marked ‡ (its re-run is
+> in progress). M1, M2, M3b, M4 and M5 are unaffected and identical across both
+> runs.
 
 ### The surface formulas disagree with each other and with the literature
 
-| FKGL | Cochrane | PLOS | D-Wikipedia | CNN/DM |
+| FKGL | Cochrane | PLOS ‡ | D-Wikipedia | CNN/DM |
 |---|---|---|---|---|
-| source → target | 10.22 → 12.55 | 12.90 → 14.59 | 10.13 → 7.15 | 9.01 → 6.99 |
-| **delta** | **+2.33** | **+1.69** | −2.98 | −2.02 |
-| 95% CI | [2.13, 2.52] | [1.56, 1.82] | [−3.19, −2.77] | [−2.18, −1.88] |
+| source → target | **14.06 → 12.81** | 12.90 → 14.59 | **11.81 → 8.19** | **9.39 → 7.15** |
+| **delta** | **−1.25** | **+1.69** | −3.62 | −2.24 |
+| 95% CI | [−1.42, −1.08] | [1.56, 1.82] | [−3.96, −3.29] | [−2.40, −2.09] |
 | published delta | 14.4 → 12.9 (−1.5) | 15.04 → 14.76 (−0.3) | — | — |
+| Dale–Chall delta | −0.45 | +3.24 | −0.78 | **+2.17** |
 
-Both plain-language corpora score as getting **harder**, and Cochrane's sign is
-opposite to its published direction. The CIs exclude zero, so this is not noise.
+‡ pre-fix; re-run in progress.
 
-Formulas also contradict each other on the same corpus: on CNN/DM, FKGL falls
-2.02 (easier) while Dale–Chall rises 2.19 (harder). They are not measuring one
+**Cochrane now reproduces its published values**: source within 0.34 grades,
+target within 0.09, and the delta negative as published. Before the segmentation
+fix it read 10.22 → 12.55, delta **+2.33** — the wrong sign, from textstat
+splitting its decimal-dense sources into roughly three times as many sentences
+as spaCy found.
+
+PLOS remains the one corpus whose targets score as harder, and that is not a
+segmentation artifact: its two segmenters agree within 19%, and M3b
+independently shows longer words (+0.137 syllables/word) and deeper nesting
+(+1.133 parse depth). Its lay summaries are lexically easier and structurally
+harder.
+
+Formulas still contradict each other on the same corpus: on CNN/DM, FKGL falls
+2.24 (easier) while Dale–Chall rises 2.17 (harder). They are not measuring one
 underlying quantity.
 
-#### Cochrane's reversal is a sentence-segmentation artifact
+#### Why Cochrane's delta was inverted
 
-The M3a formulas come from `textstat`, which does its own sentence splitting;
-M1 and M3b use spaCy. On Cochrane **sources** the two disagree sharply:
+`textstat` segments sentences with `\b[^.!?]+[.!?]*` — every period ends a
+sentence. Cochrane's sources are meta-analytic abstracts dense with statistics,
+and its worst document carries 52 periods of which **38 are decimal points**
+("OR 0.61, 95% CI 0.46 to 0.79") and none are abbreviations. Measured against
+spaCy:
 
 | words per sentence | spaCy | textstat | ratio |
 |---|---|---|---|
-| Cochrane source | 23.9 | 13.5 | **0.56** |
+| **Cochrane source** | 23.9 | 13.5 | **0.56** |
 | Cochrane target | 21.0 | 20.6 | 0.98 |
 | PLOS source / target | 19.7 / 21.0 | 23.5 / 22.3 | 1.19 / 1.06 |
 | D-Wikipedia source / target | 27.0 / 17.4 | 21.8 / 14.5 | 0.81 / 0.83 |
 | CNN/DM source / target | 17.7 / 11.9 | 17.4 / 10.9 | 0.98 / 0.91 |
 
-`textstat` splits Cochrane sources into sentences **44% shorter** than spaCy
-does, while agreeing on the targets and on every other corpus. Since sentence
-length is FKGL's dominant term, this makes Cochrane sources look artificially
-easy (10.22 rather than ≈15), which both inverts the delta and explains the gap
-against the published 14.4. Cochrane's *target* FKGL of 12.55 matches the
-published 12.9 closely — the error is entirely on the source side.
+textstat split Cochrane sources into sentences **44% shorter** than spaCy found,
+while agreeing on the targets and on every other corpus. Sentence length is
+FKGL's dominant term, so the sources scored as artificially easy — and because
+the error landed almost entirely on one side, it inverted the *delta* rather
+than shifting both endpoints together.
 
-This is a genuine measurement inconsistency in the pipeline: **M3a and M1/M3b
-count sentences with different tools**, so their length-driven numbers are not
-strictly comparable. It does not affect M1, M3b or M3c, which use spaCy
-throughout.
-
-**PLOS's rise is not an artifact** — its segmentation agrees within 19%. PLOS lay
-summaries genuinely use longer words (syllables/word +0.137) and deeper nesting
-(parse depth +1.133) than their source articles, even while using commoner
-vocabulary.
+The fix makes `surface_scores` take the caller's segmentation and neutralise
+sentence-internal terminators, so textstat keeps its formula implementations but
+counts the sentences spaCy found. Affected: **M3a, M3c** (which scores the same
+formulas over its length-matched controls) and **M6's `fkgl` feature**. Not
+affected: M1, M2, M3b, M4, M5 — verified identical across the two runs.
 
 ### The length-invariant measures — where the evidence actually is
 
@@ -196,20 +205,22 @@ This is a more honest picture than FKGL gives:
 
 ### M3c decomposition
 
-| FKGL | Cochrane | PLOS | D-Wikipedia | CNN/DM |
+| FKGL | Cochrane | PLOS ‡ | D-Wikipedia | CNN/DM |
 |---|---|---|---|---|
-| total change | +2.332 | +1.690 | −2.981 | −2.021 |
-| attributable to rewriting | +1.528 | −6.046 | −3.517 | −5.003 |
-| length artifact | +0.804 | +7.737 | +0.536 | +2.982 |
-| share attributable (median) | 1.000 | −1.618 | 1.000 | 1.600 |
+| total change | **−1.248** | +1.690 | **−3.620** | **−2.240** |
+| attributable to rewriting | **−3.421** | −6.046 | **−5.402** | **−5.656** |
+| length artifact | **+2.173** | +7.737 | **+1.782** | **+3.415** |
+| share attributable (median) | **1.249** | −1.618 | 1.000 | 1.690 |
 
 Read this column with care. `share_attributable` is a ratio whose denominator is
 the total change, and on PLOS that total is small relative to its components
 (+1.690 against parts of −6.046 and +7.737), producing an uninterpretable
 −1.618. The useful reading is the **components**: on PLOS, shortening alone
 would have raised FKGL by 7.7 and rewriting pulled it back down by 6.0. On
-D-Wikipedia the length artifact is small (+0.536) and rewriting does the work
-(−3.517) — genuine simplification, not a length effect.
+D-Wikipedia rewriting does the work (−5.402) against a smaller length artifact
+(+1.782) — genuine simplification, not a length effect. The same pattern now
+holds for Cochrane (−3.421 rewriting against +2.173 artifact): shortening alone
+would have made it *harder*, and rewriting more than compensated.
 
 ---
 
@@ -298,7 +309,7 @@ Negative = the feature is **lower** in deleted sentences.
 | 1 | rouge_recall_in_target −1.29 | **centroid_sim −1.55** | rouge_recall_in_target −1.43 | rouge_recall_in_target −1.43 |
 | 2 | centroid_sim −1.13 | rouge_recall_in_target −1.31 | centroid_sim −1.23 | centroid_sim −1.24 |
 | 3 | max_sim_other −1.03 | textrank −0.86 | textrank −0.66 | max_sim_other −0.82 |
-| 4 | sent_len −0.54 | fkgl −0.80 | norm_position +0.62 | textrank −0.71 |
+| 4 | fkgl −0.62 | fkgl −0.80 | norm_position +0.62 | textrank −0.71 |
 | deletion rate | 0.227 | 0.633 | 0.341 | 0.762 |
 | source sentences | 3616 | 78460 | 1202 | 9366 |
 
