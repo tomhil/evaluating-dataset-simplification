@@ -27,6 +27,15 @@ made visible — across six metric modules:
 Every corpus-level statistic is reported as **mean, median, IQR, and a seeded
 bootstrap 95% CI**, always carrying its own `n`, alongside a histogram.
 
+**Results:** [`RESULTS.md`](RESULTS.md) — four published corpora (Cochrane, PLOS,
+D-Wikipedia, CNN/DailyMail) profiled under identical parameters, compared axis by
+axis against their published values.
+
+**Per-module reference:** [`docs/modules/`](docs/modules/) documents every metric
+each module emits — how it is computed, what it ranges over, how to read it, and
+where it misleads. Start with [the index](docs/modules/README.md) for the shared
+statistics contract and the two traps common to all six modules.
+
 ## Install
 
 ```bash
