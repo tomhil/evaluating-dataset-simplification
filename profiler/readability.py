@@ -27,12 +27,50 @@ def _textstat():
         ) from exc
 
 
-def surface_scores(text: str) -> dict[str, float | None]:
+# ``textstat`` segments sentences with ``\b[^.!?]+[.!?]*`` -- every period is a
+# sentence boundary. Clinical and scientific prose is saturated with decimals
+# ("OR 0.61, 95% CI 0.46 to 0.79"), so that regex can report several times the
+# true sentence count and, because all six formulas are sentence-length driven,
+# make a hard text score as easy. Substituting a look-alike that the regex does
+# not split on lets textstat keep its own tested formula implementations while
+# honouring the caller's segmentation. One character in, one character out, so
+# the character counts feeding ARI and CLI are unchanged.
+_TERMINATOR_STAND_IN = "\u2024"  # ONE DOT LEADER
+
+
+def _normalise_for_textstat(text: str, sentences: list[str]) -> str:
+    """Rewrite ``text`` so ``.!?`` occur only at ``sentences`` boundaries."""
+
+    out: list[str] = []
+    for sent in sentences:
+        sent = sent.strip()
+        if not sent:
+            continue
+        body = sent.rstrip(".!?").rstrip()
+        for mark in ".!?":
+            body = body.replace(mark, _TERMINATOR_STAND_IN)
+        out.append(body + ".")
+    return " ".join(out)
+
+
+def surface_scores(
+    text: str, sentences: list[str] | None = None
+) -> dict[str, float | None]:
     """FKGL, Dale-Chall (DCRS), Coleman-Liau (CLI), Flesch Reading Ease (FRE),
-    ARI, and SMOG for one text. ``None`` for empty text."""
+    ARI, and SMOG for one text. ``None`` for empty text.
+
+    ``sentences`` is the caller's own segmentation (spaCy, via ``Processor``).
+    Supply it so these formulas agree with M1/M3b/M3c on how many sentences the
+    text has; omit it only where no segmentation is available, which leaves
+    textstat's period-splitting heuristic in charge.
+    """
 
     if not text or not text.strip():
         return {m: None for m in SURFACE_MEASURES}
+    if sentences is not None:
+        text = _normalise_for_textstat(text, sentences)
+        if not text.strip():
+            return {m: None for m in SURFACE_MEASURES}
     ts = _textstat()
     return {
         "fkgl": float(ts.flesch_kincaid_grade(text)),

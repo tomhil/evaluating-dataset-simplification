@@ -194,12 +194,16 @@ def _decile_deletion_rate(rows: list[dict], feat: str) -> dict:
 
 
 def _sent_fkgl(sent: str) -> float | None:
+    """FKGL of a single source sentence.
+
+    Scored as exactly one sentence: textstat would otherwise split on any
+    decimal it contains ("OR 0.61") and report the fragment lengths instead.
+    """
+
     if not sent.strip():
         return None
     try:
-        import textstat
-
-        return float(textstat.flesch_kincaid_grade(sent))
+        return rd.surface_scores(sent, sentences=[sent])["fkgl"]
     except Exception:
         return None
 

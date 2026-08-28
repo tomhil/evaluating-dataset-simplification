@@ -104,7 +104,7 @@ def _tree_depth(head_map: dict[int, int]) -> int:
 # Length-invariant scalar vector (for M3c decomposition; no parser)
 # --------------------------------------------------------------------------
 def _readability_vector(text: str, proc: Processor) -> dict[str, float | None]:
-    vec = rd.surface_scores(text)
+    vec = rd.surface_scores(text, sentences=proc.sentences(text))
     words = proc.words(text)
     content = proc.content_words(text)
     vec["mean_zipf"] = rd.mean_zipf(content)
@@ -200,8 +200,13 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     for p in pairs:
         row: dict = {"id": p.id}
 
-        src_surface = rd.surface_scores(p.source)
-        tgt_surface = rd.surface_scores(p.target)
+        # Segment with the shared Processor so M3a counts sentences the same
+        # way M1/M3b/M3c do; textstat's own splitter treats every period,
+        # including decimals, as a sentence end.
+        src_sents_for_scores = proc.sentences(p.source)
+        tgt_sents_for_scores = proc.sentences(p.target)
+        src_surface = rd.surface_scores(p.source, sentences=src_sents_for_scores)
+        tgt_surface = rd.surface_scores(p.target, sentences=tgt_sents_for_scores)
         for m in rd.SURFACE_MEASURES:
             row[f"src_{m}"] = src_surface[m]
             row[f"tgt_{m}"] = tgt_surface[m]
@@ -239,7 +244,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             row[f"tgt_{k}"] = v
 
         # M3c decomposition
-        src_sents = proc.sentences(p.source)
+        src_sents = src_sents_for_scores
         budget = len(tgt_words)
         lead = _lead_k(src_sents, proc, budget) if src_sents else ""
         oracle = _ext_oracle_k(src_sents, p.target, proc, budget) if src_sents else ""
