@@ -1,5 +1,5 @@
-# Cochrane (Devaraj et al. 2021) -- labelled PLS in the PRD s5 literature table.
-# Published reference values: 0.53 (501 -> 264 tok); FKGL 14.4 -> 12.9
+# PLOS (Goldsack et al. 2022) -- labelled PLS in the PRD s5 literature table.
+# Published reference values: 0.033 (5366.7 -> 175.6 w); FKGL 15.04 -> 14.76
 #
 # Corpus materialised by `python scripts/fetch_all.py` (seeded draw, n=1000).
 # All five anchor configs share identical run parameters so their profiles are
@@ -7,11 +7,11 @@
 # sample, real SBERT + NLI backends.
 dataset:
   adapter: jsonl
-  path: data/cochrane/train_1000.jsonl
+  path: data/plos/train_1000.jsonl
   source_field: source
   target_field: target
 run:
-  dataset_label: cochrane
+  dataset_label: plos
   sample_size: 250         # M4-M6 sample; M1-M3 run on all 1000
   seed: 13
   language: en

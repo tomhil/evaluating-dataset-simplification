@@ -1,5 +1,5 @@
-# Cochrane (Devaraj et al. 2021) -- labelled PLS in the PRD s5 literature table.
-# Published reference values: 0.53 (501 -> 264 tok); FKGL 14.4 -> 12.9
+# eLife (Goldsack et al. 2022) -- labelled PLS in the PRD s5 literature table.
+# Published reference values: 0.045 (7806.1 -> 347.6 w); FKGL 15.57 -> 10.92
 #
 # Corpus materialised by `python scripts/fetch_all.py` (seeded draw, n=1000).
 # All five anchor configs share identical run parameters so their profiles are
@@ -7,12 +7,18 @@
 # sample, real SBERT + NLI backends.
 dataset:
   adapter: jsonl
-  path: data/cochrane/train_1000.jsonl
+  path: data/elife/train_1000.jsonl
   source_field: source
   target_field: target
 run:
-  dataset_label: cochrane
-  sample_size: 250         # M4-M6 sample; M1-M3 run on all 1000
+  dataset_label: elife
+  # Reduced from the 250 the other four anchors use. eLife documents average
+  # ~605 source and ~18 target sentences, and M5 scores every target sentence
+  # against every source sentence: 250 pairs is ~2.74M deberta-large passes
+  # (~17h on this hardware) versus ~4h at 60. M1-M3 still run on all 1000.
+  # Consequence: eLife's M4-M6 confidence intervals are wider than the other
+  # corpora's. Every metric carries its own n, so this stays visible.
+  sample_size: 60          # M4-M6 sample; M1-M3 run on all 1000
   seed: 13
   language: en
   cache_dir: .cache/
