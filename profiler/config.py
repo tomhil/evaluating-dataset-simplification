@@ -67,6 +67,9 @@ class RunConfig:
     embed_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     nli_backend: str = "nli"
     nli_model: str = "microsoft/deberta-large-mnli"
+    # Torch device for the SBERT/NLI backends. 'auto' picks mps/cuda when
+    # available, else cpu. Purely a speed knob: same model, same math.
+    device: str = "auto"
     # Primary tau used for the alignment that feeds M5/M6 (M4 itself sweeps).
     m6_tau: float = 0.5
     # M5 optional scorers. NLI always runs (unless heuristic_only); these gate
@@ -171,6 +174,7 @@ def parse_config(raw: dict) -> Config:
         ),
         nli_backend=str(run_raw.get("nli_backend", "nli")),
         nli_model=str(run_raw.get("nli_model", "microsoft/deberta-large-mnli")),
+        device=str(run_raw.get("device", "auto")),
         m6_tau=float(run_raw.get("m6_tau", 0.5)),
         alignscore=bool(run_raw.get("alignscore", False)),
         summac=bool(run_raw.get("summac", False)),

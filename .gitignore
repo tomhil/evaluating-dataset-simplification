@@ -10,5 +10,9 @@ runs/
 .venv/
 venv/
 
-# Fetched dataset files (reproduce with scripts/fetch_cochrane.py)
-data/cochrane/
+# IDE
+.idea/
+
+# Fetched corpora (~105MB; reproduce with scripts/fetch_all.py).
+# data/smoke.jsonl is tracked -- it is a fixture, not a fetched corpus.
+data/*/

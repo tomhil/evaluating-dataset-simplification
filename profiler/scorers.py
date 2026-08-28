@@ -23,6 +23,10 @@ from .cache import Cache, content_hash
 
 _TOK = re.compile(r"[A-Za-z0-9]+")
 
+# Premise batch size for TransformersNLI. Bounds peak GPU memory independently
+# of how many sentences a source document has.
+NLI_BATCH = 32
+
 
 class SentenceScorer(Protocol):
     name: str
@@ -64,8 +68,10 @@ class TransformersNLI:
 
     name = "nli"
 
-    def __init__(self, model: str, cache: Cache | None = None):
+    def __init__(self, model: str, cache: Cache | None = None, device: str = "auto"):
         import torch
+
+        from .embeddings import resolve_device
         from transformers import (
             AutoModelForSequenceClassification,
             AutoTokenizer,
@@ -75,6 +81,10 @@ class TransformersNLI:
         self._tok = AutoTokenizer.from_pretrained(model)
         self._model = AutoModelForSequenceClassification.from_pretrained(model)
         self._model.eval()
+        # deberta-large is ~4x faster on mps/cuda than cpu, and M5 issues
+        # (#target x #source) forward passes per pair, so the device matters.
+        self.device = resolve_device(device)
+        self._model.to(self.device)
         self._cache = cache
         self._model_name = model
         # Locate the entailment label index robustly.
@@ -101,21 +111,34 @@ class TransformersNLI:
             out.append(val)
         return out
 
-    def _entail_probs(self, premises: list[str], hypothesis: list[str]) -> np.ndarray:
+    def _entail_probs(self, premises: list[str], hypothesis: str) -> np.ndarray:
+        """Entailment probability of ``hypothesis`` under each premise.
+
+        Premises are scored in fixed-size chunks. A long-document corpus can put
+        hundreds of source sentences in one call (eLife averages ~605), and
+        encoding them as a single batch exhausts GPU memory. Chunking changes no
+        arithmetic -- the caller still takes the max over every premise -- and
+        cuts padding waste, since each batch pads only to its own longest pair.
+        """
         torch = self._torch
-        pairs = [(p, hypothesis) for p in premises]
-        enc = self._tok(
-            [p for p, _ in pairs],
-            [h for _, h in pairs],
-            return_tensors="pt",
-            truncation=True,
-            padding=True,
-            max_length=256,
-        )
-        with torch.no_grad():
-            logits = self._model(**enc).logits
-            probs = torch.softmax(logits, dim=-1)[:, self._entail_idx]
-        return probs.cpu().numpy()
+        out: list[np.ndarray] = []
+        for start in range(0, len(premises), NLI_BATCH):
+            chunk = premises[start : start + NLI_BATCH]
+            enc = self._tok(
+                chunk,
+                [hypothesis] * len(chunk),
+                return_tensors="pt",
+                truncation=True,
+                padding=True,
+                max_length=256,
+            ).to(self.device)
+            with torch.no_grad():
+                logits = self._model(**enc).logits
+                probs = torch.softmax(logits, dim=-1)[:, self._entail_idx]
+            out.append(probs.cpu().numpy())
+        if not out:
+            return np.zeros(0)
+        return np.concatenate(out)
 
 
 def get_primary_scorer(config, cache: Cache) -> SentenceScorer:
@@ -123,7 +146,9 @@ def get_primary_scorer(config, cache: Cache) -> SentenceScorer:
     if backend == "lexical":
         return LexicalGrounding()
     if backend == "nli":
-        return TransformersNLI(config.run.nli_model, cache=cache)
+        return TransformersNLI(
+            config.run.nli_model, cache=cache, device=config.run.device
+        )
     raise ValueError(f"unknown nli_backend '{backend}'")
 
 

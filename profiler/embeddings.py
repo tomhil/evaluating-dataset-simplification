@@ -50,11 +50,31 @@ class HashingEmbedder:
         return _l2_normalize(out)
 
 
+def resolve_device(requested: str = "auto") -> str:
+    """Map 'auto' onto the best available torch device.
+
+    An explicit value is honoured as given so a run can be pinned to cpu for
+    cross-machine reproducibility.
+    """
+    if requested != "auto":
+        return requested
+    try:
+        import torch
+    except ImportError:
+        return "cpu"
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
 class SbertEmbedder:
-    def __init__(self, model: str):
+    def __init__(self, model: str, device: str = "auto"):
         from sentence_transformers import SentenceTransformer
 
-        self._model = SentenceTransformer(model)
+        self.device = resolve_device(device)
+        self._model = SentenceTransformer(model, device=self.device)
         self.name = model
         self.dim = int(self._model.get_sentence_embedding_dimension())
 
@@ -107,7 +127,7 @@ def get_embedder(config, cache: Cache) -> Embedder:
     if run.embedder == "hashing":
         base: Embedder = HashingEmbedder()
     elif run.embedder == "sbert":
-        base = SbertEmbedder(run.embed_model)
+        base = SbertEmbedder(run.embed_model, device=run.device)
     else:
         raise ValueError(f"unknown embedder backend '{run.embedder}'")
     return CachedEmbedder(base, cache)
