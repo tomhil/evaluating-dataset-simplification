@@ -110,22 +110,19 @@ as compression rises and carries no independent information here.
 
 > **Segmentation fix applied.** M3a originally took its sentence counts from
 > `textstat`, which treats every period — including decimals — as a sentence
-> end. Cochrane, PLOS, D-Wikipedia and CNN/DailyMail were re-run after the fix;
-> **PLOS's M3 figures below are still pre-fix** and are marked ‡ (its re-run is
-> in progress). M1, M2, M3b, M4 and M5 are unaffected and identical across both
-> runs.
+> end. All four corpora were re-run after the fix and every figure below is
+> post-fix. M1, M2, M3b, M4 and M5 are unaffected and verified identical across
+> both runs.
 
 ### The surface formulas disagree with each other and with the literature
 
-| FKGL | Cochrane | PLOS ‡ | D-Wikipedia | CNN/DM |
+| FKGL | Cochrane | PLOS | D-Wikipedia | CNN/DM |
 |---|---|---|---|---|
-| source → target | **14.06 → 12.81** | 12.90 → 14.59 | **11.81 → 8.19** | **9.39 → 7.15** |
-| **delta** | **−1.25** | **+1.69** | −3.62 | −2.24 |
-| 95% CI | [−1.42, −1.08] | [1.56, 1.82] | [−3.96, −3.29] | [−2.40, −2.09] |
+| source → target | 14.06 → 12.81 | 12.78 → 14.60 | 11.81 → 8.19 | 9.39 → 7.15 |
+| **delta** | **−1.25** | **+1.81** | −3.62 | −2.24 |
+| 95% CI | [−1.42, −1.08] | [1.69, 1.94] | [−3.96, −3.29] | [−2.40, −2.09] |
 | published delta | 14.4 → 12.9 (−1.5) | 15.04 → 14.76 (−0.3) | — | — |
-| Dale–Chall delta | −0.45 | +3.24 | −0.78 | **+2.17** |
-
-‡ pre-fix; re-run in progress.
+| Dale–Chall delta | −0.45 | +3.25 | −0.78 | **+2.17** |
 
 **Cochrane now reproduces its published values**: source within 0.34 grades,
 target within 0.09, and the delta negative as published. Before the segmentation
@@ -133,8 +130,9 @@ fix it read 10.22 → 12.55, delta **+2.33** — the wrong sign, from textstat
 splitting its decimal-dense sources into roughly three times as many sentences
 as spaCy found.
 
-PLOS remains the one corpus whose targets score as harder, and that is not a
-segmentation artifact: its two segmenters agree within 19%, and M3b
+PLOS remains the one corpus whose targets score as harder, and the re-run
+confirms this is not a segmentation artifact — the fix moved it only
++1.69 → +1.81. Its two segmenters agree within 19%, and M3b
 independently shows longer words (+0.137 syllables/word) and deeper nesting
 (+1.133 parse depth). Its lay summaries are lexically easier and structurally
 harder.
@@ -205,18 +203,18 @@ This is a more honest picture than FKGL gives:
 
 ### M3c decomposition
 
-| FKGL | Cochrane | PLOS ‡ | D-Wikipedia | CNN/DM |
+| FKGL | Cochrane | PLOS | D-Wikipedia | CNN/DM |
 |---|---|---|---|---|
-| total change | **−1.248** | +1.690 | **−3.620** | **−2.240** |
-| attributable to rewriting | **−3.421** | −6.046 | **−5.402** | **−5.656** |
-| length artifact | **+2.173** | +7.737 | **+1.782** | **+3.415** |
-| share attributable (median) | **1.249** | −1.618 | 1.000 | 1.690 |
+| total change | −1.248 | +1.812 | −3.620 | −2.240 |
+| attributable to rewriting | −3.421 | −6.006 | −5.402 | −5.656 |
+| length artifact | +2.173 | +7.818 | +1.782 | +3.415 |
+| share attributable (median) | 1.249 | −1.750 | 1.000 | 1.690 |
 
 Read this column with care. `share_attributable` is a ratio whose denominator is
 the total change, and on PLOS that total is small relative to its components
-(+1.690 against parts of −6.046 and +7.737), producing an uninterpretable
-−1.618. The useful reading is the **components**: on PLOS, shortening alone
-would have raised FKGL by 7.7 and rewriting pulled it back down by 6.0. On
+(+1.812 against parts of −6.006 and +7.818), producing an uninterpretable
+−1.750. The useful reading is the **components**: on PLOS, shortening alone
+would have raised FKGL by 7.8 and rewriting pulled it back down by 6.0. On
 D-Wikipedia rewriting does the work (−5.402) against a smaller length artifact
 (+1.782) — genuine simplification, not a length effect. The same pattern now
 holds for Cochrane (−3.421 rewriting against +2.173 artifact): shortening alone
