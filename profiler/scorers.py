@@ -27,6 +27,39 @@ _TOK = re.compile(r"[A-Za-z0-9]+")
 # of how many sentences a source document has.
 NLI_BATCH = 32
 
+# Source sentences joined into the multi-sentence premise (see _joined_premise).
+PREMISE_WINDOW = 3
+
+
+def _joined_premise(source_sents: list[str], hypothesis: str, k: int = PREMISE_WINDOW) -> str:
+    """The k source sentences most relevant to ``hypothesis``, in document order.
+
+    A target sentence that merges facts from several source sentences is
+    entailed by none of them on their own, so scoring single-sentence premises
+    alone reports faithful merges as unsupported. Relevance is content-word
+    overlap: deliberately lexical, so this does not inherit M4's alignment noise.
+    """
+
+    if not source_sents:
+        return ""
+    if len(source_sents) <= k:
+        return " ".join(source_sents)
+    from .nlp import _STOPWORDS
+
+    def content(text: str) -> set[str]:
+        return {
+            w.lower()
+            for w in _TOK.findall(text)
+            if w.lower() not in _STOPWORDS and not w.isdigit()
+        }
+
+    hyp = content(hypothesis)
+    scored = sorted(
+        range(len(source_sents)),
+        key=lambda i: (-len(content(source_sents[i]) & hyp), i),
+    )
+    return " ".join(source_sents[i] for i in sorted(scored[:k]))
+
 
 class SentenceScorer(Protocol):
     name: str
@@ -98,7 +131,11 @@ class TransformersNLI:
             return [0.0] * len(target_sents)
         out: list[float] = []
         for t in target_sents:
-            key = content_hash(self._model_name, "||".join(source_sents), t)
+            # The window is part of the key: changing it changes the score, and a
+            # stale cache would silently return the old single-premise value.
+            key = content_hash(
+                self._model_name, "||".join(source_sents), t, f"w{PREMISE_WINDOW}"
+            )
             if self._cache is not None:
                 cached = self._cache.get_json(key)
                 if cached is not None:
@@ -106,6 +143,14 @@ class TransformersNLI:
                     continue
             probs = self._entail_probs(premises=source_sents, hypothesis=t)
             val = float(np.max(probs)) if len(probs) else 0.0
+            # Also try the multi-sentence premise, which is the only way a merged
+            # target sentence can be entailed. Taking the max means this can only
+            # remove false "not entailed", never introduce one.
+            joined = _joined_premise(source_sents, t)
+            if joined and len(source_sents) > 1:
+                merged = self._entail_probs(premises=[joined], hypothesis=t)
+                if len(merged):
+                    val = max(val, float(merged[0]))
             if self._cache is not None:
                 self._cache.put_json(key, val)
             out.append(val)

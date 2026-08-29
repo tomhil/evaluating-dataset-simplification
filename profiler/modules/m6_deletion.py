@@ -24,7 +24,19 @@ from .base import Context, ModuleResult
 NAME = "deletion_profile"
 
 SALIENCE = ["textrank", "centroid_sim", "norm_position", "rouge_recall_in_target"]
-DIFFICULTY = ["fkgl", "rare_word_rate", "mean_dependency_distance", "jargon_rate", "sent_len"]
+# ``fkgl`` is retained for comparability with the readability literature, but on
+# a single sentence it is 0.39*sent_len + 11.8*syllables_per_word - 15.59: its
+# dominant term is simply the sentence's length, which ``sent_len`` already
+# reports. ``syllables_per_word`` is the length-free half, so the two together
+# carry the same information as fkgl + sent_len without the shared length term.
+DIFFICULTY = [
+    "fkgl",
+    "syllables_per_word",
+    "rare_word_rate",
+    "mean_dependency_distance",
+    "jargon_rate",
+    "sent_len",
+]
 REDUNDANCY = ["max_sim_other"]
 ALL_FEATURES = SALIENCE + DIFFICULTY + REDUNDANCY
 
@@ -47,8 +59,22 @@ def _textrank(sim: np.ndarray, damping: float = 0.85, iters: int = 50) -> np.nda
     return scores
 
 
+def _content_tokens(sent: str, proc) -> list[str]:
+    """Content words as a token list, repeats kept.
+
+    ``rare_word_rate`` and ``jargon_rate`` are *token* rates in M3b -- what share
+    of the words are rare or technical. Passing a set turns them into type rates,
+    so a sentence repeating one jargon term counts it once and the same metric
+    name means two different things in two modules.
+    """
+
+    return [w.lower() for w in proc.content_words(sent)]
+
+
 def _content_set(sent: str, proc) -> set[str]:
-    return {w.lower() for w in proc.content_words(sent)}
+    """Distinct content words -- for overlap ratios, which are set operations."""
+
+    return set(_content_tokens(sent, proc))
 
 
 def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
@@ -89,7 +115,9 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         for i, sent in enumerate(src_sents):
             deleted = 1 if al.src_degree[i] == 0 else 0
             n_deleted += deleted
-            sent_content = _content_set(sent, proc)
+            # Overlap is a set operation; the rates below are token rates.
+            sent_tokens = _content_tokens(sent, proc)
+            sent_content = set(sent_tokens)
             rouge_in_tgt = (
                 len(sent_content & tgt_content) / len(sent_content) if sent_content else None
             )
@@ -102,9 +130,10 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
                     "norm_position": i / (n - 1) if n > 1 else 0.0,
                     "rouge_recall_in_target": rouge_in_tgt,
                     "fkgl": _sent_fkgl(sent),
-                    "rare_word_rate": rd.rare_word_rate(list(sent_content)) if sent_content else None,
+                    "syllables_per_word": rd.syllables_per_word(proc.words(sent)),
+                    "rare_word_rate": rd.rare_word_rate(sent_tokens) if sent_tokens else None,
                     "mean_dependency_distance": syn,
-                    "jargon_rate": rd.jargon_rate(list(sent_content), jargon) if sent_content else None,
+                    "jargon_rate": rd.jargon_rate(sent_tokens, jargon) if sent_tokens else None,
                     "sent_len": len(proc.words(sent)),
                     "max_sim_other": float(max_sim_other[i]),
                 }
