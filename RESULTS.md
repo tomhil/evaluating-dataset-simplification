@@ -265,22 +265,18 @@ these as relative shape, not as a partition.
 > against source sentences **one at a time**, taking the max. A target sentence
 > that merges facts from several source sentences is entailed by none of them
 > individually, so faithful merges were reported as unsupported. The scorer now
-> also evaluates a multi-sentence premise. Cochrane, D-Wikipedia and
-> CNN/DailyMail below are post-fix; **PLOS is marked ‡ and is pre-fix** (re-run
-> in progress).
+> also evaluates a multi-sentence premise. All four corpora below are post-fix.
 
-| | Cochrane (PLS) | PLOS ‡ (PLS) | D-Wikipedia (DS) | CNN/DM (SUM) |
+| | Cochrane (PLS) | PLOS (PLS) | D-Wikipedia (DS) | CNN/DM (SUM) |
 |---|---|---|---|---|
-| **not-entailed rate** | **0.534** | 0.567 | **0.537** | **0.298** |
+| **not-entailed rate** | **0.534** | **0.425** | **0.537** | **0.298** |
 | *before the fix* | *0.651* | *0.567* | *0.605* | *0.556* |
-| gap vs SUM control | **+0.236** | — | **+0.239** | (control) |
-| *gap before the fix* | *+0.095* | — | *+0.049* | — |
+| gap vs SUM control | **+0.236** | **+0.127** | **+0.239** | (control) |
+| *gap before the fix* | *+0.095* | *+0.011* | *+0.049* | — |
 | target sentences scored | 2487 | 2131 | 928 | 863 |
 | candidate gloss | 1562 | 1202 | 457 | 476 |
 | candidate new background | 57 | 7 | **104** | 4 |
 | definitional cue | 88 | 174 | 169 | 11 |
-
-‡ pre-fix; re-run in progress.
 
 ### The metric now separates the tasks
 
@@ -290,11 +286,18 @@ it sat at 0.556, within 0.05 of everything else. It now sits at **0.298**, with
 both simplification corpora ~0.24 above it — a **five-fold** improvement in
 separation.
 
-The control moved furthest by far (−0.258, against −0.068 for D-Wikipedia), and
-that asymmetry is the diagnostic signature rather than a coincidence:
-CNN/DailyMail's summary sentences are the heaviest n:1 merges of the four
-corpora (M4 records its lowest split rate, 0.064, and a 0.840 deletion rate), so
-they were the sentences most damaged by single-sentence premises.
+Every corpus fell, but by very different amounts — CNN/DailyMail −0.258, PLOS
+−0.142, Cochrane −0.117, D-Wikipedia −0.068 — and that ordering is the
+diagnostic signature rather than a coincidence:
+the drop tracks how heavily a corpus merges. CNN/DailyMail has the lowest split
+rate of the four (0.064) and a 0.840 deletion rate, so its summary sentences are
+the heaviest n:1 merges and were the most damaged by single-sentence premises.
+D-Wikipedia, which rewrites largely in place, was damaged least.
+
+**PLOS separates least among the three simplification corpora** (+0.127 against
++0.236 and +0.239). That is consistent with the rest of its profile: on
+compression, copying and source coverage it behaves like the summarization
+control rather than like Cochrane, its own class-mate.
 
 ### How the defect was found, and what the earlier evidence meant
 
@@ -363,9 +366,10 @@ carried both `fkgl` and `sent_len`, but on a single sentence FKGL is
 `0.39·sent_len + 11.8·syllables_per_word − 15.59` — its dominant term is the
 sentence's length, so the two features competed for the same variance and buried
 the vocabulary component. `syllables_per_word`, the length-free half, was added
-and enters at only −0.24 (Cochrane) and −0.12 (D-Wikipedia). Its **sign** is the
-informative part: deleted sentences use *shorter* words, the opposite of
-difficulty-driven deletion.
+and enters at −0.62 (PLOS), −0.24 (Cochrane), −0.20 (CNN/DM) and −0.12
+(D-Wikipedia) — never above the salience features. Its **sign** is the
+informative part and it is negative everywhere: deleted sentences use *shorter*
+words, the opposite of difficulty-driven deletion.
 
 **No corpus here deletes on the basis of difficulty.** Even the plain-language
 corpora drop material because it is peripheral, not because it is hard. That is
@@ -402,7 +406,7 @@ warrants.
   restored its ability to rank corpora, but the control still reads 0.298 for a
   corpus that adds nothing, so the residue is alignment error and off-domain
   entailment error. Only the manual annotation loop yields an absolute figure.
-- **PLOS's M5/M6 figures are pre-fix**; the other three corpora are post-fix.
+- **All four corpora are post-fix** on every module.
 
 ## Not covered here
 

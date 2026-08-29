@@ -480,37 +480,37 @@
       }
      },
      "jargon_rate": {
-      "cohens_d_deleted_vs_retained": -0.1517,
+      "cohens_d_deleted_vs_retained": -0.151995,
       "deleted": {
        "ci95": [
-        0.01384,
-        0.014699
+        0.01416,
+        0.015042
        ],
        "extra": {},
        "iqr": [
         0.0,
         0.0
        ],
-       "mean": 0.0143,
+       "mean": 0.014621,
        "median": 0.0,
        "n": 43879,
-       "std": 0.045642
+       "std": 0.046934
       },
-      "point_biserial_with_deletion": -0.073982,
+      "point_biserial_with_deletion": -0.074125,
       "retained": {
        "ci95": [
-        0.020672,
-        0.021665
+        0.02121,
+        0.022243
        ],
        "extra": {},
        "iqr": [
         0.0,
         0.0
        ],
-       "mean": 0.021149,
+       "mean": 0.021717,
        "median": 0.0,
        "n": 28744,
-       "std": 0.044381
+       "std": 0.046304
       }
      },
      "max_sim_other": {
@@ -616,37 +616,37 @@
       }
      },
      "rare_word_rate": {
-      "cohens_d_deleted_vs_retained": -0.029756,
+      "cohens_d_deleted_vs_retained": -0.044817,
       "deleted": {
        "ci95": [
-        0.617957,
-        0.622506
+        0.617278,
+        0.621823
        ],
        "extra": {},
        "iqr": [
         0.5,
-        0.772727
+        0.777778
        ],
-       "mean": 0.620229,
+       "mean": 0.619533,
        "median": 0.625,
        "n": 43879,
-       "std": 0.235523
+       "std": 0.236935
       },
-      "point_biserial_with_deletion": -0.01455,
+      "point_biserial_with_deletion": -0.021911,
       "retained": {
        "ci95": [
-        0.624528,
-        0.628444
+        0.627087,
+        0.631079
        ],
        "extra": {},
        "iqr": [
-        0.521739,
-        0.73913
+        0.52381,
+        0.75
        ],
-       "mean": 0.626562,
-       "median": 0.631579,
+       "mean": 0.629138,
+       "median": 0.636364,
        "n": 28744,
-       "std": 0.172527
+       "std": 0.174191
       }
      },
      "rouge_recall_in_target": {
@@ -717,6 +717,40 @@
        "std": 11.777089
       }
      },
+     "syllables_per_word": {
+      "cohens_d_deleted_vs_retained": -0.615108,
+      "deleted": {
+       "ci95": [
+        1.618215,
+        1.625727
+       ],
+       "extra": {},
+       "iqr": [
+        1.333333,
+        1.888889
+       ],
+       "mean": 1.622006,
+       "median": 1.666667,
+       "n": 49641,
+       "std": 0.425003
+      },
+      "point_biserial_with_deletion": -0.284273,
+      "retained": {
+       "ci95": [
+        1.853994,
+        1.860804
+       ],
+       "extra": {},
+       "iqr": [
+        1.678571,
+        2.0
+       ],
+       "mean": 1.857375,
+       "median": 1.842105,
+       "n": 28801,
+       "std": 0.295724
+      }
+     },
      "textrank": {
       "cohens_d_deleted_vs_retained": -0.864514,
       "deleted": {
@@ -762,6 +796,7 @@
    "params": {
     "difficulty_features": [
      "fkgl",
+     "syllables_per_word",
      "rare_word_rate",
      "mean_dependency_distance",
      "jargon_rate",
@@ -784,37 +819,37 @@
    "corpus": {
     "corrected_not_entailed_rate": null,
     "heuristic_only": false,
-    "n_not_entailed_primary": 1209,
+    "n_not_entailed_primary": 905,
     "n_target_sentences": 2131,
     "not_entailed_pattern_breakdown": {
-     "candidate_gloss": 1202,
+     "candidate_gloss": 898,
      "candidate_new_background": 7,
-     "definitional": 174,
-     "example_marker": 46,
-     "n_not_entailed": 1209
+     "definitional": 126,
+     "example_marker": 36,
+     "n_not_entailed": 905
     },
     "pairwise_agreement": {},
     "per_scorer": {
      "nli": {
       "not_entailed_rate": {
        "n": 2131,
-       "rate": 0.567339,
+       "rate": 0.424683,
        "threshold": 0.5
       },
       "score": {
        "ci95": [
-        0.467379,
-        0.495626
+        0.576198,
+        0.605573
        ],
        "extra": {},
        "iqr": [
-        0.156166,
-        0.873407
+        0.217306,
+        0.954675
        ],
-       "mean": 0.480858,
-       "median": 0.383282,
+       "mean": 0.590666,
+       "median": 0.660637,
        "n": 2131,
-       "std": 0.349242
+       "std": 0.354483
       }
      }
     },
@@ -2305,8 +2340,8 @@
  "n_full": 1000,
  "n_sample": 250,
  "provenance": {
-  "git_commit": "4903c38",
-  "run_dir": "plos_20260828T140224Z",
-  "source_file": "runs/plos_20260828T140224Z/metrics.json"
+  "git_commit": "7910baf",
+  "run_dir": "plos_20260829T201402Z",
+  "source_file": "runs/plos_20260829T201402Z/metrics.json"
  }
 }
