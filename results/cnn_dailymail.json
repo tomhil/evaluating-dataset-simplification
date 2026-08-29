@@ -480,37 +480,37 @@
       }
      },
      "jargon_rate": {
-      "cohens_d_deleted_vs_retained": 0.015433,
+      "cohens_d_deleted_vs_retained": 0.015754,
       "deleted": {
        "ci95": [
-        0.00056,
-        0.001145
+        0.000553,
+        0.001142
        ],
        "extra": {},
        "iqr": [
         0.0,
         0.0
        ],
-       "mean": 0.000823,
+       "mean": 0.000817,
        "median": 0.0,
        "n": 6987,
-       "std": 0.012567
+       "std": 0.012525
       },
-      "point_biserial_with_deletion": 0.00661,
+      "point_biserial_with_deletion": 0.006748,
       "retained": {
        "ci95": [
-        0.000314,
-        0.001009
+        0.000311,
+        0.000994
        ],
        "extra": {},
        "iqr": [
         0.0,
         0.0
        ],
-       "mean": 0.000642,
+       "mean": 0.000634,
        "median": 0.0,
        "n": 2230,
-       "std": 0.008388
+       "std": 0.008309
       }
      },
      "max_sim_other": {
@@ -616,37 +616,37 @@
       }
      },
      "rare_word_rate": {
-      "cohens_d_deleted_vs_retained": -0.120416,
+      "cohens_d_deleted_vs_retained": -0.120244,
       "deleted": {
        "ci95": [
-        0.385984,
-        0.398264
+        0.384676,
+        0.397199
        ],
        "extra": {},
        "iqr": [
-        0.222222,
+        0.214286,
         0.5
        ],
-       "mean": 0.392231,
+       "mean": 0.391135,
        "median": 0.375,
        "n": 6987,
-       "std": 0.263203
+       "std": 0.263501
       },
-      "point_biserial_with_deletion": -0.051507,
+      "point_biserial_with_deletion": -0.051433,
       "retained": {
        "ci95": [
-        0.414385,
-        0.428938
+        0.413222,
+        0.427845
        ],
        "extra": {},
        "iqr": [
-        0.3,
-        0.529412
+        0.294118,
+        0.528638
        ],
-       "mean": 0.421898,
+       "mean": 0.420804,
        "median": 0.411765,
        "n": 2230,
-       "std": 0.183899
+       "std": 0.184585
       }
      },
      "rouge_recall_in_target": {
@@ -717,6 +717,40 @@
        "std": 10.654272
       }
      },
+     "syllables_per_word": {
+      "cohens_d_deleted_vs_retained": -0.196447,
+      "deleted": {
+       "ci95": [
+        1.547335,
+        1.564568
+       ],
+       "extra": {},
+       "iqr": [
+        1.333333,
+        1.727273
+       ],
+       "mean": 1.556174,
+       "median": 1.521739,
+       "n": 7119,
+       "std": 0.379335
+      },
+      "point_biserial_with_deletion": -0.08344,
+      "retained": {
+       "ci95": [
+        1.615247,
+        1.635243
+       ],
+       "extra": {},
+       "iqr": [
+        1.475102,
+        1.754573
+       ],
+       "mean": 1.625319,
+       "median": 1.615385,
+       "n": 2230,
+       "std": 0.244967
+      }
+     },
      "textrank": {
       "cohens_d_deleted_vs_retained": -0.711693,
       "deleted": {
@@ -762,6 +796,7 @@
    "params": {
     "difficulty_features": [
      "fkgl",
+     "syllables_per_word",
      "rare_word_rate",
      "mean_dependency_distance",
      "jargon_rate",
@@ -784,37 +819,37 @@
    "corpus": {
     "corrected_not_entailed_rate": null,
     "heuristic_only": false,
-    "n_not_entailed_primary": 480,
+    "n_not_entailed_primary": 257,
     "n_target_sentences": 863,
     "not_entailed_pattern_breakdown": {
-     "candidate_gloss": 476,
+     "candidate_gloss": 253,
      "candidate_new_background": 4,
-     "definitional": 11,
-     "example_marker": 6,
-     "n_not_entailed": 480
+     "definitional": 6,
+     "example_marker": 5,
+     "n_not_entailed": 257
     },
     "pairwise_agreement": {},
     "per_scorer": {
      "nli": {
       "not_entailed_rate": {
        "n": 863,
-       "rate": 0.556199,
+       "rate": 0.297798,
        "threshold": 0.5
       },
       "score": {
        "ci95": [
-        0.444513,
-        0.500465
+        0.675197,
+        0.726845
        ],
        "extra": {},
        "iqr": [
-        0.067713,
-        0.978622
+        0.300196,
+        0.991043
        ],
-       "mean": 0.472505,
-       "median": 0.296609,
+       "mean": 0.701515,
+       "median": 0.956134,
        "n": 863,
-       "std": 0.414146
+       "std": 0.377768
       }
      }
     },
@@ -2307,8 +2342,8 @@
  "n_full": 1000,
  "n_sample": 250,
  "provenance": {
-  "git_commit": "58c48aa",
-  "run_dir": "cnn_dailymail_20260828T111617Z",
-  "source_file": "runs/cnn_dailymail_20260828T111617Z/metrics.json"
+  "git_commit": "4903c38",
+  "run_dir": "cnn_dailymail_20260829T102845Z",
+  "source_file": "runs/cnn_dailymail_20260829T102845Z/metrics.json"
  }
 }

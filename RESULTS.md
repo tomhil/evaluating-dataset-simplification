@@ -40,7 +40,9 @@ Three findings survive scrutiny, and one widely-quoted metric does not.
    defect made Cochrane's FKGL report the *opposite* of its published
    direction; after the fix it matches. Even corrected, the formulas
    contradict each other on the same corpus.
-4. **M5's not-entailed rate carries almost no signal** as currently measured.
+4. **M5 works once entailment is judged against multi-sentence premises.** As
+   originally written it could not separate the summarization control from the
+   plain-language corpora; corrected, the gap goes from +0.05 to +0.24.
 
 ---
 
@@ -259,41 +261,81 @@ these as relative shape, not as a partition.
 
 ## M5 — Content addition
 
-| | Cochrane | PLOS | D-Wikipedia | CNN/DM |
+> **Premise-granularity fix applied.** M5 originally scored each target sentence
+> against source sentences **one at a time**, taking the max. A target sentence
+> that merges facts from several source sentences is entailed by none of them
+> individually, so faithful merges were reported as unsupported. The scorer now
+> also evaluates a multi-sentence premise. Cochrane, D-Wikipedia and
+> CNN/DailyMail below are post-fix; **PLOS is marked ‡ and is pre-fix** (re-run
+> in progress).
+
+| | Cochrane (PLS) | PLOS ‡ (PLS) | D-Wikipedia (DS) | CNN/DM (SUM) |
 |---|---|---|---|---|
-| not-entailed rate | 0.651 | 0.567 | 0.605 | **0.556** |
+| **not-entailed rate** | **0.534** | 0.567 | **0.537** | **0.298** |
+| *before the fix* | *0.651* | *0.567* | *0.605* | *0.556* |
+| gap vs SUM control | **+0.236** | — | **+0.239** | (control) |
+| *gap before the fix* | *+0.095* | — | *+0.049* | — |
 | target sentences scored | 2487 | 2131 | 928 | 863 |
 | candidate gloss | 1562 | 1202 | 457 | 476 |
 | candidate new background | 57 | 7 | **104** | 4 |
 | definitional cue | 88 | 174 | 169 | 11 |
 
-**This metric does not currently work, and the control proves it.** CNN/DailyMail
-adds no content by construction, yet scores 0.556 — within 0.1 of every other
-corpus. A measure that cannot distinguish a corpus that elaborates from one that
-cannot is not measuring elaboration. The range across all four (0.556–0.651) is
-narrower than the noise floor the control establishes.
+‡ pre-fix; re-run in progress.
 
-The cause is the one the module documents about itself: the rate counts every
-target sentence the NLI model fails to support, which conflates genuine added
-content with **M4 alignment failures** and with **off-domain entailment error**
-— and these are medical and scientific corpora, where `deberta-large-mnli`
-degrades. It is an upper bound, not an estimate.
+### The metric now separates the tasks
 
-The **pattern breakdown is more informative than the rate**. D-Wikipedia has
-104 candidate-new-background sentences against CNN/DM's 4 and PLOS's 7 — an 8–26×
-gap in the right direction, from surface cues that don't depend on the entailment
-model. PLOS leads on definitional cues (174), consistent with lay summaries
-defining terms.
+CNN/DailyMail is the control: it adds no content by construction, so a working
+measure must place it clearly below the simplification corpora. Before the fix
+it sat at 0.556, within 0.05 of everything else. It now sits at **0.298**, with
+both simplification corpora ~0.24 above it — a **five-fold** improvement in
+separation.
 
-**To make this column trustworthy**, annotate the 100 exported sentences per run
-and re-ingest:
+The control moved furthest by far (−0.258, against −0.068 for D-Wikipedia), and
+that asymmetry is the diagnostic signature rather than a coincidence:
+CNN/DailyMail's summary sentences are the heaviest n:1 merges of the four
+corpora (M4 records its lowest split rate, 0.064, and a 0.840 deletion rate), so
+they were the sentences most damaged by single-sentence premises.
+
+### How the defect was found, and what the earlier evidence meant
+
+Two observations showed the original numbers were wrong:
+
+1. **No threshold rescued them.** `nli_threshold` swept from 0.05 to 0.95 never
+   held the control below the plain-language corpora by more than 0.087, and
+   below 0.40 the gap was negative. Reproduce with
+   `scripts/sweep_nli_threshold.py`.
+2. **They contradicted M2, which uses no model.** PLOS assembles 90.7% of its
+   summary from copied source spans (M2 `coverage`) yet was scored 56.7%
+   unsupported *by that source*. Every corpus overshot its own novel-content
+   share by 0.32–0.47.
+
+Both were sound, and both pointed at the scores rather than the cutoff. The
+cause was not off-domain model degradation, as first supposed, but a
+**granularity error in the pipeline**: a document-level question asked with a
+sentence-level premise. That is worth stating plainly, because the same class of
+defect appeared independently in M3a (readability formulas taking sentence
+counts from a different segmenter) and in M6 (`fkgl` double-counting sentence
+length). Granularity mismatches were the most common defect found in this
+codebase.
+
+### Still read the pattern breakdown
+
+The surface-cue counts use no model and remain the most interpretable evidence
+here. D-Wikipedia shows 104 candidate-new-background sentences against
+CNN/DailyMail's 4 and PLOS's 7 — an 8–26× separation in the expected direction.
+PLOS leads on definitional cues (174), consistent with lay summaries defining
+terms.
+
+### The remaining caveat
+
+Even corrected, the control's 0.298 is high for a corpus that adds nothing: the
+rate still absorbs M4 alignment failures and residual off-domain entailment
+error. It is now a usable comparative signal, **not** an absolute elaboration
+rate. The manual annotation loop remains the only route to a real figure:
 
 ```bash
 python -m profiler ingest-annotations --run runs/<dir> --file <annotated>.csv
 ```
-
-That is the only step that separates real elaboration from alignment error.
-Until then, treat every number in this section as a ceiling.
 
 ---
 
@@ -314,7 +356,16 @@ Negative = the feature is **lower** in deleted sentences.
 **Salience dominates in all four corpora, including both PLS corpora.** Deleted
 sentences are consistently less central (`centroid_sim` −1.13 to −1.55) and
 share less vocabulary with the target. Difficulty features rank low everywhere:
-`rare_word_rate` never exceeds |0.30|, and `jargon_rate` never exceeds |0.15|.
+`rare_word_rate` never exceeds |0.31|, and `jargon_rate` never exceeds |0.15|.
+
+This survived a fix designed to give difficulty its best chance. M6 originally
+carried both `fkgl` and `sent_len`, but on a single sentence FKGL is
+`0.39·sent_len + 11.8·syllables_per_word − 15.59` — its dominant term is the
+sentence's length, so the two features competed for the same variance and buried
+the vocabulary component. `syllables_per_word`, the length-free half, was added
+and enters at only −0.24 (Cochrane) and −0.12 (D-Wikipedia). Its **sign** is the
+informative part: deleted sentences use *shorter* words, the opposite of
+difficulty-driven deletion.
 
 **No corpus here deletes on the basis of difficulty.** Even the plain-language
 corpora drop material because it is peripheral, not because it is hard. That is
@@ -347,7 +398,11 @@ warrants.
   every deleted/retained split inherits it. Conclusions should be checked
   against the τ sweep in each run's `metrics.json`.
 - **M4–M6 rest on n=250**, M1–M3 on n=1000. Every metric reports its own `n`.
-- **M5's automatic rate is an upper bound** until the manual sample is annotated.
+- **M5's rate is comparative, not absolute.** The premise-granularity fix
+  restored its ability to rank corpora, but the control still reads 0.298 for a
+  corpus that adds nothing, so the residue is alignment error and off-domain
+  entailment error. Only the manual annotation loop yields an absolute figure.
+- **PLOS's M5/M6 figures are pre-fix**; the other three corpora are post-fix.
 
 ## Not covered here
 

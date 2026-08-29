@@ -480,37 +480,37 @@
       }
      },
      "jargon_rate": {
-      "cohens_d_deleted_vs_retained": 0.042302,
+      "cohens_d_deleted_vs_retained": 0.045579,
       "deleted": {
        "ci95": [
-        0.063079,
-        0.07674
+        0.063238,
+        0.077064
        ],
        "extra": {},
        "iqr": [
         0.0,
         0.125
        ],
-       "mean": 0.069846,
+       "mean": 0.070222,
        "median": 0.0,
        "n": 804,
-       "std": 0.098706
+       "std": 0.099908
       },
-      "point_biserial_with_deletion": 0.017622,
+      "point_biserial_with_deletion": 0.018987,
       "retained": {
        "ci95": [
-        0.062974,
-        0.069363
+        0.063026,
+        0.06943
        ],
        "extra": {},
        "iqr": [
         0.0,
         0.111111
        ],
-       "mean": 0.066171,
-       "median": 0.047619,
+       "mean": 0.066195,
+       "median": 0.041667,
        "n": 2795,
-       "std": 0.083174
+       "std": 0.084725
       }
      },
      "max_sim_other": {
@@ -616,37 +616,37 @@
       }
      },
      "rare_word_rate": {
-      "cohens_d_deleted_vs_retained": -0.040574,
+      "cohens_d_deleted_vs_retained": -0.061898,
       "deleted": {
        "ci95": [
-        0.450296,
-        0.478507
+        0.448656,
+        0.477091
        ],
        "extra": {},
        "iqr": [
         0.333333,
         0.6
        ],
-       "mean": 0.464781,
-       "median": 0.5,
+       "mean": 0.463069,
+       "median": 0.466667,
        "n": 804,
-       "std": 0.201343
+       "std": 0.202854
       },
-      "point_biserial_with_deletion": -0.016902,
+      "point_biserial_with_deletion": -0.02578,
       "retained": {
        "ci95": [
-        0.465724,
-        0.477858
+        0.467695,
+        0.48032
        ],
        "extra": {},
        "iqr": [
         0.363636,
-        0.588235
+        0.6
        ],
-       "mean": 0.471915,
+       "mean": 0.474089,
        "median": 0.473684,
        "n": 2795,
-       "std": 0.167767
+       "std": 0.170239
       }
      },
      "rouge_recall_in_target": {
@@ -717,6 +717,40 @@
        "std": 15.701425
       }
      },
+     "syllables_per_word": {
+      "cohens_d_deleted_vs_retained": -0.23521,
+      "deleted": {
+       "ci95": [
+        1.759544,
+        1.805533
+       ],
+       "extra": {},
+       "iqr": [
+        1.571429,
+        2.0
+       ],
+       "mean": 1.783223,
+       "median": 1.789474,
+       "n": 821,
+       "std": 0.34227
+      },
+      "point_biserial_with_deletion": -0.098087,
+      "retained": {
+       "ci95": [
+        1.842702,
+        1.865026
+       ],
+       "extra": {},
+       "iqr": [
+        1.654509,
+        2.0
+       ],
+       "mean": 1.853819,
+       "median": 1.833333,
+       "n": 2795,
+       "std": 0.286605
+      }
+     },
      "textrank": {
       "cohens_d_deleted_vs_retained": -0.41421,
       "deleted": {
@@ -762,6 +796,7 @@
    "params": {
     "difficulty_features": [
      "fkgl",
+     "syllables_per_word",
      "rare_word_rate",
      "mean_dependency_distance",
      "jargon_rate",
@@ -784,37 +819,37 @@
    "corpus": {
     "corrected_not_entailed_rate": null,
     "heuristic_only": false,
-    "n_not_entailed_primary": 1619,
+    "n_not_entailed_primary": 1327,
     "n_target_sentences": 2487,
     "not_entailed_pattern_breakdown": {
-     "candidate_gloss": 1562,
+     "candidate_gloss": 1270,
      "candidate_new_background": 57,
-     "definitional": 88,
-     "example_marker": 81,
-     "n_not_entailed": 1619
+     "definitional": 80,
+     "example_marker": 67,
+     "n_not_entailed": 1327
     },
     "pairwise_agreement": {},
     "per_scorer": {
      "nli": {
       "not_entailed_rate": {
        "n": 2487,
-       "rate": 0.650985,
+       "rate": 0.533575,
        "threshold": 0.5
       },
       "score": {
        "ci95": [
-        0.351501,
-        0.384608
+        0.456022,
+        0.488722
        ],
        "extra": {},
        "iqr": [
-        0.018687,
-        0.861314
+        0.037986,
+        0.963386
        ],
-       "mean": 0.368047,
-       "median": 0.112299,
+       "mean": 0.472207,
+       "median": 0.386372,
        "n": 2487,
-       "std": 0.406938
+       "std": 0.417589
       }
      }
     },
@@ -2305,8 +2340,8 @@
  "n_full": 1000,
  "n_sample": 250,
  "provenance": {
-  "git_commit": "58c48aa",
-  "run_dir": "cochrane_20260828T105846Z",
-  "source_file": "runs/cochrane_20260828T105846Z/metrics.json"
+  "git_commit": "4903c38",
+  "run_dir": "cochrane_20260829T111231Z",
+  "source_file": "runs/cochrane_20260829T111231Z/metrics.json"
  }
 }
