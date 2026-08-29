@@ -23,6 +23,7 @@ import numpy as np
 
 from ..scorers import LexicalGrounding, get_primary_scorer, optional_scorers
 from ..stats import histogram, summarize
+from .. import progress
 from ..types import Pair
 from .base import Context, ModuleResult
 
@@ -156,7 +157,10 @@ def _score_all(scorer, records: list[dict], src_sents_by_id: dict) -> list[float
     by_pair: dict[str, list[int]] = {}
     for i, r in enumerate(records):
         by_pair.setdefault(r["pair_id"], []).append(i)
-    for pid, idxs in by_pair.items():
+    label = getattr(scorer, "name", "scorer")
+    for pid, idxs in progress.track(
+        list(by_pair.items()), f"M5 {label}", total=len(by_pair)
+    ):
         tgt = [records[i]["sentence"] for i in idxs]
         src = src_sents_by_id.get(pid, [])
         vals = scorer.score(tgt, src)

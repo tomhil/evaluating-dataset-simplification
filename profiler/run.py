@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import csv
 import json
+import time
 import warnings
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,6 +18,7 @@ from typing import Sequence
 
 import numpy as np
 
+from . import progress
 from . import report as report_mod
 from .adapters import load_pairs
 from .cache import Cache
@@ -130,10 +132,16 @@ def run(config: Config, output_dir: str | Path | None = None) -> Path:
 
     for name in CHEAP_ORDER:
         if name in active:
+            progress.stage(f"module {name}", f"n={len(full_pairs)} (full corpus)")
+            _t0 = time.monotonic()
             results[name] = CHEAP[name].compute(full_pairs, ctx)
+            progress.stage(f"module {name} done", f"{time.monotonic() - _t0:.1f}s")
     for name in EXPENSIVE_ORDER:
         if name in active:
+            progress.stage(f"module {name}", f"n={len(sample)} (sample)")
+            _t0 = time.monotonic()
             results[name] = EXPENSIVE[name].compute(sample, ctx)
+            progress.stage(f"module {name} done", f"{time.monotonic() - _t0:.1f}s")
 
     # Assemble outputs.
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")

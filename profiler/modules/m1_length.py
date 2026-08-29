@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Sequence
 
 from ..stats import Summary, dip_statistic, histogram, summarize
+from .. import progress
 from ..types import Pair
 from .base import Context, ModuleResult
 
@@ -21,7 +22,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     proc = ctx.processor
     per_pair: list[dict] = []
 
-    for p in pairs:
+    for p in progress.track(pairs, "M1 length"):
         src_sents = proc.sentences(p.source)
         tgt_sents = proc.sentences(p.target)
         src_words = proc.words(p.source)

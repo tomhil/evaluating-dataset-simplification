@@ -10,6 +10,11 @@ matplotlib>=3.7
 textstat==0.7.3
 wordfreq>=3.0
 
+# Progress reporting uses tqdm when a TTY is attached; without it (or without
+# a TTY, e.g. a redirected background log) the fallback prints one line per
+# decile using only the standard library.
+tqdm>=4.60
+
 # NLP (model download required on first use)
 spacy>=3.7
 # python -m spacy download en_core_web_sm

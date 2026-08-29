@@ -15,6 +15,7 @@ import numpy as np
 
 from ..embeddings import get_embedder
 from ..stats import summarize
+from .. import progress
 from ..types import Pair
 from .base import Context, ModuleResult
 
@@ -119,7 +120,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     sims: dict[str, np.ndarray] = {}
     src_sents_by_id: dict[str, list[str]] = {}
     tgt_sents_by_id: dict[str, list[str]] = {}
-    for p in pairs:
+    for p in progress.track(pairs, "M4 embedding"):
         s_sents = proc.sentences(p.source)
         t_sents = proc.sentences(p.target)
         src_sents_by_id[p.id] = s_sents

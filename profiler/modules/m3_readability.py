@@ -18,6 +18,7 @@ from typing import Sequence
 from .. import readability as rd
 from ..nlp import Processor
 from ..stats import histogram, paired_delta_summary, summarize
+from .. import progress
 from ..types import Pair
 from .base import Context, ModuleResult
 
@@ -197,7 +198,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     proc = ctx.processor
     per_pair: list[dict] = []
 
-    for p in pairs:
+    for p in progress.track(pairs, "M3 readability"):
         row: dict = {"id": p.id}
 
         # Segment with the shared Processor so M3a counts sentences the same

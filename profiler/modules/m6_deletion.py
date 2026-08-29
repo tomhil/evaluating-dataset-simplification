@@ -18,6 +18,7 @@ import numpy as np
 from .. import readability as rd
 from ..embeddings import get_embedder
 from ..stats import cohens_d, histogram, point_biserial, summarize
+from .. import progress
 from ..types import Pair
 from .base import Context, ModuleResult
 
@@ -92,7 +93,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     feature_rows: list[dict] = []
     per_pair: list[dict] = []
 
-    for p in pairs:
+    for p in progress.track(pairs, "M6 deletion profile"):
         src_sents = src_sents_by_id.get(p.id, [])
         al = aligns[p.id]
         n = len(src_sents)

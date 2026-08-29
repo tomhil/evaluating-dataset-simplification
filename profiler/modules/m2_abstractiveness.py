@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Sequence
 
 from ..stats import histogram, summarize
+from .. import progress
 from ..types import Pair
 from .base import Context, ModuleResult
 
@@ -124,7 +125,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     proc = ctx.processor
     per_pair: list[dict] = []
 
-    for p in pairs:
+    for p in progress.track(pairs, "M2 abstractiveness"):
         src_tokens = [t.lower() for t in proc.words(p.source)]
         tgt_tokens = [t.lower() for t in proc.words(p.target)]
         src_content = {t.lower() for t in proc.content_words(p.source)}
