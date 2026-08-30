@@ -105,6 +105,11 @@ COCHRANE = "https://raw.githubusercontent.com/AshOlogn/Paragraph-level-Simplific
 DWIKI = "https://raw.githubusercontent.com/RLSNLP/Document-level-text-simplification/main/Dataset"
 LAYSUMM = "https://huggingface.co/datasets/tomasg25/scientific_lay_summarisation/resolve/refs%2Fconvert%2Fparquet"
 CNNDM = "https://huggingface.co/datasets/abisee/cnn_dailymail/resolve/main/3.0.0"
+# SWiPE ships two things: a ~140k-pair full corpus stored via Git LFS (served
+# from media.githubusercontent.com, not raw.), and a ~5k manually annotated
+# subset in plain files. They are not interchangeable -- see fetch_swipe.
+SWIPE_LFS = "https://media.githubusercontent.com/media/salesforce/simplification/master/data"
+SWIPE_RAW = "https://raw.githubusercontent.com/salesforce/simplification/master/data"
 
 
 def fetch_cochrane(limit: int) -> Path:
@@ -133,6 +138,103 @@ def fetch_elife(limit: int) -> Path:
     return _write("elife", "train", limit, _parquet_rows(url, "article", "summary", "elife", limit))
 
 
+def _stream_json_array(url: str, chunk: int = 1 << 20) -> Iterator[dict]:
+    """Yield objects from a large JSON array without holding it in memory.
+
+    SWiPE's full corpus is a single 190MB array; json.load would need well over
+    a gigabyte of Python objects to hand back a thousand rows.
+    """
+    dec = json.JSONDecoder()
+    req = urllib.request.Request(url, headers={"User-Agent": "fetch_all/1"})
+    with urllib.request.urlopen(req, timeout=900) as resp:
+        buf = ""
+        started = False
+        while True:
+            data = resp.read(chunk)
+            if data:
+                buf += data.decode("utf-8", errors="replace")
+            if not started:
+                buf = buf.lstrip()
+                if not buf:
+                    if not data:
+                        return
+                    continue
+                if buf[0] != "[":
+                    raise SystemExit(f"expected a JSON array at {url}")
+                buf = buf[1:]
+                started = True
+            while True:
+                buf = buf.lstrip().lstrip(",").lstrip()
+                if not buf or buf[0] == "]":
+                    if buf[:1] == "]":
+                        return
+                    break
+                try:
+                    obj, end = dec.raw_decode(buf)
+                except ValueError:
+                    break  # object straddles the chunk boundary; read more
+                buf = buf[end:]
+                yield obj
+            if not data:
+                return
+
+
+def _reservoir(items: Iterator[dict], k: int, seed: int) -> list[dict]:
+    """Seeded reservoir sample: one streaming pass, no total needed.
+
+    SWiPE's full corpus is ordered by page title, so taking the head would
+    return an alphabetical slice rather than a sample of the corpus.
+    """
+    rng = random.Random(seed)
+    out: list[dict] = []
+    for i, item in enumerate(items):
+        if i < k:
+            out.append(item)
+        else:
+            j = rng.randint(0, i)
+            if j < k:
+                out[j] = item
+    return out
+
+
+def fetch_swipe(limit: int) -> Path:
+    """SWiPE (Laban et al. 2023), DS. English Wikipedia -> Simple English Wikipedia.
+
+    The full ~140k-pair corpus, which is what the paper's content-preserving
+    compression describes. Its records are {input, output}; the separate ~5k
+    annotated subset uses {r_content, s_content} and measures 0.50 compression
+    rather than ~1, because annotators selected pairs carrying interesting
+    edits. The two are not interchangeable -- see fetch_swipe_gold.
+    """
+    docs = _reservoir(
+        _stream_json_array(f"{SWIPE_LFS}/swipe_full.json"), int(limit * 1.2), SEED
+    )
+    rows = (
+        (f"swipe{i}", str(d.get("input") or ""), str(d.get("output") or ""))
+        for i, d in enumerate(docs)
+    )
+    return _write("swipe", "full", limit, rows)
+
+
+def fetch_swipe_gold(limit: int) -> Path:
+    """The manually annotated SWiPE subset, for validating M4/M5 against labels.
+
+    Every pair carries human edit annotations -- semantic_deletion,
+    syntactic_sentence_splitting, semantic_elaboration_generic,
+    discourse_reordering -- which are ground truth for what M4 and M5 estimate.
+    Profile it alongside the full corpus, never in place of it.
+    """
+    with urllib.request.urlopen(f"{SWIPE_RAW}/swipe_train.json", timeout=600) as resp:
+        docs = json.load(resp)
+    want = min(int(limit * 1.2), len(docs))
+    picks = sorted(random.Random(SEED).sample(range(len(docs)), want))
+    rows = (
+        (f"swipeg{i}", str(docs[i].get("r_content") or ""), str(docs[i].get("s_content") or ""))
+        for i in picks
+    )
+    return _write("swipe_gold", "train", limit, rows)
+
+
 def fetch_cnn_dailymail(limit: int) -> Path:
     """CNN/DailyMail, generic summarization -- the SUM control."""
     url = f"{CNNDM}/train-00000-of-00003.parquet"
@@ -145,6 +247,8 @@ FETCHERS = {
     "elife": fetch_elife,
     "dwikipedia": fetch_dwikipedia,
     "cnn_dailymail": fetch_cnn_dailymail,
+    "swipe": fetch_swipe,
+    "swipe_gold": fetch_swipe_gold,
 }
 
 

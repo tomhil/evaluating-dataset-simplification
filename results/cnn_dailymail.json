@@ -2342,7 +2342,7 @@
  "n_full": 1000,
  "n_sample": 250,
  "provenance": {
-  "git_commit": "7910baf",
+  "git_commit": "d08e833",
   "run_dir": "cnn_dailymail_20260829T102845Z",
   "source_file": "runs/cnn_dailymail_20260829T102845Z/metrics.json"
  }
