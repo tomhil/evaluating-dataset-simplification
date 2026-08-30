@@ -1,0 +1,30 @@
+# Core (offline at runtime; required for M1-M3 and all I/O)
+numpy>=1.24
+scipy>=1.10
+pandas>=2.0
+pyarrow>=12.0
+pyyaml>=6.0
+matplotlib>=3.7
+# Pinned: >=0.7.4 fetches syllables from NLTK cmudict (network download);
+# 0.7.3 uses bundled pyphen and stays fully offline & deterministic.
+textstat==0.7.3
+wordfreq>=3.0
+
+# Progress reporting uses tqdm when a TTY is attached; without it (or without
+# a TTY, e.g. a redirected background log) the fallback prints one line per
+# decile using only the standard library.
+tqdm>=4.60
+
+# NLP (model download required on first use)
+spacy>=3.7
+# python -m spacy download en_core_web_sm
+
+# Alignment / elaboration (M4, M5; model download required)
+sentence-transformers>=2.2
+transformers>=4.35
+torch>=2.0
+
+# Optional M5 scorers — install only if you want them; the module skips
+# gracefully when absent (see profiler/modules/m5_elaboration.py):
+#   alignscore
+#   summac

@@ -1,0 +1,77 @@
+# PLOS (Goldsack et al. 2022) -- labelled PLS in the PRD s5 literature table.
+# Published reference values: 0.033 (5366.7 -> 175.6 w); FKGL 15.04 -> 14.76
+#
+# Corpus materialised by `python scripts/fetch_all.py` (seeded draw, n=1000).
+# All five anchor configs share identical run parameters so their profiles are
+# directly comparable: M1-M3 over all 1000 pairs, M4-M6 over a seeded 250-pair
+# sample, real SBERT + NLI backends.
+dataset:
+  adapter: jsonl
+  path: data/plos/train_1000.jsonl
+  source_field: source
+  target_field: target
+run:
+  dataset_label: plos
+  sample_size: 250         # M4-M6 sample; M1-M3 run on all 1000
+  seed: 13
+  language: en
+  cache_dir: .cache/
+  bootstrap_resamples: 1000
+  embedder: sbert
+  embed_model: sentence-transformers/all-MiniLM-L6-v2
+  nli_backend: nli
+  nli_model: microsoft/deberta-large-mnli
+  device: auto             # mps here; deberta-large is ~4x cpu
+  nli_threshold: 0.5
+  tau_sweep: [0.4, 0.5, 0.6]
+  m6_tau: 0.5
+  # One shared technical-term list across all five corpora, so M3b/M6
+  # jargon_rate is comparable between them rather than domain-tuned per corpus.
+  jargon_terms:
+    - randomised
+    - randomized
+    - placebo
+    - trial
+    - trials
+    - meta-analysis
+    - systematic
+    - efficacy
+    - intervention
+    - interventions
+    - outcome
+    - outcomes
+    - clinical
+    - dose
+    - dosage
+    - adverse
+    - mortality
+    - morbidity
+    - prognosis
+    - incidence
+    - prevalence
+    - cohort
+    - baseline
+    - statistically
+    - significance
+    - hypothesis
+    - methodology
+    - empirical
+    - correlation
+    - regression
+    - coefficient
+    - parameter
+    - mechanism
+    - molecular
+    - cellular
+    - protein
+    - gene
+    - genome
+    - enzyme
+    - receptor
+    - pathway
+    - inhibitor
+    - expression
+    - phenotype
+    - in-vitro
+    - in-vivo
+modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile]

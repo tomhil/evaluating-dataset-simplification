@@ -1,0 +1,26 @@
+# Example config for a Hugging Face corpus using real models.
+dataset:
+  adapter: hf
+  name: <dataset id>
+  split: train
+  source_field: reference
+  target_field: summary
+run:
+  sample_size: 1000        # null = full corpus; seeded random
+  seed: 13
+  language: en
+  cache_dir: .cache/
+  # Model backends (real models; download on first use):
+  embedder: sbert
+  embed_model: sentence-transformers/all-MiniLM-L6-v2
+  nli_backend: nli
+  nli_model: microsoft/deberta-large-mnli
+  nli_threshold: 0.5
+  tau_sweep: [0.4, 0.5, 0.6]
+  m6_tau: 0.5
+  # Optional M5 scorers (skipped gracefully if not installed):
+  alignscore: false
+  summac: false
+  # Supply a domain jargon term list to activate M3b/M6 jargon_rate:
+  jargon_terms: []
+modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile]
