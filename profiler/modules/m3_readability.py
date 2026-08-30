@@ -81,24 +81,47 @@ def _syntactic_features(text: str, proc: Processor) -> dict[str, float | None]:
 
 
 def _tree_depth(head_map: dict[int, int]) -> int:
-    """Max depth from any node to its root following head pointers."""
+    """Max depth from any node to its root, following head pointers.
 
-    depth_cache: dict[int, int] = {}
-
-    def depth(node: int, seen: frozenset[int]) -> int:
-        if node in depth_cache:
-            return depth_cache[node]
-        head = head_map.get(node, node)
-        if head == node or head not in head_map or head in seen:
-            depth_cache[node] = 0
-            return 0
-        d = 1 + depth(head, seen | {node})
-        depth_cache[node] = d
-        return d
+    Iterative on purpose. A recursive walk nests once per link, and real corpora
+    contain flattened lists and tables parsed as one enormous sentence -- SWiPE
+    has one of 2,340 tokens -- which overflows Python's 1,000-frame stack. The
+    memo makes this linear overall: each node's depth is computed once.
+    """
 
     if not head_map:
         return 0
-    return max(depth(n, frozenset()) for n in head_map)
+
+    depth_cache: dict[int, int] = {}
+    best = 0
+    for start in head_map:
+        if start in depth_cache:
+            best = max(best, depth_cache[start])
+            continue
+        # Walk up to a node whose depth is known, a root, or a cycle.
+        path: list[int] = []
+        on_path: set[int] = set()
+        node = start
+        base = 0
+        while True:
+            if node in depth_cache:
+                base = depth_cache[node]
+                break
+            head = head_map.get(node, node)
+            if head == node or head not in head_map or head in on_path:
+                # Root, dangling head, or a malformed cyclic parse: depth 0.
+                depth_cache[node] = 0
+                base = 0
+                break
+            path.append(node)
+            on_path.add(node)
+            node = head
+        # Unwind, assigning each node one more than the node above it.
+        for n in reversed(path):
+            base += 1
+            depth_cache[n] = base
+        best = max(best, base)
+    return best
 
 
 # --------------------------------------------------------------------------
