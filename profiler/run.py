@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import time
 import warnings
 from datetime import datetime, timezone
@@ -64,6 +65,44 @@ def _to_jsonable(obj):
     if isinstance(obj, np.ndarray):
         return obj.tolist()
     return obj
+
+
+# A target is called degenerate when it is long enough to matter and mostly
+# repeats itself. This catches vandalised or truncation-looped documents, which
+# a corpus-level rate that pools sentences would otherwise let dominate: one
+# vandalised Wikipedia revision in SWiPE's annotated subset supplied 32% of the
+# M5 sentence pool on its own.
+DEGENERATE_MIN_SENTENCES = 20
+DEGENERATE_DISTINCT_RATIO = 0.2
+
+
+def find_degenerate_pairs(pairs: Sequence[Pair]) -> list[dict]:
+    """Flag pairs whose target is long and largely self-repeating.
+
+    Nothing is dropped. The pair is reported so a reader can see that a corpus
+    statistic rests partly on pathological input, and decide what to do.
+    """
+
+    flagged: list[dict] = []
+    for p in pairs:
+        # Split on terminators only; this must not need a parser or a model.
+        sents = [s.strip() for s in re.split(r"[.!?]+", p.target or "") if s.strip()]
+        if len(sents) < DEGENERATE_MIN_SENTENCES:
+            continue
+        ratio = len(set(sents)) / len(sents)
+        if ratio < DEGENERATE_DISTINCT_RATIO:
+            flagged.append(
+                {
+                    "id": p.id,
+                    "n_target_sentences": len(sents),
+                    "distinct_sentence_ratio": round(ratio, 4),
+                    "reason": (
+                        f"target repeats itself: {len(set(sents))} distinct of "
+                        f"{len(sents)} sentences"
+                    ),
+                }
+            )
+    return flagged
 
 
 def validate_corpus(pairs: Sequence[Pair], config: Config) -> list[str]:
@@ -125,6 +164,17 @@ def run(config: Config, output_dir: str | Path | None = None) -> Path:
 
     full_pairs = list(load_pairs(config))
     corpus_warnings = validate_corpus(full_pairs, config)
+    degenerate = find_degenerate_pairs(full_pairs)
+    if degenerate:
+        msg = (
+            f"{len(degenerate)} degenerate pair(s) flagged -- a long target that "
+            f"mostly repeats itself, e.g. {degenerate[0]['id']}: "
+            f"{degenerate[0]['reason']}. Nothing was dropped, but a corpus rate "
+            f"that pools sentences can rest heavily on such a pair; compare "
+            f"elaboration.not_entailed_rate_by_document."
+        )
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
+        corpus_warnings = list(corpus_warnings) + [msg]
     sample = sample_pairs(full_pairs, config)
 
     active = config.active_modules()
@@ -156,6 +206,7 @@ def run(config: Config, output_dir: str | Path | None = None) -> Path:
             results["alignment"].params.get("embedder") if "alignment" in results else None
         ),
         "corpus_warnings": corpus_warnings,
+        "degenerate_pairs": degenerate,
     }
 
     _write_metrics(base / "metrics.json", config, results, meta)
@@ -194,6 +245,10 @@ def _write_metrics(path: Path, config: Config, results: dict, meta: dict) -> Non
         },
         "n_full": meta["n_full"],
         "n_sample": meta["n_sample"],
+        # Deterministic and reader-facing: both depend only on the corpus, so
+        # they do not break the byte-identical-rerun guarantee.
+        "corpus_warnings": meta.get("corpus_warnings", []),
+        "degenerate_pairs": meta.get("degenerate_pairs", []),
         "modules": modules_out,
     }
     text = json.dumps(_to_jsonable(payload), sort_keys=True, indent=2, ensure_ascii=True)

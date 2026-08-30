@@ -118,6 +118,8 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     annotation_rows = _annotation_sample(not_entailed_records, src_sents_by_id, ctx.seed)
 
     corpus = {
+        # Pooled over sentences; see _rate_by_document for the per-document view.
+        "not_entailed_rate_by_document": _rate_by_document(per_pair),
         "n_target_sentences": len(records),
         "scorers_run": scorer_names,
         "heuristic_only": heuristic_only,
@@ -167,6 +169,34 @@ def _score_all(scorer, records: list[dict], src_sents_by_id: dict) -> list[float
         for i, v in zip(idxs, vals):
             scores[i] = float(v)
     return scores
+
+
+def _rate_by_document(per_pair: list[dict]) -> dict:
+    """Not-entailed rate averaged over documents rather than pooled sentences.
+
+    The pooled rate weights each document by its sentence count, so one long
+    document can carry the corpus figure: a vandalised revision in SWiPE's
+    annotated subset held 32% of the sentence pool and moved the rate from
+    0.301 to 0.526. Reported alongside, never instead -- the pooled rate is the
+    right denominator for "what share of sentences are unsupported", and this
+    one for "what does a typical document look like".
+    """
+
+    rates = [
+        r["not_entailed_rate"]
+        for r in per_pair
+        if r.get("not_entailed_rate") is not None
+    ]
+    if not rates:
+        return {"n": 0, "mean": None, "median": None, "iqr": [None, None]}
+    arr = np.sort(np.asarray(rates, dtype=float))
+    q25, q75 = (float(x) for x in np.percentile(arr, [25, 75]))
+    return {
+        "n": int(arr.size),
+        "mean": float(np.mean(arr)),
+        "median": float(np.median(arr)),
+        "iqr": [q25, q75],
+    }
 
 
 def _pairwise_agreement(scorer_scores: dict[str, list[float]], threshold: float) -> dict:

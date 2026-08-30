@@ -46,7 +46,12 @@ Three findings survive scrutiny, and one widely-quoted metric does not.
    contradict each other on the same corpus.
 4. **M5 works once entailment is judged against multi-sentence premises.** As
    originally written it could not separate the summarization control from the
-   plain-language corpora; corrected, the gap goes from +0.05 to +0.24.
+   plain-language corpora; corrected, the gap goes from +0.05 to +0.24. It is
+   also the only module whose agreement with human labels survives controlling
+   for document length.
+5. **M4's deletion and merge counts are not validated.** Against human
+   annotations their apparent agreement is entirely a length artifact. Splits
+   and reordering hold up; deletion does not.
 
 ---
 
@@ -438,6 +443,80 @@ length figure: measured across all 143,359 released pairs, compression is
 **0.676**. The 1000-document sample profiled here reads 0.549, so this corpus is
 understated on both counts.
 
+## Validation against human labels
+
+Every other check here is indirect: a control corpus that should score low, or a
+published statistic the pipeline should reproduce. SWiPE ships a 3,861-pair
+subset with per-document human edit annotations, which is the one place the
+pipeline's estimates can be compared against what annotators actually saw.
+
+Spearman rank correlation on 250 documents, pipeline per-pair output against
+human annotation counts. Reproduce with `scripts/validate_against_swipe.py`.
+
+| check | raw rho | partial rho | p | verdict |
+|---|---|---|---|---|
+| M4 splits vs `syntactic_sentence_splitting` | 0.267 | **0.222** | 0.0004 | agrees |
+| M4 deletions vs `semantic_deletion` (+2) | **0.434** | **0.007** | 0.91 | **length artifact** |
+| M4 merges vs `syntactic_sentence_fusion` | 0.160 | 0.076 | 0.23 | length artifact |
+| M4 Kendall's tau vs `discourse_reordering` | -0.136 | **-0.166** | 0.025 | agrees |
+| M5 not-entailed vs `semantic_elaboration_*` | 0.259 | **0.195** | 0.002 | agrees |
+
+**Read the partial column.** A longer source has more sentences for the pipeline
+to count and more edits for annotators to mark, so length alone induces
+agreement. `partial` is the same correlation with source length partialled out.
+
+**The strongest-looking result is spurious.** M4's deletion check reads rho=0.434
+at p=6.6e-13 -- by far the most impressive number available -- and collapses to
+**0.007 (p=0.91)** under control. Length correlates 0.737 with the pipeline's
+deletion count and 0.603 with the human count. Merges fail the same way. So
+**M4's deletion and merge counts have no demonstrated agreement with human
+judgment**, which matters because deletion rate carries much of the weight in
+the M4 section above.
+
+**M5 comes out best-behaved**, which the earlier control-corpus analysis could
+not have shown. Its agreement is genuine (0.195, p=0.002) and its correlation
+with document length is -0.044, essentially zero -- unlike M4's deletion count,
+it is not a proxy for document size. Kendall's tau got *stronger* under control
+(-0.136 to -0.166), so partialling length removed noise rather than signal.
+
+**These are weak correlations.** rho ~ 0.2 is about 4% of rank variance:
+sanity checks passing, not strong agreement. Consistent with the alignment noise
+documented throughout.
+
+**What this cannot show.** Annotators selected pairs carrying interesting edits,
+so these correlations describe the pipeline on edit-rich documents. The two
+sides also count different objects -- humans count edits, the pipeline counts
+sentences, and 4 of the 19 annotated categories (`lexical_generic` chief among
+them, at 4,840 instances) have no pipeline equivalent at all. Only rank
+agreement is testable, not counts.
+
+### A vandalised document, and what it exposed
+
+SWiPE's annotated subset contains a vandalised Wikipedia revision, `swipeg3153`:
+a 12-word source against a 2,488-word target that is almost entirely one
+sentence repeated. Three distinct sentences across 496.
+
+It is now flagged automatically (`degenerate_pairs` in `metrics.json`) and
+nothing is dropped. What it revealed is a design property of M5: **the corpus
+rate pools every target sentence, so it is sentence-weighted**, and one document
+with 496 sentences carries 496 times the weight of a one-sentence document.
+
+| swipe_gold not-entailed rate | |
+|---|---|
+| sentence-weighted (pooled) | 0.526 |
+| with that single pair removed | 0.301 |
+| document-weighted mean | 0.255 |
+| document-weighted median | 0.167 |
+
+One page nearly doubles the pooled figure. M5 now reports
+`not_entailed_rate_by_document` alongside the pooled rate; both are legitimate
+and answer different questions.
+
+**The five main corpora are unaffected.** Their largest single document holds
+between 0.7% and 2.1% of any sentence pool, and removing it moves no corpus rate
+by more than 0.009. The vulnerability is real but fires only on pathological
+input.
+
 ## Caveats and limitations
 
 Read these before quoting any number here. They are ordered by how much they
@@ -453,6 +532,10 @@ could change a conclusion.
 - **The corpora are not the ones the papers measured.** Three of five differ
   measurably from their published statistics (below). Where this repository and
   a paper disagree, the released artefact is what was measured here.
+- **M4's deletion rate has no validation behind it.** Its agreement with human
+  deletion annotations vanishes once document length is controlled (rho 0.434 ->
+  0.007). The cross-corpus deletion contrast is not thereby wrong, but it rests
+  on an unvalidated metric.
 - **M5 ranks corpora; it does not measure elaboration.** The control still reads
   0.298 for a corpus that adds nothing by construction. That residue is M4
   alignment error plus off-domain entailment error. Only the manual annotation
