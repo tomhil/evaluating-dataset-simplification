@@ -48,14 +48,46 @@ def _write(name: str, split: str, limit: int, rows: Iterator[Pair]) -> Path:
     return out
 
 
+def _allocate(sizes: list[int], limit: int) -> list[int]:
+    """How many rows to draw from each chosen row group to reach ``limit``.
+
+    An even split undershoots whenever a chosen group is short. Parquet files
+    end in a remainder group -- XSum's 204,045 rows are 204 groups of 1000 plus
+    one of 45 -- so an even split there yielded 845 rows for a limit of 1000.
+
+    Two passes: divide what is still needed across the groups still to come,
+    then top up from whatever spare capacity remains. The second pass is what
+    covers a short group in the *last* position, where nothing follows it.
+    """
+
+    take = [0] * len(sizes)
+    remaining = limit
+    for i, size in enumerate(sizes):
+        left = len(sizes) - i
+        want = -(-remaining // left)  # ceil, so rounding never undershoots
+        take[i] = min(want, size)
+        remaining -= take[i]
+    # Second pass: spend what is left over on groups with room.
+    for i, size in enumerate(sizes):
+        if remaining <= 0:
+            break
+        spare = size - take[i]
+        if spare > 0:
+            grab = min(spare, remaining)
+            take[i] += grab
+            remaining -= grab
+    return take
+
+
 def _parquet_rows(url: str, src_field: str, tgt_field: str, prefix: str, limit: int) -> Iterator[Pair]:
     """Sample rows over HTTP range requests, stratified across row groups.
 
-    These shards are ordered (PLOS/eLife by year and journal), so taking the
-    leading rows skews the profile -- the first PLOS row group averages ~25%
-    longer articles than the published corpus mean. Instead we spread the draw
-    over ``STRATA`` row groups sampled evenly through the file and take a
-    seeded random subset of each, which costs a few extra range reads.
+    These shards are ordered (PLOS/eLife by year and journal, XSum by article),
+    so taking the leading rows skews the profile -- the first PLOS row group
+    averages ~25% longer articles than the published corpus mean. Instead we
+    spread the draw over ``STRATA`` row groups sampled evenly through the file
+    and take a seeded random subset of each, which costs a few extra range
+    reads.
     """
     import fsspec
     import pyarrow.parquet as pq
@@ -65,14 +97,17 @@ def _parquet_rows(url: str, src_field: str, tgt_field: str, prefix: str, limit: 
     strata = min(STRATA, n_groups)
     # Evenly spaced row groups: e.g. 5 strata over 13 groups -> 0, 3, 6, 9, 12.
     picks = sorted({round(i * (n_groups - 1) / max(strata - 1, 1)) for i in range(strata)})
-    per_group = -(-limit // len(picks))  # ceil, so rounding never undershoots
+    sizes = [pf.metadata.row_group(i).num_rows for i in picks]
+    # Oversample: _write drops pairs with an empty side and we still want `limit`.
+    take = _allocate(sizes, int(limit * 1.2))
     rng = random.Random(SEED)
     seen = 0
-    for rg in picks:
+    for rg, want in zip(picks, take):
+        if want <= 0:
+            continue
         table = pf.read_row_group(rg, columns=[src_field, tgt_field])
         recs = table.to_pylist()
-        take = rng.sample(recs, min(per_group, len(recs)))
-        for rec in take:
+        for rec in rng.sample(recs, min(want, len(recs))):
             yield f"{prefix}{rg}_{seen}", str(rec[src_field] or ""), str(rec[tgt_field] or "")
             seen += 1
 
@@ -108,6 +143,7 @@ CNNDM = "https://huggingface.co/datasets/abisee/cnn_dailymail/resolve/main/3.0.0
 # SWiPE ships two things: a ~140k-pair full corpus stored via Git LFS (served
 # from media.githubusercontent.com, not raw.), and a ~5k manually annotated
 # subset in plain files. They are not interchangeable -- see fetch_swipe.
+XSUM = "https://huggingface.co/datasets/EdinburghNLP/xsum/resolve/refs%2Fconvert%2Fparquet/default"
 SWIPE_LFS = "https://media.githubusercontent.com/media/salesforce/simplification/master/data"
 SWIPE_RAW = "https://raw.githubusercontent.com/salesforce/simplification/master/data"
 
@@ -235,6 +271,17 @@ def fetch_swipe_gold(limit: int) -> Path:
     return _write("swipe_gold", "train", limit, rows)
 
 
+def fetch_xsum(limit: int) -> Path:
+    """XSum (Narayan et al. 2018), SUM. BBC article -> its one-sentence summary.
+
+    The abstractive counterpart to CNN/DailyMail's extractive highlights: the
+    two sit at opposite ends of summarization style, which is what makes the
+    pair a test of whether SUM is a coherent class.
+    """
+    url = f"{XSUM}/train/0000.parquet"
+    return _write("xsum", "train", limit, _parquet_rows(url, "document", "summary", "xsum", limit))
+
+
 def fetch_cnn_dailymail(limit: int) -> Path:
     """CNN/DailyMail, generic summarization -- the SUM control."""
     url = f"{CNNDM}/train-00000-of-00003.parquet"
@@ -247,6 +294,7 @@ FETCHERS = {
     "elife": fetch_elife,
     "dwikipedia": fetch_dwikipedia,
     "cnn_dailymail": fetch_cnn_dailymail,
+    "xsum": fetch_xsum,
     "swipe": fetch_swipe,
     "swipe_gold": fetch_swipe_gold,
 }

@@ -18,12 +18,13 @@ import json
 from pathlib import Path
 
 # Display order: PLS anchors, then DS, then the SUM control.
-ORDER = ["cochrane", "plos", "elife", "dwikipedia", "swipe", "cnn_dailymail"]
+ORDER = ["cochrane", "plos", "elife", "dwikipedia", "swipe", "cnn_dailymail", "xsum"]
 TASK = {"cochrane": "PLS", "plos": "PLS", "elife": "PLS", "dwikipedia": "DS",
-        "swipe": "DS", "cnn_dailymail": "SUM"}
+        "swipe": "DS", "cnn_dailymail": "SUM", "xsum": "SUM"}
 PUBLISHED_COMPRESSION = {
     "cochrane": "0.53", "plos": "0.033", "elife": "0.045",
     "dwikipedia": "0.55", "swipe": "~1 (see note)", "cnn_dailymail": "~0.08",
+    "xsum": "0.054",
 }
 
 
