@@ -79,33 +79,52 @@ def _allocate(sizes: list[int], limit: int) -> list[int]:
     return take
 
 
-def _parquet_rows(url: str, src_field: str, tgt_field: str, prefix: str, limit: int) -> Iterator[Pair]:
-    """Sample rows over HTTP range requests, stratified across row groups.
+def _parquet_rows(
+    urls: list[str] | str, src_field: str, tgt_field: str, prefix: str, limit: int
+) -> Iterator[Pair]:
+    """Sample rows over HTTP range requests, stratified across a whole split.
 
-    These shards are ordered (PLOS/eLife by year and journal, XSum by article),
-    so taking the leading rows skews the profile -- the first PLOS row group
-    averages ~25% longer articles than the published corpus mean. Instead we
-    spread the draw over ``STRATA`` row groups sampled evenly through the file
-    and take a seeded random subset of each, which costs a few extra range
-    reads.
+    A split is often several parquet shards, and reading only the first one
+    silently narrows the population: PLOS's training split is two shards, so
+    drawing from the first covered 13,000 of its 24,773 documents, and
+    CNN/DailyMail's is three, covering 95,705 of 287,113.
+
+    Shards are treated as one concatenated sequence of row groups and the draw
+    is spread evenly across it, so a sample spans the entire split. Within a
+    chosen row group the rows are sampled at random, because these files are
+    ordered -- PLOS and eLife by year and journal, XSum by article -- and taking
+    the leading rows would skew the profile.
     """
     import fsspec
     import pyarrow.parquet as pq
 
-    pf = pq.ParquetFile(fsspec.open(url).open())
-    n_groups = pf.metadata.num_row_groups
-    strata = min(STRATA, n_groups)
-    # Evenly spaced row groups: e.g. 5 strata over 13 groups -> 0, 3, 6, 9, 12.
-    picks = sorted({round(i * (n_groups - 1) / max(strata - 1, 1)) for i in range(strata)})
-    sizes = [pf.metadata.row_group(i).num_rows for i in picks]
+    if isinstance(urls, str):
+        urls = [urls]
+
+    # (url, row-group index, rows) for every row group in the split.
+    groups: list[tuple[str, int, int]] = []
+    for url in urls:
+        pf = pq.ParquetFile(fsspec.open(url).open())
+        for rg in range(pf.metadata.num_row_groups):
+            groups.append((url, rg, pf.metadata.row_group(rg).num_rows))
+
+    strata = min(STRATA, len(groups))
+    picks = sorted(
+        {round(i * (len(groups) - 1) / max(strata - 1, 1)) for i in range(strata)}
+    )
+    chosen = [groups[i] for i in picks]
     # Oversample: _write drops pairs with an empty side and we still want `limit`.
-    take = _allocate(sizes, int(limit * 1.2))
+    take = _allocate([g[2] for g in chosen], int(limit * 1.2))
+
     rng = random.Random(SEED)
     seen = 0
-    for rg, want in zip(picks, take):
+    handles: dict[str, object] = {}
+    for (url, rg, _), want in zip(chosen, take):
         if want <= 0:
             continue
-        table = pf.read_row_group(rg, columns=[src_field, tgt_field])
+        if url not in handles:
+            handles[url] = pq.ParquetFile(fsspec.open(url).open())
+        table = handles[url].read_row_group(rg, columns=[src_field, tgt_field])
         recs = table.to_pylist()
         for rec in rng.sample(recs, min(want, len(recs))):
             yield f"{prefix}{rg}_{seen}", str(rec[src_field] or ""), str(rec[tgt_field] or "")
@@ -164,14 +183,15 @@ def fetch_dwikipedia(limit: int) -> Path:
 def fetch_plos(limit: int) -> Path:
     """PLOS (Goldsack et al. 2022), PLS. Script-based on HF, so we read the
     auto-converted parquet branch directly."""
-    url = f"{LAYSUMM}/plos/train/0000.parquet"
-    return _write("plos", "train", limit, _parquet_rows(url, "article", "summary", "plos", limit))
+    # Two shards; both are sampled so the draw spans the whole training split.
+    urls = [f"{LAYSUMM}/plos/train/{i:04d}.parquet" for i in range(2)]
+    return _write("plos", "train", limit, _parquet_rows(urls, "article", "summary", "plos", limit))
 
 
 def fetch_elife(limit: int) -> Path:
     """eLife (Goldsack et al. 2022), PLS."""
-    url = f"{LAYSUMM}/elife/train/0000.parquet"
-    return _write("elife", "train", limit, _parquet_rows(url, "article", "summary", "elife", limit))
+    urls = [f"{LAYSUMM}/elife/train/0000.parquet"]  # single shard
+    return _write("elife", "train", limit, _parquet_rows(urls, "article", "summary", "elife", limit))
 
 
 def _stream_json_array(url: str, chunk: int = 1 << 20) -> Iterator[dict]:
@@ -278,14 +298,15 @@ def fetch_xsum(limit: int) -> Path:
     two sit at opposite ends of summarization style, which is what makes the
     pair a test of whether SUM is a coherent class.
     """
-    url = f"{XSUM}/train/0000.parquet"
-    return _write("xsum", "train", limit, _parquet_rows(url, "document", "summary", "xsum", limit))
+    urls = [f"{XSUM}/train/0000.parquet"]  # single shard
+    return _write("xsum", "train", limit, _parquet_rows(urls, "document", "summary", "xsum", limit))
 
 
 def fetch_cnn_dailymail(limit: int) -> Path:
     """CNN/DailyMail, generic summarization -- the SUM control."""
-    url = f"{CNNDM}/train-00000-of-00003.parquet"
-    return _write("cnn_dailymail", "train", limit, _parquet_rows(url, "article", "highlights", "cnndm", limit))
+    # Three shards; all are sampled so the draw spans the whole training split.
+    urls = [f"{CNNDM}/train-{i:05d}-of-00003.parquet" for i in range(3)]
+    return _write("cnn_dailymail", "train", limit, _parquet_rows(urls, "article", "highlights", "cnndm", limit))
 
 
 FETCHERS = {
