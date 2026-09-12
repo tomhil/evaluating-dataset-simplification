@@ -32,7 +32,8 @@ this module — a lower τ links more, inflating coverage and groundedness and
 deflating deletions — so **check whether your conclusion survives the sweep**
 before trusting it.
 
-`m6_tau` (default 0.5) selects the one alignment handed to M5 and M6. If it
+`m6_tau` selects the one alignment handed to M5 and M6 — 0.5 by default and
+for most corpora, 0.7 for the Wikipedia ones (see below). If it
 falls outside the sweep it is computed on demand.
 
 **τ is genre-dependent, so there is no single right value.** Validated per

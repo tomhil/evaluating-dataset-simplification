@@ -40,7 +40,7 @@ Paired source→target differences use `paired_delta_summary`, which resamples
 rows *jointly* so the pairing survives the bootstrap. Ordinary `summarize` on a
 column of deltas would not.
 
-### Two traps worth knowing before reading any table
+### Three traps worth knowing before reading any table
 
 **Ratio metrics are skewed.** `compression_ratio`, `sentence_ratio` and
 `share_attributable` are all per-pair ratios averaged across pairs. A pair with
@@ -54,6 +54,14 @@ the metric measures what you want, whether the model backend is reliable on your
 domain, or whether the corpus is a mixture of two populations. M1's dip
 statistic, M4's τ sweep and M5's scorer disagreement exist to surface those.
 
+**Document length confounds anything pooled across documents.** Three separate
+metrics in this pipeline looked meaningful until length was controlled: M6's
+`textrank` correlates with its own document's sentence count at ρ = −0.92 when
+pooled, M6's `fkgl` double-counted sentence length, and a per-document *count*
+correlation hid the fact that M4's deletion split agrees with human labels at
+0.959 precision. Prefer statistics computed within a document (M6's
+`stratified_effect`) or invariant to length (M3b) over anything pooled.
+
 ## Configuration that changes the numbers
 
 | Setting | Affects | Effect |
@@ -62,7 +70,7 @@ statistic, M4's τ sweep and M5's scorer disagreement exist to surface those.
 | `seed` | everything | sample draw, bootstrap, M5 annotation shuffle |
 | `bootstrap_resamples` | all CIs | precision of interval endpoints |
 | `tau_sweep` | M4 | thresholds reported |
-| `m6_tau` | M4→M5/M6 | the single alignment M5 and M6 consume |
+| `m6_tau` | M4→M5/M6 | the single alignment M5 and M6 consume; **genre-dependent**, validated per sentence against human labels ([m4-alignment.md](m4-alignment.md)) |
 | `nli_threshold` | M5 | score below which a sentence is "not entailed" |
 | `jargon_terms` | M3b, M6 | `jargon_rate` is `None` without a list |
 | `embedder`, `nli_backend` | M4–M6 | real models vs. offline stand-ins |

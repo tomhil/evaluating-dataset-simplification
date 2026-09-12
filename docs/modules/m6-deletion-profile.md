@@ -29,6 +29,26 @@ error, which the module states in a note. A sentence dropped because of an
 embedding failure is indistinguishable here from one the authors genuinely cut —
 so check whether your conclusion holds across M4's τ sweep.
 
+**This split has been validated**, which is unusual for anything in this
+pipeline. Against SWiPE's human deletion annotations, per sentence
+(`scripts/validate_deletion_split.py`, 1,073 source sentences):
+
+| τ | pipeline says deleted | precision | recall | Cohen's κ |
+|---|---|---|---|---|
+| 0.5 | 27.2% | 0.959 | 0.497 | 0.462 |
+| 0.7 | 50.0% | 0.909 | 0.865 | **0.767** |
+| 0.75 | 52.9% | 0.875 | 0.918 | 0.775 |
+
+Annotators mark 52.5% of source sentences as deleted. **Precision is high at
+every τ** — when the pipeline says deleted, annotators agree — but recall at 0.5
+is only 0.497, because a sentence that loses half its content still aligns
+through the surviving half. So at 0.5 the split is trustworthy when it fires and
+misses about half of what a human would call a deletion.
+
+Validated on Wikipedia prose with MiniLM only. It does **not** transfer: at 0.7,
+XSum's deletion rate reaches 0.983 and only 13 of 60 documents retain any
+deleted/retained contrast. Hence the per-corpus setting.
+
 ## Features
 
 ### Salience — is this sentence important?
@@ -41,7 +61,8 @@ so check whether your conclusion holds across M4's τ sweep.
 ### Difficulty — is this sentence hard?
 | Feature | Definition |
 |---|---|
-| `fkgl` | Flesch–Kincaid grade of the single sentence. Noisy at sentence length; `None` on failure. |
+| `fkgl` | Flesch–Kincaid grade of the single sentence. Noisy at sentence length; `None` on failure. On one sentence it is `0.39·sent_len + 11.8·syllables_per_word − 15.59`, so its dominant term duplicates `sent_len` — prefer `syllables_per_word`. |
+| `syllables_per_word` | Average syllables per word: the length-free half of `fkgl`, added so difficulty has a feature that does not restate sentence length. |
 | `rare_word_rate` | Content words outside the top-3,000 band. Computed over the sentence's content-word **set** (types, not tokens). |
 | `mean_dependency_distance` | Mean `\|token − head\|`. Null without a parser. |
 | `jargon_rate` | Share matching `jargon_terms`; **null without a list**. Also computed over the content-word set. |
@@ -54,18 +75,40 @@ so check whether your conclusion holds across M4's τ sweep.
 
 ## Statistics, per feature
 
-- **`deleted`** / **`retained`** — full Summary for each group.
-- **`cohens_d_deleted_vs_retained`** — standardised mean difference
-  `(deleted − retained)` with pooled SD. **Sign convention: positive means the
-  feature is *higher* in deleted sentences.** `None` if either group has fewer
-  than 2 values or pooled variance is zero. Conventional magnitudes: 0.2 small,
-  0.5 medium, 0.8 large.
-- **`point_biserial_with_deletion`** — correlation between the feature and the
-  0/1 deletion indicator, over all sentences. Same sign convention. `None` if
-  fewer than 3 values, no variance, or only one class present.
+Two views, and **only the first is trustworthy**.
 
-The two are closely related — they answer the same question on different scales —
-so read them as a consistency check on each other, not as independent evidence.
+### `stratified_effect` — the one to read
+
+The deleted-versus-retained difference computed **inside each document**, then
+averaged. Fields: `effect` (the mean), `median`, `iqr`, `n_documents`,
+`n_source_sentences`.
+
+Per document the effect is `(mean_deleted − mean_retained) / spread`, where
+spread is that document's own standard deviation for the feature. **Sign
+convention: negative means the feature is lower in deleted sentences.**
+
+A document contributes to a feature only if that feature has both a deleted and
+a retained value *in that document*. Otherwise it is absent from the aggregate
+rather than diluting it — which is why `n_documents` is per feature, not per
+corpus: a document can support one feature and not another.
+
+### `cohens_d_deleted_vs_retained` and `point_biserial_with_deletion` — pooled, confounded
+
+Standardised mean difference and point-biserial correlation over **every
+sentence from every document pooled into one array**. Retained for continuity
+with earlier results, but they carry document length as well as the feature.
+
+`textrank` is a per-document stationary distribution summing to 1, so a
+sentence in a 5-sentence document scores ~0.2 and one in a 400-sentence
+document ~0.0025. Measured on 120 D-Wikipedia documents, the raw feature
+correlates with its own document's sentence count at **ρ = −0.92**;
+`centroid_sim` at −0.43 and `max_sim_other` at +0.31. On a 20-document probe the
+correction moved `centroid_sim` from −1.34 pooled to −0.49 stratified.
+
+Standardising within each document and then pooling the z-scores was tried
+first and abandoned: the guards were per document while the z-scores were per
+feature over non-null values, so a document could pass every check while one
+feature inside it had two non-null values (saturated) or no contrast at all.
 
 ### Plot data
 `deciles` — deletion rate within each decile of the feature, showing whether the
@@ -74,8 +117,14 @@ relationship is monotonic or has a threshold, which a single effect size hides.
 `metrics.json`; both are rendered under `plots/`.
 
 ### Corpus and per-pair
-Corpus: `features`, `n_source_sentences`, `n_deleted`, `primary_tau`. Per-pair:
-`n_src_sents`, `deletion_rate`.
+
+Corpus: `features`, `n_source_sentences`, `n_deleted`, `primary_tau`,
+`n_documents_total`. Per-pair: `n_src_sents`, `deletion_rate`.
+
+`params` records `salience_features`, `difficulty_features` and
+`redundancy_features` (the family membership above), `primary_effect_size`
+(which statistic to read) and `why` (the reason the pooled one is not it), plus
+`note` confirming no model is fitted.
 
 Note the unit shift: **M6's statistics are over source *sentences*, not document
 pairs**, so its `n` is far larger than the sample size and its CIs are
@@ -85,7 +134,8 @@ the clustering justifies. Don't read them as if sentences were independent draws
 
 ## Reading it
 
-Rank the features by `|cohens_d|` and look at which family dominates:
+Rank the features by `|stratified_effect.effect|` and look at which family
+dominates:
 
 | Dominant family | Reading |
 |---|---|
@@ -145,8 +195,10 @@ between the sentences that were dropped and the ones that were kept.
 |---|---|
 | `deleted` | The feature's distribution among sentences that were dropped. |
 | `retained` | The same among sentences that were kept. |
-| `cohens_d_deleted_vs_retained` | How far apart those two groups are, in standard deviations. **Positive = the feature is higher in deleted sentences.** Roughly: 0.2 slight, 0.5 moderate, 0.8 strong. |
-| `point_biserial_with_deletion` | The same relationship as a correlation from −1 to 1. Same sign convention; a cross-check on Cohen's d rather than separate evidence. |
+| `stratified_effect` | **The one to read.** How different the deleted sentences were from the retained ones, judged inside each document and then averaged. Negative = the feature is lower in deleted sentences. Roughly: 0.2 slight, 0.5 moderate, 0.8 strong. |
+| `stratified_effect.n_documents` | How many documents could support that comparison for this feature — per feature, since a feature may be missing on most sentences of a document. |
+| `cohens_d_deleted_vs_retained` | The same idea with every sentence pooled across documents, which lets document length in. Kept for continuity with earlier results; **prefer the stratified figure.** |
+| `point_biserial_with_deletion` | The pooled relationship as a correlation from −1 to 1. Same caveat. |
 | `deletion_rate` | Per document, the share of its source sentences that were dropped. |
 | `n_source_sentences` | How many sentences the comparison rests on — far more than the number of documents. |
 | `n_deleted` | How many of those were dropped. |

@@ -52,9 +52,11 @@ Three findings survive scrutiny, and one widely-quoted metric does not.
    plain-language corpora; corrected, the gap goes from +0.05 to +0.24. It is
    also the only module whose agreement with human labels survives controlling
    for document length.
-5. **M4's deletion and merge counts are not validated.** Against human
-   annotations their apparent agreement is entirely a length artifact. Splits
-   and reordering hold up; deletion does not.
+5. **M4's deletion split is validated per sentence** against human labels
+   (precision 0.959, kappa 0.462 at tau=0.5 and 0.767 at 0.7) -- but the
+   *count* correlation that an earlier revision relied on was confounded by
+   length in both directions, which first hid this and then had to be
+   corrected.
 6. **M6's effect sizes are confounded by document length** and its "salience
    dominates" conclusion is unverified. A corrected estimator exists but no
    corpus has been re-run. This is the third instance of the same failure mode:
@@ -379,7 +381,15 @@ python -m profiler ingest-annotations --run runs/<dir> --file <annotated>.csv
 > 20-document probe the correction cut `centroid_sim` from -1.34 to -0.49 and
 > `textrank` from -0.71 to -0.48, so the ranking below may not survive.
 >
-> **The "salience dominates" conclusion in this section is unverified.**
+> Since these numbers were produced, three further things changed: `m6_tau` is
+> now per corpus (0.7 for the Wikipedia corpora, 0.5 elsewhere, after
+> per-sentence validation against human labels), and
+> `rouge_recall_in_target` -- which ranks **first in every column below** -- has
+> been **removed** for restating M6's own dependent variable, since "retained"
+> is defined as aligning to the target.
+>
+> **The "salience dominates" conclusion in this section is unverified**, and its
+> top-ranked feature no longer exists.
 
 ## M6 — Deletion basis
 
@@ -608,10 +618,15 @@ could change a conclusion.
   sentence count at rho = -0.92). `stratified_effect` corrects this by
   estimating within each document and aggregating, but the figures in this
   document predate it.
-- **M4's deletion rate has no validation behind it.** Its agreement with human
-  deletion annotations vanishes once document length is controlled (rho 0.434 ->
-  0.007). The cross-corpus deletion contrast is not thereby wrong, but it rests
-  on an unvalidated metric.
+- **M4's deletion split *is* validated, correcting an earlier claim here.** An
+  earlier revision said its agreement with human annotations vanished under
+  length control (rho 0.434 -> 0.007). That was a bad test, not a bad metric:
+  it correlated per-document *counts*, and length drives both sides. Compared
+  per sentence against SWiPE's human deletion labels, precision is **0.959** at
+  tau=0.5 with Cohen's kappa 0.462, rising to 0.767 at tau=0.7. So the split is
+  trustworthy when it fires; at 0.5 it misses about half of what annotators call
+  a deletion, because a sentence that loses half its content still aligns
+  through the surviving half.
 - **M5 ranks corpora; it does not measure elaboration.** The control still reads
   0.298 for a corpus that adds nothing by construction. That residue is M4
   alignment error plus off-domain entailment error. Only the manual annotation
