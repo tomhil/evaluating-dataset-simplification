@@ -15,6 +15,9 @@ _VOWEL_GROUP = re.compile(r"[aeiouy]+", re.IGNORECASE)
 
 SURFACE_MEASURES = ["fkgl", "dcrs", "cli", "fre", "ari", "smog"]
 
+# SMOG is undefined below this many sentences; textstat returns 0.0 instead.
+_SMOG_MIN_SENTENCES = 3
+
 
 def _textstat():
     try:
@@ -72,13 +75,19 @@ def surface_scores(
         if not text.strip():
             return {m: None for m in SURFACE_MEASURES}
     ts = _textstat()
+    # SMOG needs at least three sentences; below that textstat returns 0.0
+    # rather than raising, and 0.0 is a valid SMOG score, so passing it through
+    # fabricates a reading level. Every XSum target is a single sentence, which
+    # produced a reported -11.31 grade "improvement" over 1000 pairs.
+    n_sents = len(sentences) if sentences is not None else ts.sentence_count(text)
+    smog = float(ts.smog_index(text)) if n_sents >= _SMOG_MIN_SENTENCES else None
     return {
         "fkgl": float(ts.flesch_kincaid_grade(text)),
         "dcrs": float(ts.dale_chall_readability_score(text)),
         "cli": float(ts.coleman_liau_index(text)),
         "fre": float(ts.flesch_reading_ease(text)),
         "ari": float(ts.automated_readability_index(text)),
-        "smog": float(ts.smog_index(text)),
+        "smog": smog,
     }
 
 

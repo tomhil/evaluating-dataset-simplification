@@ -350,9 +350,43 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         "surface_measures": rd.SURFACE_MEASURES,
         "decomposition_measures": DECOMP_MEASURES,
         "controls": ["LEAD-k", "EXT-ORACLE-k (greedy ROUGE-1+2 recall)"],
-        "headline": "share_attributable = (R(target)-R(EXT-ORACLE-k)) / (R(target)-R(source))",
+        "headline": "share_attributable_corpus = sum(attributable) / sum(total)",
+        "why": (
+            "share_attributable is a per-pair ratio whose denominator is near "
+            "zero whenever a pair changed little, so its mean is dominated by "
+            "those pairs -- one contributed 6.39 of a reported corpus mean of "
+            "6.87. Read share_attributable_corpus, or the per-pair median."
+        ),
     }
     return ModuleResult(name=NAME, per_pair=per_pair, corpus=corpus, params=params, notes=notes)
+
+
+def _corpus_share(per_pair: list[dict], measure: str) -> float | None:
+    """Corpus share attributable to rewriting, as a ratio of sums.
+
+    ``share_attributable`` is a per-pair ratio whose denominator is a difference
+    of two readability scores, so it is near zero exactly when a pair changed
+    little -- the common case. Its mean is therefore meaningless: in the
+    committed CNN/DailyMail run one pair scored 6388.9 and contributed 6.39 of
+    the reported corpus mean of 6.87, and ``rare_word_rate``'s mean came out
+    sign-flipped against its median (-0.72 against +0.68).
+
+    Summing numerator and denominator first gives a corpus-level quantity that
+    no single near-zero denominator can dominate -- the same distinction M1
+    draws between its compression mean and its corpus-level ratio. ``None`` when
+    the totals cancel, since the share is then undefined rather than large.
+    """
+
+    num = den = 0.0
+    for r in per_pair:
+        a, t = r.get(f"attributable_{measure}"), r.get(f"total_{measure}")
+        if a is None or t is None:
+            continue
+        num += float(a)
+        den += float(t)
+    if abs(den) < 1e-9:
+        return None
+    return num / den
 
 
 def _corpus_summaries(per_pair: list[dict], ctx: Context) -> dict:
@@ -401,6 +435,9 @@ def _corpus_summaries(per_pair: list[dict], ctx: Context) -> dict:
             "total": summarize(col(f"total_{m}"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
             "attributable_to_rewriting": summarize(col(f"attributable_{m}"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
             "length_artifact": summarize(col(f"artifact_{m}"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
+            # Ratio of sums: the per-pair mean below is dominated by pairs
+            # whose denominator is near zero. Read this, or the median.
+            "share_attributable_corpus": _corpus_share(per_pair, m),
             "share_attributable": summarize(col(f"share_attributable_{m}"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
             "share_histogram": histogram(col(f"share_attributable_{m}")),
         }
