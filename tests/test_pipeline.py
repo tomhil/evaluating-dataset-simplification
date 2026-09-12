@@ -74,7 +74,12 @@ def test_every_number_carries_n_and_ci(tmp_path):
     m1 = metrics["modules"]["length"]["corpus"]["compression_ratio"]
     assert "n" in m1 and "ci95" in m1 and "median" in m1
     # Module parameters are recorded.
-    assert metrics["modules"]["alignment"]["params"]["tau_sweep"] == [0.4, 0.5, 0.6]
+    # Against the config, not a literal: the point is that params records what
+    # produced the numbers, and the default sweep is free to change.
+    assert (
+        metrics["modules"]["alignment"]["params"]["tau_sweep"]
+        == _smoke_config(tmp_path).run.tau_sweep
+    )
 
 
 def test_report_has_no_verdict(tmp_path):

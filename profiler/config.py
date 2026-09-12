@@ -57,7 +57,7 @@ class RunConfig:
     cache_dir: str = ".cache/"
     output_dir: str = "runs/"
     bootstrap_resamples: int = 1000
-    tau_sweep: list[float] = field(default_factory=lambda: [0.4, 0.5, 0.6])
+    tau_sweep: list[float] = field(default_factory=lambda: [0.4, 0.5, 0.6, 0.7, 0.8])
     nli_threshold: float = 0.5
     jargon_terms: list[str] = field(default_factory=list)
     # Model backends. 'sbert'/'nli' use real models (network download on first
@@ -71,7 +71,10 @@ class RunConfig:
     # available, else cpu. Purely a speed knob: same model, same math.
     device: str = "auto"
     # Primary tau used for the alignment that feeds M5/M6 (M4 itself sweeps).
-    m6_tau: float = 0.5
+    # 0.7, not 0.5: validated per sentence against SWiPE's human deletion
+    # annotations, where kappa is 0.462 at 0.5 and 0.767 at 0.7. See
+    # scripts/validate_deletion_split.py.
+    m6_tau: float = 0.7
     # M5 optional scorers. NLI always runs (unless heuristic_only); these gate
     # the fragile extras.
     alignscore: bool = False
@@ -165,7 +168,7 @@ def parse_config(raw: dict) -> Config:
         cache_dir=str(run_raw.get("cache_dir", ".cache/")),
         output_dir=str(run_raw.get("output_dir", "runs/")),
         bootstrap_resamples=int(run_raw.get("bootstrap_resamples", 1000)),
-        tau_sweep=list(run_raw.get("tau_sweep", [0.4, 0.5, 0.6])),
+        tau_sweep=list(run_raw.get("tau_sweep", [0.4, 0.5, 0.6, 0.7, 0.8])),
         nli_threshold=float(run_raw.get("nli_threshold", 0.5)),
         jargon_terms=list(run_raw.get("jargon_terms", []) or []),
         embedder=str(run_raw.get("embedder", "sbert")),
@@ -175,7 +178,7 @@ def parse_config(raw: dict) -> Config:
         nli_backend=str(run_raw.get("nli_backend", "nli")),
         nli_model=str(run_raw.get("nli_model", "microsoft/deberta-large-mnli")),
         device=str(run_raw.get("device", "auto")),
-        m6_tau=float(run_raw.get("m6_tau", 0.5)),
+        m6_tau=float(run_raw.get("m6_tau", 0.7)),
         alignscore=bool(run_raw.get("alignscore", False)),
         summac=bool(run_raw.get("summac", False)),
         heuristic_only=bool(run_raw.get("heuristic_only", False)),
