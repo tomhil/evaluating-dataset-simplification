@@ -24,7 +24,13 @@ from .base import Context, ModuleResult
 
 NAME = "deletion_profile"
 
-SALIENCE = ["textrank", "centroid_sim", "norm_position", "rouge_recall_in_target"]
+# rouge_recall_in_target was dropped. It measured how much of a source
+# sentence's vocabulary appears in the target -- but "retained" is defined as
+# M4 aligning that sentence to a target sentence, so the feature partly encodes
+# the label being explained. It ranked first in all six corpora profiled, which
+# made M6's headline a restatement of its own dependent variable rather than a
+# finding about salience.
+SALIENCE = ["textrank", "centroid_sim", "norm_position"]
 # ``fkgl`` is retained for comparability with the readability literature, but on
 # a single sentence it is 0.39*sent_len + 11.8*syllables_per_word - 15.59: its
 # dominant term is simply the sentence's length, which ``sent_len`` already
@@ -128,12 +134,6 @@ def _content_tokens(sent: str, proc) -> list[str]:
     return [w.lower() for w in proc.content_words(sent)]
 
 
-def _content_set(sent: str, proc) -> set[str]:
-    """Distinct content words -- for overlap ratios, which are set operations."""
-
-    return set(_content_tokens(sent, proc))
-
-
 def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     align_state = ctx.shared.get("alignment")
     if align_state is None:
@@ -166,18 +166,13 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         np.fill_diagonal(sim_no_diag, -1.0)
         max_sim_other = sim_no_diag.max(axis=1) if n > 1 else np.zeros(n)
 
-        tgt_content = _content_set(p.target, proc)
-
         n_deleted = 0
         for i, sent in enumerate(src_sents):
             deleted = 1 if al.src_degree[i] == 0 else 0
             n_deleted += deleted
-            # Overlap is a set operation; the rates below are token rates.
+            # Token lists, not sets: rare_word_rate and jargon_rate are token
+            # rates in M3b and must mean the same thing here.
             sent_tokens = _content_tokens(sent, proc)
-            sent_content = set(sent_tokens)
-            rouge_in_tgt = (
-                len(sent_content & tgt_content) / len(sent_content) if sent_content else None
-            )
             syn = _dep_distance(sent, proc)
             feature_rows.append(
                 {
@@ -186,7 +181,6 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
                     "textrank": float(textrank[i]),
                     "centroid_sim": float(centroid_sim[i]),
                     "norm_position": i / (n - 1) if n > 1 else 0.0,
-                    "rouge_recall_in_target": rouge_in_tgt,
                     "fkgl": _sent_fkgl(sent),
                     "syllables_per_word": rd.syllables_per_word(proc.words(sent)),
                     "rare_word_rate": rd.rare_word_rate(sent_tokens) if sent_tokens else None,

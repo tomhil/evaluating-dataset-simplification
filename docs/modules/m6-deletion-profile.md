@@ -37,7 +37,6 @@ so check whether your conclusion holds across M4's τ sweep.
 | `textrank` | PageRank over the sentence-similarity graph (damping 0.85, 50 iterations, diagonal zeroed, negatives clipped, rows normalised). Higher = more central. |
 | `centroid_sim` | Cosine of the sentence to the mean of all source embeddings. Higher = more representative of the document. |
 | `norm_position` | Position normalised to `[0, 1]` (`0.0` for single-sentence documents). Captures lead bias — in news, early sentences are disproportionately retained. |
-| `rouge_recall_in_target` | Fraction of the sentence's content words appearing anywhere in the target. **Not independent of the alignment** — it partly restates what "retained" means, so a large effect here is less informative than the same effect on an independent feature. |
 
 ### Difficulty — is this sentence hard?
 | Feature | Definition |
@@ -99,6 +98,16 @@ result, not a contradiction. The interpretation guide in `profiler/reference.py`
 makes the same point: the axes are independent, and nothing forces a corpus into
 one of three boxes.
 
+## A feature that was removed
+
+`rouge_recall_in_target` measured how much of a source sentence's vocabulary
+appears in the target. It was dropped because M6 defines *retained* as M4
+aligning that sentence to a target sentence, so the feature partly encodes the
+label being explained. It ranked first in all six corpora profiled, which made
+the module's headline a restatement of its own dependent variable rather than a
+finding about salience. Results predating its removal show it at the top of
+every ranking.
+
 ## Notes this module emits
 
 - Deletion defined at `primary_tau`; alignment noise propagates into the split.
@@ -123,7 +132,6 @@ between the sentences that were dropped and the ones that were kept.
 | `textrank` | How central a sentence is to the document, judged by how much the rest of the document resembles it. | Salience |
 | `centroid_sim` | How close the sentence is to the document's overall "average meaning". | Salience |
 | `norm_position` | Where the sentence sits, 0 = first, 1 = last. Catches the news habit of keeping the opening. | Salience |
-| `rouge_recall_in_target` | How much of the sentence's vocabulary shows up in the target. Partly restates what "kept" means, so treat a strong result here as weaker evidence. | Salience |
 | `fkgl` | Reading grade of that one sentence. Noisy at sentence length. | Difficulty |
 | `rare_word_rate` | Share of unusual words in the sentence. | Difficulty |
 | `mean_dependency_distance` | How grammatically tangled the sentence is. | Difficulty |
