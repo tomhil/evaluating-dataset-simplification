@@ -64,6 +64,26 @@ def _setstr(vals: set) -> str:
     return str(vs[0]) if len(set(vs)) == 1 else f"{vs[0]}-{vs[-1]}"
 
 
+# M6 reports two effect sizes. The within-document one is primary -- the pooled
+# one carries document length, since textrank is a per-document stationary
+# distribution and correlates with its own document's sentence count at
+# rho = -0.92. Runs predating that change carry only the pooled key, and mixing
+# the two silently in one cross-corpus row would compare different quantities:
+# they differ in magnitude *and* in which features rank top-3. So the fallback
+# is explicit and the row is marked.
+def _m6_effect(feature: dict) -> tuple[float | None, bool]:
+    """Return (effect size, is_pooled_fallback) for one M6 feature.
+
+    Branches on the key being *present*, not on its value: a current run whose
+    stratified estimate is None (no document could support that feature) must
+    not be relabelled as an old run, and must not silently fall back to a
+    pooled number measured on a different population.
+    """
+    if "stratified_effect" in feature:
+        return (feature.get("stratified_effect") or {}).get("effect"), False
+    return feature.get("cohens_d_deleted_vs_retained"), True
+
+
 def _dig(d: dict, *path, default=None):
     for p in path:
         if not isinstance(d, dict) or p not in d:
@@ -89,8 +109,8 @@ def row_values(m: dict) -> dict:
     # M6: features ranked by |Cohen's d| between deleted and retained sentences.
     feats = D.get("features", {}) or {}
     ranked = sorted(
-        ((k, v.get("cohens_d_deleted_vs_retained")) for k, v in feats.items()
-         if isinstance(v, dict) and v.get("cohens_d_deleted_vs_retained") is not None),
+        ((k, _m6_effect(v)[0]) for k, v in feats.items()
+         if isinstance(v, dict) and _m6_effect(v)[0] is not None),
         key=lambda kv: abs(kv[1]), reverse=True,
     )
     return {
@@ -116,6 +136,11 @@ def row_values(m: dict) -> dict:
         "align_dist": tau.get("alignment_type_distribution", {}) or {},
         "not_entailed": ner,
         "top_deletion": ranked[:3],
+        "m6_pooled_fallback": any(
+            _m6_effect(v)[1]
+            for v in feats.values()
+            if isinstance(v, dict) and _m6_effect(v)[0] is not None
+        ),
     }
 
 
@@ -184,12 +209,18 @@ def build(rows: dict[str, dict]) -> str:
     table("M5 - Content addition", [
         ("not-entailed rate", lambda r: _f({"mean": _dig(r["not_entailed"], "rate")})),
     ])
-    table("M6 - Deletion basis (top |Cohen's d|)", [
-        (f"#{i+1} feature", lambda r, i=i: (
+    m6_rows: list[tuple[str, callable]] = [
+        # Which statistic each column holds, so a mix of fresh and archived
+        # runs cannot be read as one quantity.
+        ("statistic", lambda r: "pooled (pre-fix)" if r["m6_pooled_fallback"] else "within-doc"),
+    ]
+    m6_rows += [
+        (f"#{i + 1} feature", lambda r, i=i: (
             f"{r['top_deletion'][i][0]} ({r['top_deletion'][i][1]:+.2f})"
             if len(r["top_deletion"]) > i else "--"))
         for i in range(3)
-    ])
+    ]
+    table("M6 - Deletion basis (top |Cohen's d|, within-document)", m6_rows)
 
     out.append("\n## Published reference (profiler/reference.py)\n")
     out.append("| Corpus | Labelled | Published compression |")

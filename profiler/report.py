@@ -233,11 +233,31 @@ def _m6(r: ModuleResult) -> str:
         f"{c.get('n_deleted')} deleted of {c.get('n_source_sentences')} source sentences. "
         "No fitted model — the effect sizes are the answer.\n"
     )
-    out.append("| feature | deleted mean [CI] | retained mean [CI] | Cohen's d | point-biserial |\n|---|---|---|---|---|")
+    out.append(
+        "**Read the stratified column.** It compares deleted against retained "
+        "sentences inside each document and averages those effects, so document "
+        "length cannot leak in. The pooled column compares sentences across "
+        "documents: textrank is a per-document stationary distribution and "
+        "correlates with its own document's sentence count at rho = -0.92.\n"
+    )
+    out.append(
+        "`n docs` is how many documents could support the comparison for that "
+        "feature -- a feature null on most sentences of a document cannot be "
+        "compared there. The means and their `n` describe every source sentence "
+        "in raw units, so they do not reconstruct the stratified effect.\n"
+    )
+    out.append(
+        "| feature | deleted mean [CI] | retained mean [CI] | stratified effect "
+        "| n docs | Cohen's d (pooled) |"
+        "\n|---|---|---|---|---|---|"
+    )
     for feat, d in c.get("features", {}).items():
+        st = d.get("stratified_effect") or {}
         out.append(
             f"| {feat} | {_summary(d['deleted'])} | {_summary(d['retained'])} "
-            f"| {_fmt(d['cohens_d_deleted_vs_retained'])} | {_fmt(d['point_biserial_with_deletion'])} |"
+            f"| {_fmt(st.get('effect'))} "
+            f"| {st.get('n_documents', '--')} "
+            f"| {_fmt(d['cohens_d_deleted_vs_retained'])} |"
         )
     return "\n".join(out) + _notes(r)
 

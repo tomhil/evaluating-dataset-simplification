@@ -39,6 +39,7 @@ DIFFICULTY = [
     "sent_len",
 ]
 REDUNDANCY = ["max_sim_other"]
+
 ALL_FEATURES = SALIENCE + DIFFICULTY + REDUNDANCY
 
 
@@ -60,47 +61,59 @@ def _textrank(sim: np.ndarray, damping: float = 0.85, iters: int = 50) -> np.nda
     return scores
 
 
-def _within_document_z(rows: list[dict], features: list[str]) -> list[dict]:
-    """Add a ``<feature>_z`` column standardising each feature within its document.
+def _stratified_effect(rows: list[dict], feat: str) -> dict:
+    """Deleted-vs-retained effect for one feature, estimated per document.
 
-    M6 asks whether deleted sentences differ from retained ones, and that
-    comparison is inherently within a document -- but the features were pooled
-    across documents before the effect sizes were taken, which lets
-    between-document variation in.
+    The comparison M6 asks for lives inside a document, so it is computed there
+    and the per-document effects are then averaged. This replaces standardising
+    within a document and pooling the z-scores, which kept springing leaks: the
+    guards were per document while the z-scores were per feature over non-null
+    values, so a document could pass every check while one feature inside it had
+    two non-null values (saturated) or no deletion contrast at all.
 
-    For ``textrank`` this is not a subtlety. It is a stationary distribution and
-    sums to 1 per document, so a sentence in a 5-sentence document scores ~0.2
-    and one in a 400-sentence document ~0.0025. On D-Wikipedia the raw feature
-    correlates with its own document's sentence count at rho = -0.92:
-    pooled, it measures length far more than centrality. ``centroid_sim``
-    (-0.43) and ``max_sim_other`` (+0.31) carry the same confound less severely.
+    Stratifying makes those cases structural. A document contributes to a
+    feature only if that feature has at least one deleted and one retained
+    value *in that document*; otherwise it is simply absent from the aggregate
+    rather than diluting it with a zero.
 
-    Nulls stay null -- a feature that could not be computed is missing, not
-    average -- and a document with no variance in a feature (including a
-    single-sentence document) yields 0.0, which is its correct standardised
-    position rather than a division by zero.
+    The per-document effect is the normalised mean difference
+    ``(mean_deleted - mean_retained) / spread``, where spread is the document's
+    own standard deviation for that feature. That keeps the sign convention of
+    the statistic it replaces -- negative means the feature is lower in deleted
+    sentences -- while making the magnitude comparable across documents. When a
+    document has no spread the difference is zero by construction, so the effect
+    is zero rather than undefined.
     """
 
-    by_doc: dict[str, list[int]] = {}
-    for i, r in enumerate(rows):
-        by_doc.setdefault(r.get("pair_id"), []).append(i)
+    by_doc: dict[str, list[dict]] = {}
+    for r in rows:
+        if r.get(feat) is not None:
+            by_doc.setdefault(r.get("pair_id"), []).append(r)
 
-    for feat in features:
-        zkey = f"{feat}_z"
-        for idxs in by_doc.values():
-            vals = [(i, rows[i].get(feat)) for i in idxs]
-            present = [(i, float(v)) for i, v in vals if v is not None]
-            for i, v in vals:
-                if v is None:
-                    rows[i][zkey] = None
-            if not present:
-                continue
-            arr = np.asarray([v for _, v in present], dtype=float)
-            sd = float(arr.std())
-            mean = float(arr.mean())
-            for i, v in present:
-                rows[i][zkey] = 0.0 if sd == 0 else (v - mean) / sd
-    return rows
+    effects: list[float] = []
+    weights: list[int] = []
+    for rs in by_doc.values():
+        dele = [float(r[feat]) for r in rs if r["deleted"] == 1]
+        keep = [float(r[feat]) for r in rs if r["deleted"] == 0]
+        if not dele or not keep:
+            continue  # no contrast for this feature in this document
+        arr = np.asarray([float(r[feat]) for r in rs], dtype=float)
+        sd = float(arr.std())
+        diff = float(np.mean(dele)) - float(np.mean(keep))
+        effects.append(0.0 if sd == 0 else diff / sd)
+        weights.append(len(rs))
+
+    if not effects:
+        return {"effect": None, "n_documents": 0, "median": None, "iqr": [None, None]}
+    a = np.asarray(effects, dtype=float)
+    q25, q75 = (float(x) for x in np.percentile(a, [25, 75]))
+    return {
+        "effect": float(a.mean()),
+        "median": float(np.median(a)),
+        "iqr": [q25, q75],
+        "n_documents": int(a.size),
+        "n_source_sentences": int(sum(weights)),
+    }
 
 
 def _content_tokens(sent: str, proc) -> list[str]:
@@ -187,9 +200,6 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             {"id": p.id, "n_src_sents": n, "deletion_rate": n_deleted / n}
         )
 
-    # Standardise within document before pooling, so the effect sizes compare
-    # sentences against their own document rather than across documents.
-    feature_rows = _within_document_z(feature_rows, ALL_FEATURES)
     corpus, plot_data = _summarize_features(feature_rows, ctx)
     corpus["n_source_sentences"] = len(feature_rows)
     corpus["n_deleted"] = int(sum(r["deleted"] for r in feature_rows))
@@ -210,13 +220,15 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         "difficulty_features": DIFFICULTY,
         "redundancy_features": REDUNDANCY,
         "note": "No regression or fitted model; effect sizes are the answer.",
-        "primary_effect_size": "cohens_d_within_document",
+        "primary_effect_size": "stratified_effect.effect",
         "why": (
             "cohens_d_deleted_vs_retained pools sentences across documents, which "
             "lets document length into the comparison -- textrank is a per-document "
-            "stationary distribution and correlates with its document's sentence "
-            "count at rho=-0.92. The _within_document variants standardise each "
-            "feature inside its own document first."
+            "stationary distribution and correlates with its own document's "
+            "sentence count at rho=-0.92. stratified_effect computes the "
+            "deleted-vs-retained difference inside each document and averages "
+            "those, so a document that cannot support the comparison for a "
+            "feature is absent from it rather than diluting it."
         ),
     }
     return ModuleResult(
@@ -243,33 +255,44 @@ def _summarize_features(feature_rows: list[dict], ctx: Context) -> tuple[dict, d
         r_vals = vals(retained_rows, feat)
         all_vals = [r[feat] for r in feature_rows if r.get(feat) is not None]
         indicators = [r["deleted"] for r in feature_rows if r.get(feat) is not None]
-        # The within-document view is the one to read: pooling raw values lets
-        # document length into the comparison (see _within_document_z).
-        zf = f"{feat}_z"
-        dz = vals(deleted_rows, zf)
-        rz = vals(retained_rows, zf)
-        all_z = [r[zf] for r in feature_rows if r.get(zf) is not None]
-        ind_z = [r["deleted"] for r in feature_rows if r.get(zf) is not None]
+        # The stratified estimate is the one to read: the pooled statistics
+        # below compare sentences across documents, which lets document length
+        # into the comparison (see _stratified_effect).
+        strat = _stratified_effect(feature_rows, feat)
         features[feat] = {
             "deleted": summarize(d_vals, seed=ctx.seed, resamples=ctx.resamples).to_dict(),
             "retained": summarize(r_vals, seed=ctx.seed, resamples=ctx.resamples).to_dict(),
+            "stratified_effect": strat,
             "cohens_d_deleted_vs_retained": cohens_d(d_vals, r_vals),
             "point_biserial_with_deletion": point_biserial(all_vals, indicators),
-            "cohens_d_within_document": cohens_d(dz, rz),
-            "point_biserial_within_document": point_biserial(all_z, ind_z),
         }
         plot_data["deciles"][feat] = _decile_deletion_rate(feature_rows, feat)
         plot_data["overlays"][feat] = {
             "deleted": histogram(d_vals, bins=20),
             "retained": histogram(r_vals, bins=20),
         }
-    return {"features": features}, plot_data
+    return {
+        "features": features,
+        # Each feature's stratified_effect carries its own n_documents: a
+        # document can support the comparison for one feature and not another,
+        # so a single corpus-level count would misdescribe most of them.
+        "n_documents_total": len({r.get("pair_id") for r in feature_rows}),
+    }, plot_data
 
 
 def _decile_deletion_rate(rows: list[dict], feat: str) -> dict:
     pts = [(r[feat], r["deleted"]) for r in rows if r.get(feat) is not None]
     if len(pts) < 10:
-        return {"deciles": [], "deletion_rate": [], "n": len(pts)}
+        # Same keys as the normal branch. The old shape returned "deciles",
+        # which plots.py never reads, so a sparse feature produced no plot and
+        # no explanation -- flagged in an earlier review and made more reachable
+        # by every filter added since.
+        return {
+            "decile_centers": [],
+            "deletion_rate": [],
+            "n": len(pts),
+            "insufficient_data": True,
+        }
     values = np.array([p[0] for p in pts], dtype=float)
     flags = np.array([p[1] for p in pts], dtype=float)
     edges = np.quantile(values, np.linspace(0, 1, 11))

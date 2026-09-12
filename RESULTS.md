@@ -55,6 +55,10 @@ Three findings survive scrutiny, and one widely-quoted metric does not.
 5. **M4's deletion and merge counts are not validated.** Against human
    annotations their apparent agreement is entirely a length artifact. Splits
    and reordering hold up; deletion does not.
+6. **M6's effect sizes are confounded by document length** and its "salience
+   dominates" conclusion is unverified. A corrected estimator exists but no
+   corpus has been re-run. This is the third instance of the same failure mode:
+   an effect that looks real until document length is controlled.
 
 ---
 
@@ -360,6 +364,23 @@ python -m profiler ingest-annotations --run runs/<dir> --file <annotated>.csv
 
 ---
 
+> **⚠ The M6 effect sizes below are confounded and should not be read as
+> sentence-level evidence.** They pool every sentence from every document into
+> one array. TextRank is a per-document stationary distribution and sums to 1
+> per document, so a sentence in a 5-sentence document scores ~0.2 and one in a
+> 400-sentence document ~0.0025; measured on D-Wikipedia, raw textrank
+> correlates with its own document's sentence count at **rho = -0.92**,
+> `centroid_sim` at -0.43 and `max_sim_other` at +0.31. The two features ranking
+> 1st-3rd in every corpus are therefore substantially measuring document length.
+>
+> The pipeline now estimates the effect inside each document and aggregates
+> (`stratified_effect` in `metrics.json`, primary in `report.md`), but **no
+> corpus has been re-run**, so the numbers here are the pooled ones. On a
+> 20-document probe the correction cut `centroid_sim` from -1.34 to -0.49 and
+> `textrank` from -0.71 to -0.48, so the ranking below may not survive.
+>
+> **The "salience dominates" conclusion in this section is unverified.**
+
 ## M6 — Deletion basis
 
 Features ranked by |Cohen's d| between deleted and retained source sentences.
@@ -582,6 +603,11 @@ could change a conclusion.
 - **The corpora are not the ones the papers measured.** Three of five differ
   measurably from their published statistics (below). Where this repository and
   a paper disagree, the released artefact is what was measured here.
+- **M6's reported effect sizes pool sentences across documents**, which lets
+  document length into the comparison (textrank correlates with its document's
+  sentence count at rho = -0.92). `stratified_effect` corrects this by
+  estimating within each document and aggregating, but the figures in this
+  document predate it.
 - **M4's deletion rate has no validation behind it.** Its agreement with human
   deletion annotations vanishes once document length is controlled (rho 0.434 ->
   0.007). The cross-corpus deletion contrast is not thereby wrong, but it rests
