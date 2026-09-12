@@ -116,7 +116,12 @@ def sentence_labels(
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=200, help="documents to check")
-    ap.add_argument("--tau", type=float, default=0.5, help="alignment threshold")
+    ap.add_argument(
+        "--tau",
+        type=float,
+        default=None,
+        help="alignment threshold; defaults to the config's m6_tau",
+    )
     ap.add_argument(
         "--threshold",
         type=float,
@@ -133,6 +138,11 @@ def main() -> int:
     from profiler.nlp import get_processor
 
     cfg = load_config("configs/swipe_gold.yaml")
+    # Default to the threshold the pipeline actually uses. A hardcoded default
+    # would validate a split the pipeline no longer takes and print the table
+    # as if it did -- the failure this script exists to catch.
+    if args.tau is None:
+        args.tau = cfg.run.m6_tau
     proc = get_processor("en")
     embedder = get_embedder(cfg, Cache(cfg.run.cache_dir, "alignment"))
 
@@ -194,6 +204,7 @@ def main() -> int:
     pe = p_yes + p_no
     kappa = (acc - pe) / (1 - pe) if pe < 1 else float("nan")
 
+    print(f"tau: {args.tau}  (configs/swipe_gold.yaml m6_tau = {cfg.run.m6_tau})")
     print(f"documents used: {used}  skipped (unmappable): {skipped}")
     print(f"source sentences scored: {total}")
     print(f"  annotator-deleted: {tp + fn} ({(tp + fn) / total:.1%})")

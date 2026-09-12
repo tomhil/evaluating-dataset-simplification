@@ -22,7 +22,9 @@ would introduce its own inductive bias and invite a verdict; the effect sizes
 ## What counts as deleted
 
 A source sentence is **deleted** if it has **zero links** in M4's alignment at
-`m6_tau` (default 0.5), **retained** otherwise. This inherits every M4 alignment
+`m6_tau`, **retained** otherwise — 0.5 for most corpora and 0.7 for the
+Wikipedia ones, since the threshold is genre-dependent (see
+[m4-alignment.md](m4-alignment.md)). This inherits every M4 alignment
 error, which the module states in a note. A sentence dropped because of an
 embedding failure is indistinguishable here from one the authors genuinely cut —
 so check whether your conclusion holds across M4's τ sweep.

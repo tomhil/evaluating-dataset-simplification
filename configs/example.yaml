@@ -16,18 +16,17 @@ run:
   nli_backend: nli
   nli_model: microsoft/deberta-large-mnli
   nli_threshold: 0.5
-  # Widened past 0.6 and m6_tau raised to 0.7 on evidence. Validated per
-  # sentence against SWiPE's human deletion annotations (1,073 source sentences,
-  # scripts/validate_deletion_split.py): Cohen's kappa runs 0.462 at tau=0.5
-  # against 0.767 at 0.7 and 0.775 at 0.75, and the pipeline's deletion rate
-  # only matches the annotators' (50% vs 52.5%) from 0.7 upward. At 0.5 recall
-  # is 0.497 -- half of what annotators call a deletion is missed, because a
-  # sentence that loses half its content still aligns through the surviving
-  # half. 0.7 rather than 0.75 because precision is still 0.909 there and falls
-  # away above it. Validated on Wikipedia prose only; whether it transfers to
-  # Cochrane or PLOS is untested, which is why the sweep now spans it.
   tau_sweep: [0.4, 0.5, 0.6, 0.7, 0.8]
-  m6_tau: 0.7
+  # 0.5, NOT the 0.7 validated on SWiPE. That calibration is Wikipedia prose
+  # with MiniLM and does not transfer: measured on 60 pairs, 0.7 drives this
+  # corpus's deletion rate up and strips the deleted/retained contrast M6
+  # needs -- XSum goes from 48/60 usable documents to 13/60, CNN/DailyMail
+  # 60/60 to 52/60. Staying at 0.5 until validated on this genre. The sweep
+  # below reports 0.7 so the effect is visible.
+  #
+  # The threshold is genre-dependent, so a single global value is wrong; see
+  # docs/modules/m4-alignment.md.
+  m6_tau: 0.5
   # Optional M5 scorers (skipped gracefully if not installed):
   alignscore: false
   summac: false

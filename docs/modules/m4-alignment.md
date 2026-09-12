@@ -26,7 +26,7 @@ sweep, so sweeping costs almost nothing beyond the first threshold.
 
 ### The τ sweep
 
-Every metric is reported at each τ in `tau_sweep` (default 0.4, 0.5, 0.6). No
+Every metric is reported at each τ in `tau_sweep` (default 0.4, 0.5, 0.6, 0.7, 0.8). No
 single threshold is silently privileged. τ is the dominant free parameter in
 this module — a lower τ links more, inflating coverage and groundedness and
 deflating deletions — so **check whether your conclusion survives the sweep**
@@ -34,6 +34,19 @@ before trusting it.
 
 `m6_tau` (default 0.5) selects the one alignment handed to M5 and M6. If it
 falls outside the sweep it is computed on demand.
+
+**τ is genre-dependent, so there is no single right value.** Validated per
+sentence against SWiPE's human deletion annotations
+(`scripts/validate_deletion_split.py`), 0.7 agrees far better than 0.5 —
+Cohen's kappa 0.767 against 0.462, with the pipeline's deletion rate matching
+the annotators' only from 0.7 up. But that calibration is Wikipedia prose with
+MiniLM and does not transfer: on XSum, 0.7 raises the deletion rate to 0.983 and
+leaves 13 of 60 documents with any deleted/retained contrast, against 48 at 0.5.
+
+So the Wikipedia configs (`dwikipedia`, `swipe`, `swipe_gold`) use 0.7 and the
+rest stay at 0.5 until validated on their own genre. Each config records which
+and why. **A corpus profiled at a different `m6_tau` is not comparable on M6**;
+`compare_runs.py` prints each run's value for that reason.
 
 ## Metrics, per τ
 

@@ -103,6 +103,11 @@ def row_values(m: dict) -> dict:
     D = _dig(mod, "deletion_profile", "corpus", default={})
 
     tau = _dig(AL, "by_tau", "0.50", default={})
+    # M6's features come from whatever primary tau that run used. The threshold
+    # is genre-dependent, so comparing corpora profiled at different values
+    # compares different splits -- XSum deletes 84% of sentences at 0.5 and 98%
+    # at 0.7. Surfaced rather than assumed.
+    m6_tau = _dig(D, "primary_tau")
     primary = E.get("primary_scorer")
     ner = _dig(E, "per_scorer", primary, "not_entailed_rate", default={}) if primary else {}
 
@@ -136,6 +141,7 @@ def row_values(m: dict) -> dict:
         "align_dist": tau.get("alignment_type_distribution", {}) or {},
         "not_entailed": ner,
         "top_deletion": ranked[:3],
+        "m6_tau": m6_tau,
         "m6_pooled_fallback": any(
             _m6_effect(v)[1]
             for v in feats.values()
@@ -212,7 +218,8 @@ def build(rows: dict[str, dict]) -> str:
     m6_rows: list[tuple[str, callable]] = [
         # Which statistic each column holds, so a mix of fresh and archived
         # runs cannot be read as one quantity.
-        ("statistic", lambda r: "pooled (pre-fix)" if r["m6_pooled_fallback"] else "within-doc"),
+        ("statistic", lambda r: "pooled (pre-fix)" if r["m6_pooled_fallback"] else "stratified"),
+        ("primary tau", lambda r: r["m6_tau"] if r["m6_tau"] is not None else "--"),
     ]
     m6_rows += [
         (f"#{i + 1} feature", lambda r, i=i: (

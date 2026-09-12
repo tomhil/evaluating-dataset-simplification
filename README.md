@@ -101,8 +101,8 @@ run:
   language: en           # non-English corpora get M1/M2/M4 only
   embedder: sbert        # sbert | hashing (offline)
   nli_backend: nli       # nli | lexical (offline)
-  tau_sweep: [0.4, 0.5, 0.6]
-  m6_tau: 0.5            # primary τ feeding M5/M6
+  tau_sweep: [0.4, 0.5, 0.6, 0.7, 0.8]
+  m6_tau: 0.5            # primary τ feeding M5/M6; genre-dependent, see docs
   jargon_terms: []       # supply a domain term list to activate jargon_rate
 modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile]
 ```

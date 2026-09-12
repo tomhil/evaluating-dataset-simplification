@@ -71,10 +71,14 @@ class RunConfig:
     # available, else cpu. Purely a speed knob: same model, same math.
     device: str = "auto"
     # Primary tau used for the alignment that feeds M5/M6 (M4 itself sweeps).
-    # 0.7, not 0.5: validated per sentence against SWiPE's human deletion
-    # annotations, where kappa is 0.462 at 0.5 and 0.767 at 0.7. See
-    # scripts/validate_deletion_split.py.
-    m6_tau: float = 0.7
+    # Stays 0.5. 0.7 measures better against SWiPE's human deletion labels
+    # (kappa 0.767 vs 0.462; see scripts/validate_deletion_split.py) but that
+    # calibration is Wikipedia prose with MiniLM and does not transfer: on XSum
+    # it raises the deletion rate to 0.983 and leaves only 13 of 60 documents
+    # with the deleted/retained contrast M6 needs. The threshold is
+    # genre-dependent, so each config sets its own and the default stays where
+    # every committed result was produced.
+    m6_tau: float = 0.5
     # M5 optional scorers. NLI always runs (unless heuristic_only); these gate
     # the fragile extras.
     alignscore: bool = False
@@ -178,7 +182,7 @@ def parse_config(raw: dict) -> Config:
         nli_backend=str(run_raw.get("nli_backend", "nli")),
         nli_model=str(run_raw.get("nli_model", "microsoft/deberta-large-mnli")),
         device=str(run_raw.get("device", "auto")),
-        m6_tau=float(run_raw.get("m6_tau", 0.7)),
+        m6_tau=float(run_raw.get("m6_tau", 0.5)),
         alignscore=bool(run_raw.get("alignscore", False)),
         summac=bool(run_raw.get("summac", False)),
         heuristic_only=bool(run_raw.get("heuristic_only", False)),

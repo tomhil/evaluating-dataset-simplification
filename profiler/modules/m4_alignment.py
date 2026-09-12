@@ -2,7 +2,7 @@
 
 SBERT sentence embeddings, cosine similarity, and greedy many-to-many matching
 at threshold tau. Every downstream number is reported at each tau in the sweep
-(default {0.4, 0.5, 0.6}); none is silently picked. The alignment computed at the
+(default {0.4, 0.5, 0.6, 0.7, 0.8}); none is silently picked. The alignment computed at the
 configured primary tau (``m6_tau``) is stored for M5/M6.
 """
 
