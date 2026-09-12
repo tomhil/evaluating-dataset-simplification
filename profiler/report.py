@@ -62,7 +62,10 @@ def build_report(config, results: dict[str, ModuleResult], meta: dict) -> str:
         f"(config sample_size={config.run.sample_size})\n"
         f"- Seed: {config.run.seed}; bootstrap resamples: {config.run.bootstrap_resamples}\n"
         f"- τ sweep: {config.run.tau_sweep}; primary τ (M5/M6): {config.run.m6_tau}\n"
-        f"- Embedder: {meta.get('embedder', config.run.embed_model if config.run.embedder=='sbert' else config.run.embedder)}\n"
+        # run() always inserts the "embedder" key, setting it to None when M4
+        # did not run, so a `.get` default never fired and the report read
+        # "Embedder: None". Fall back on the value, not on the key.
+        f"- Embedder: {meta.get('embedder') or (config.run.embed_model if config.run.embedder == 'sbert' else config.run.embedder)}\n"
         f"- NLI backend: {config.run.nli_backend}"
         + (f" ({config.run.nli_model})" if config.run.nli_backend == "nli" else "")
         + "\n"
@@ -325,7 +328,14 @@ def _caveats(config, results: dict[str, ModuleResult], meta: dict) -> str:
     if "elaboration" in results:
         c = results["elaboration"].corpus
         agr = c.get("pairwise_agreement", {})
-        low = [k for k, v in agr.items() if (v.get("label_agreement") or 1.0) < 0.8]
+        # `or 1.0` turned an agreement of 0.0 into 1.0, so total disagreement --
+        # the case this caveat exists for -- was the one value that produced no
+        # caveat, while 0.5 produced one. Missing values still skip.
+        low = [
+            k
+            for k, v in agr.items()
+            if v.get("label_agreement") is not None and v["label_agreement"] < 0.8
+        ]
         if low:
             items.append(
                 f"**NLI/scorer disagreement.** Low label agreement between {', '.join(low)}; "

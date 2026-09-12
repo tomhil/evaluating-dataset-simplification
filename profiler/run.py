@@ -110,6 +110,27 @@ def validate_corpus(pairs: Sequence[Pair], config: Config) -> list[str]:
 
     if not pairs:
         raise ValueError("corpus is empty: no pairs loaded")
+
+    # M4 keys its per-pair source sentences and similarity matrices by pair id,
+    # and _write_per_pair merges parquet rows by id. Two pairs sharing an id
+    # therefore profile the *last* document twice and drop the other, silently
+    # and with a plausible-looking n. The adapters take the id from the corpus's
+    # own field, which carries no uniqueness guarantee.
+    seen: set[str] = set()
+    dupes: list[str] = []
+    for p in pairs:
+        if p.id in seen:
+            dupes.append(str(p.id))
+        seen.add(p.id)
+    if dupes:
+        shown = ", ".join(sorted(set(dupes))[:5])
+        raise ValueError(
+            f"{len(set(dupes))} duplicate pair id(s): {shown}. Ids must be "
+            f"unique -- M4 and the parquet writer key by id, so duplicates "
+            f"drop documents. Set a different id_field or remove the field to "
+            f"fall back to line numbers."
+        )
+
     warnings_list: list[str] = []
     high_compression = 0
     checked = 0

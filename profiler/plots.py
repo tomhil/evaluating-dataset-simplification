@@ -41,7 +41,11 @@ def _save(fig, path: Path) -> list[str]:
     return [str(path)]
 
 
-def _hist_from_dict(ax, hist: dict, **kw):
+def _hist_from_dict(ax, hist: dict | None, **kw):
+    # The caller's guard skips only when *both* overlays are missing, so one
+    # side can still arrive as None.
+    if not hist:
+        return
     counts, edges = hist.get("counts", []), hist.get("edges", [])
     if not counts:
         return
@@ -65,13 +69,38 @@ def _compression_histogram(corpus: dict, out: Path) -> list[str]:
     return _save(fig, out / "compression_histogram.png")
 
 
+def _decomp_measures(decomp: dict) -> list[str]:
+    """M3c measures with both components actually computed.
+
+    ``mean or 0.0`` mapped a ``None`` mean -- the measure had no data, e.g.
+    SMOG below three sentences or MTLD on short text -- onto the same bar as a
+    genuine 0.0, so the figure asserted "this measure did not change" for a
+    measure that could not be computed. Drop it from the chart instead; a
+    missing bar reads as missing, a zero bar does not.
+    """
+
+    out = []
+    for m in rd.SURFACE_MEASURES:
+        d = decomp.get(m)
+        if not d:
+            continue
+        if d.get("attributable_to_rewriting", {}).get("mean") is None:
+            continue
+        if d.get("length_artifact", {}).get("mean") is None:
+            continue
+        out.append(m)
+    return out
+
+
 def _readability_decomposition(corpus: dict, out: Path) -> list[str]:
     decomp = corpus.get("m3c_decomposition")
     if not decomp:
         return []
-    measures = [m for m in rd.SURFACE_MEASURES if m in decomp]
-    attributable = [decomp[m]["attributable_to_rewriting"]["mean"] or 0.0 for m in measures]
-    artifact = [decomp[m]["length_artifact"]["mean"] or 0.0 for m in measures]
+    measures = _decomp_measures(decomp)
+    if not measures:
+        return []
+    attributable = [decomp[m]["attributable_to_rewriting"]["mean"] for m in measures]
+    artifact = [decomp[m]["length_artifact"]["mean"] for m in measures]
     fig, ax = plt.subplots(figsize=(8, 4.5))
     ax.bar(measures, artifact, label="length artifact (EXT-ORACLE−source)", color="#C44E52")
     ax.bar(measures, attributable, bottom=artifact, label="attributable to rewriting (target−EXT-ORACLE)", color="#4C72B0")

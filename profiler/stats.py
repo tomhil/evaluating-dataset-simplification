@@ -137,11 +137,21 @@ def histogram(values: Sequence[float], *, bins: int = 30) -> dict:
     if arr.size == 0:
         return {"counts": [], "edges": [], "n": 0}
     lo, hi = float(np.min(arr)), float(np.max(arr))
-    if hi <= lo:
-        # Degenerate range (all values equal): emit a single unit-width bin.
+    # A positive range is not enough: numpy raises "Too many bins for data
+    # range" when it cannot lay `bins` finite-width bins across it. M6 hit this
+    # with min=0.4999999999999999 and max=0.5000000000000001 -- values equal up
+    # to float rounding, a 2.2e-16 span -- and the ValueError propagated out of
+    # run(), aborting the run at M6 after M1-M5 had already completed. Compare
+    # the span against the representable spacing at this magnitude, so
+    # "all equal" and "equal to within rounding" take the same path.
+    span = hi - lo
+    floor = bins * float(np.spacing(max(abs(lo), abs(hi), 1.0)))
+    if not np.isfinite(span) or span <= floor:
+        # Degenerate range: emit a single bin covering the value.
+        half = max(0.5 * span, 0.5)
         return {
             "counts": [int(arr.size)],
-            "edges": [lo - 0.5, lo + 0.5],
+            "edges": [lo - half, hi + half],
             "n": int(arr.size),
         }
     counts, edges = np.histogram(arr, bins=bins, range=(lo, hi))

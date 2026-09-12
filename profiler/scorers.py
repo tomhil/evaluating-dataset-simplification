@@ -14,6 +14,8 @@ score in [0, 1], where low = the target sentence is not supported by the source.
 
 from __future__ import annotations
 
+import warnings
+
 import re
 from typing import Callable, Protocol
 
@@ -215,10 +217,29 @@ def optional_scorers(config, cache: Cache) -> tuple[list[SentenceScorer], list[s
 
 
 def _try_load(loader: Callable[[], SentenceScorer]):
+    """Load an optional scorer, returning ``(scorer, note)``.
+
+    The note goes into ``metrics.json`` via M5's ``notes``, and that file is
+    contractually byte-identical across runs of one config and free of absolute
+    paths. Interpolating ``str(exc)`` broke both: a checkpoint-not-found message
+    embeds an HF cache path, and a CUDA message embeds a driver version, so two
+    machines -- or one machine before and after a download -- produced different
+    bytes. Record the exception *type*, which is stable, and let the full text
+    go to stderr where it is useful for debugging.
+    """
+
     try:
         return loader(), None
     except Exception as exc:  # pragma: no cover - optional deps
-        return None, f"{loader.__name__} unavailable: {exc}"
+        warnings.warn(
+            f"{loader.__name__} unavailable: {type(exc).__name__}: {exc}",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return None, (
+            f"{loader.__name__} unavailable ({type(exc).__name__}); "
+            f"scorer skipped. See stderr for details."
+        )
 
 
 def _load_alignscore() -> SentenceScorer:  # pragma: no cover - optional dep

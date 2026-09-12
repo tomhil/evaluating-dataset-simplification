@@ -47,13 +47,31 @@ def test_english_only_module_on_non_english_raises():
         parse_config(raw)
 
 
-def test_non_english_gates_modules():
-    raw = _base(run={"seed": 1, "language": "de"}, modules=["length", "abstractiveness", "alignment"])
-    cfg = parse_config(raw)
-    active = cfg.active_modules()
-    assert "readability" not in active
-    assert "elaboration" not in active
-    assert "length" in active
+def test_non_english_is_refused_rather_than_gated():
+    """Non-English used to load with M1/M2/M4 active. It no longer loads.
+
+    The gating was real but the capability behind it was not: ``get_processor``
+    accepted a language argument and ignored it, returning ``en_core_web_sm``
+    every time. So the "M1/M2/M4 only" path segmented, tokenised and
+    stopword-filtered other languages as English, and every compression ratio,
+    sentence count and alignment score rested on that -- reported without a
+    caveat, because the config had been "handled".
+
+    Refusing is the honest behaviour until a language-appropriate model is
+    wired up. No shipped config is affected; all ten are ``en``.
+    """
+    raw = _base(
+        run={"seed": 1, "language": "de"},
+        modules=["length", "abstractiveness", "alignment"],
+    )
+    with pytest.raises(ConfigError, match="(?i)not supported"):
+        parse_config(raw)
+
+
+def test_english_variants_are_accepted():
+    for lang in ("en", "EN", "en-GB", "en_US"):
+        cfg = parse_config(_base(run={"seed": 1, "language": lang}, modules=["length"]))
+        assert cfg.active_modules() == ["length"]
 
 
 def test_bad_tau_raises():

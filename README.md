@@ -98,7 +98,7 @@ dataset:
 run:
   sample_size: 1000      # null = full corpus; seeded random
   seed: 13
-  language: en           # non-English corpora get M1/M2/M4 only
+  language: en           # only 'en' is supported; anything else is refused at load
   embedder: sbert        # sbert | hashing (offline)
   nli_backend: nli       # nli | lexical (offline)
   tau_sweep: [0.4, 0.5, 0.6, 0.7, 0.8]

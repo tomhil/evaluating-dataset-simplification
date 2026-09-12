@@ -29,6 +29,19 @@ ENGLISH_ONLY_MODULES = {"readability", "elaboration"}
 
 KNOWN_ADAPTERS = {"jsonl", "hf", "filedir"}
 
+# Backend names are validated at load. get_embedder raised on an unknown name
+# only when M4 started -- after the full-corpus M1-M3 pass -- and
+# get_primary_scorer only at M5, after M4's embeddings. A typo cost hours.
+KNOWN_EMBEDDERS = {"sbert", "hashing"}
+KNOWN_NLI_BACKENDS = {"nli", "lexical"}
+KNOWN_DEVICES = {"auto", "cpu", "mps", "cuda"}
+
+# The only language with a processor. get_processor ignored its argument and
+# always loaded en_core_web_sm, so the documented "non-English corpora get
+# M1/M2/M4" path would have applied English segmentation, tokenisation and
+# stopword lists to non-English text and reported the numbers without comment.
+SUPPORTED_LANGUAGES = {"en"}
+
 
 class ConfigError(ValueError):
     """Raised for any invalid or inconsistent configuration."""
@@ -112,6 +125,23 @@ class Config:
         return [m for m in self.modules if m not in ENGLISH_ONLY_MODULES]
 
 
+def _opt_int(value: Any, name: str) -> int | None:
+    """Coerce a nullable integer field, raising ConfigError on junk.
+
+    ``sample_size`` was the one numeric run field taken as-is, to preserve
+    ``null``. PyYAML reads ``sample_size: 1e3`` as the *string* ``"1e3"`` (YAML
+    1.1 wants ``1.0e+3``), which then reached ``validate``'s ``<= 0`` and raised
+    a bare TypeError instead of a ConfigError naming the field.
+    """
+
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        raise ConfigError(f"run.{name} must be an integer or null; got {value!r}") from None
+
+
 def _require(d: dict, key: str, where: str) -> Any:
     if key not in d or d[key] is None:
         raise ConfigError(f"missing required field '{key}' in {where}")
@@ -166,7 +196,7 @@ def parse_config(raw: dict) -> Config:
     if not isinstance(run_raw, dict):
         raise ConfigError("'run' must be a mapping")
     run = RunConfig(
-        sample_size=run_raw.get("sample_size", 1000),
+        sample_size=_opt_int(run_raw.get("sample_size", 1000), "sample_size"),
         seed=int(run_raw.get("seed", 13)),
         language=str(run_raw.get("language", "en")),
         cache_dir=str(run_raw.get("cache_dir", ".cache/")),
@@ -229,6 +259,16 @@ def validate(cfg: Config) -> None:
         if not 0.0 <= float(value) <= 1.0:
             raise ConfigError(f"{name} must be in [0,1]; got {value}")
 
+    for name, value, known in (
+        ("embedder", cfg.run.embedder, KNOWN_EMBEDDERS),
+        ("nli_backend", cfg.run.nli_backend, KNOWN_NLI_BACKENDS),
+        ("device", cfg.run.device, KNOWN_DEVICES),
+    ):
+        if value not in known:
+            raise ConfigError(
+                f"unknown run.{name} '{value}'; known: {sorted(known)}"
+            )
+
     # M5 and M6 read M4's alignment out of the shared context and raise if it is
     # absent -- but only after the full-corpus M1-M3 pass, which is hours on a
     # long-document corpus. Catch it at load instead.
@@ -240,15 +280,19 @@ def validate(cfg: Config) -> None:
             f"run without it. Add 'alignment' to modules."
         )
 
-    # Language gating: requesting an English-only module on a non-English
-    # corpus is a loud error, not a silent drop (PRD s2).
-    if not cfg.language.lower().startswith("en"):
-        conflicting = [m for m in cfg.modules if m in ENGLISH_ONLY_MODULES]
-        if conflicting:
-            raise ConfigError(
-                f"modules {conflicting} require language=en but language="
-                f"'{cfg.language}'. Remove them or set language=en."
-            )
+    # Language: there is one processor and it is English. Loading a non-English
+    # config used to succeed for M1/M2/M4 and then silently apply English
+    # segmentation, tokenisation and stopwords, so every length ratio,
+    # sentence count and alignment rested on wrong segmentation with no warning.
+    # Refuse instead of reporting numbers that look fine and are not.
+    lang = cfg.language.lower().split("-")[0].split("_")[0]
+    if lang not in SUPPORTED_LANGUAGES:
+        raise ConfigError(
+            f"language '{cfg.language}' is not supported: the only processor is "
+            f"English (en_core_web_sm), and using it on other languages "
+            f"invalidates segmentation, tokenisation and stopword handling for "
+            f"every module. Supported: {sorted(SUPPORTED_LANGUAGES)}."
+        )
 
     # Adapter-specific required fields.
     ds = cfg.dataset

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -39,7 +40,7 @@ class Cache:
         return None
 
     def put_array(self, key: str, arr: np.ndarray) -> None:
-        np.save(self._path(key, ".npy"), arr)
+        self._atomic(self._path(key, ".npy"), lambda fh: np.save(fh, arr))
 
     # --- json -------------------------------------------------------------
     def get_json(self, key: str) -> Any | None:
@@ -50,8 +51,34 @@ class Cache:
         return None
 
     def put_json(self, key: str, value: Any) -> None:
-        with self._path(key, ".json").open("w") as fh:
-            json.dump(value, fh)
+        self._atomic(
+            self._path(key, ".json"),
+            lambda fh: fh.write(json.dumps(value).encode("utf-8")),
+        )
+
+    # --- durability -------------------------------------------------------
+    @staticmethod
+    def _atomic(path: Path, write: Any) -> None:
+        """Write via a temp file and rename, so a key is never half-written.
+
+        Both writers used to land directly on the final key path. A run killed
+        mid-write -- Ctrl-C or OOM, both realistic on the multi-hour
+        long-document corpora -- left a truncated .npy or .json at a *valid*
+        key, and every later run took ``exists()`` as a hit and raised an
+        opaque decode error with no way to invalidate short of deleting the
+        cache by hand. ``os.replace`` is atomic within a filesystem, and the
+        temp file shares the key's directory so it always is one.
+        ``progress.write_status`` already does this.
+        """
+
+        tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+        try:
+            with tmp.open("wb") as fh:
+                write(fh)
+            os.replace(tmp, path)
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
 
 
 class NullCache(Cache):

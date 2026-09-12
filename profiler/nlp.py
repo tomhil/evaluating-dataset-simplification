@@ -214,7 +214,21 @@ def get_processor(language: str = "en", prefer_spacy: bool = True) -> Processor:
     Attempts spaCy first (required for the syntactic M3b features); falls back to
     :class:`SimpleProcessor` with a warning if the model cannot be loaded. Cached
     so a single model is shared across modules within a run.
+
+    Raises for any language other than English. This argument used to be
+    accepted and ignored -- every call returned ``en_core_web_sm`` -- so the
+    documented "non-English corpora get M1/M2/M4" path would have segmented,
+    tokenised and stopword-filtered other languages as English and published
+    the results without comment.
     """
+
+    lang = (language or "en").lower().split("-")[0].split("_")[0]
+    if lang != "en":
+        raise ValueError(
+            f"unsupported language '{language}': the only processor is English "
+            f"(en_core_web_sm). Using it on other text invalidates segmentation, "
+            f"tokenisation and stopword handling for every module."
+        )
 
     if prefer_spacy:
         try:
@@ -222,6 +236,11 @@ def get_processor(language: str = "en", prefer_spacy: bool = True) -> Processor:
         except Exception as exc:  # pragma: no cover - environment dependent
             warnings.warn(
                 f"spaCy model unavailable ({exc}); falling back to SimpleProcessor. "
+                "SimpleProcessor splits sentences on every period, so decimals and "
+                "abbreviations ('OR 0.61, 95% CI 0.46 to 0.79') each become several "
+                "sentences -- the exact behaviour _normalise_for_textstat exists to "
+                "undo. All six M3a formulas and M1's sentence counts will read "
+                "easier than the text is. "
                 "Syntactic M3b features (dependency distance, parse depth, "
                 "passive/subordinate rates) will be reported as null.",
                 RuntimeWarning,
