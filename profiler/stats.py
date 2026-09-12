@@ -39,10 +39,23 @@ class Summary:
 
 
 def _clean(values: Sequence[float]) -> np.ndarray:
+    """Drop values that cannot be summarised: NaN and infinities.
+
+    NaN was already dropped; infinities were not, and they propagate. An inf
+    reaching `histogram`'s degenerate branch produced ``edges: [-inf, inf]``
+    and an all-inf input produced ``[nan, nan]`` (Python's ``max(nan, x)``
+    returns nan). ``_write_metrics`` uses ``json.dumps`` with the default
+    ``allow_nan=True``, so those became bare ``Infinity``/``NaN`` literals in
+    metrics.json, which strict JSON parsers reject, and
+    ``plots._hist_from_dict`` would then call ``ax.bar`` with an infinite
+    width. No metric here has a meaningful infinite value -- an inf means a
+    division bug upstream -- so treat it like NaN and exclude it.
+    """
+
     arr = np.asarray(list(values), dtype=float)
     if arr.size == 0:
         return arr
-    return arr[~np.isnan(arr)]
+    return arr[np.isfinite(arr)]
 
 
 def bootstrap_ci(
@@ -148,7 +161,10 @@ def histogram(values: Sequence[float], *, bins: int = 30) -> dict:
     floor = bins * float(np.spacing(max(abs(lo), abs(hi), 1.0)))
     if not np.isfinite(span) or span <= floor:
         # Degenerate range: emit a single bin covering the value.
-        half = max(0.5 * span, 0.5)
+        # _clean already excludes non-finite input, so span is finite here;
+        # guard anyway, because a non-finite edge silently produces invalid
+        # JSON rather than an error.
+        half = 0.5 if not np.isfinite(span) else max(0.5 * span, 0.5)
         return {
             "counts": [int(arr.size)],
             "edges": [lo - half, hi + half],

@@ -36,10 +36,24 @@ ANNOTATION_COLUMNS = ["grounded_elaboration", "hallucination", "alignment_error"
 # ``len(records) < 2000``, which dropped it from exactly the corpora with the
 # most target sentences -- Cochrane and PLOS, the two biomedical sets where an
 # MNLI-trained model is furthest off-domain and the caveat matters most.
+#
+# Two wordings, because ungating it made it unconditional across *modes* as
+# well as sizes: a heuristic_only run is scored by LexicalGrounding, and the
+# original text told the reader that entailment models degrade off-domain,
+# describing a model that was never loaded.
 UPPER_BOUND_NOTE = (
     "Automatic elaboration rate is an upper bound on real elaboration "
     "until the manual sample is annotated; entailment models degrade off-domain."
 )
+UPPER_BOUND_NOTE_HEURISTIC = (
+    "Automatic elaboration rate is an upper bound on real elaboration "
+    "until the manual sample is annotated; content-word grounding over-counts "
+    "any rewording that introduces new content words."
+)
+
+
+def upper_bound_note(heuristic_only: bool) -> str:
+    return UPPER_BOUND_NOTE_HEURISTIC if heuristic_only else UPPER_BOUND_NOTE
 
 _DEFINITIONAL = re.compile(
     r"\b(is|are|was|were)\s+(a|an|the)\b|,\s*which\b|\bwhich means\b|\brefers to\b|\bknown as\b",
@@ -74,7 +88,10 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         return ModuleResult(
             name=NAME,
             corpus={"n_target_sentences": 0},
-            notes=["No target sentences.", UPPER_BOUND_NOTE],
+            notes=[
+                "No target sentences.",
+                upper_bound_note(ctx.config.run.heuristic_only),
+            ],
         )
 
     # --- scorers ---------------------------------------------------------
@@ -148,7 +165,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         "primary_scorer": primary_name,
         "corrected_not_entailed_rate": None,  # filled by `ingest-annotations`
     }
-    notes.append(UPPER_BOUND_NOTE)
+    notes.append(upper_bound_note(heuristic_only))
 
     return ModuleResult(
         name=NAME,

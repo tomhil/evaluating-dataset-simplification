@@ -50,7 +50,7 @@ INTERPRETATION_GUIDE = [
     ),
     (
         "Readability change",
-        "M3c share_attributable",
+        "M3c share_attributable_corpus",
         "genuine rewriting for an audience",
         "apparent readability gain is a length artifact",
     ),

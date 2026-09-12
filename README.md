@@ -19,7 +19,7 @@ made visible — across six metric modules:
 |---|---|---|
 | **M1** | Length & compression | compression/sentence ratios, expansion rate, bimodality dip check |
 | **M2** | Abstractiveness | novel n-grams, Grusky coverage/density, ROUGE recall, content-type overlap |
-| **M3** | Readability, decomposed against length | surface formulas (M3a), length-invariant measures (M3b), and a length-matched decomposition (M3c) whose `share_attributable` separates genuine rewriting from length artifact |
+| **M3** | Readability, decomposed against length | surface formulas (M3a), length-invariant measures (M3b), and a length-matched decomposition (M3c) whose `share_attributable_corpus` separates genuine rewriting from length artifact |
 | **M4** | Alignment & content preservation | SBERT alignment, τ sweep {0.4, 0.5, 0.6}, coverage/groundedness, alignment-type distribution, Kendall's τ |
 | **M5** | Content addition | NLI entailment (+ optional AlignScore/SummaC), per-scorer distributions, agreement, surface-pattern breakdown, 100-row manual annotation export |
 | **M6** | Deletion profile | salience vs difficulty vs redundancy features for deleted vs retained source sentences, Cohen's d, point-biserial, decile plots — no fitted model |

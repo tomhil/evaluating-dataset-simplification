@@ -79,7 +79,17 @@ def surface_scores(
     # rather than raising, and 0.0 is a valid SMOG score, so passing it through
     # fabricates a reading level. Every XSum target is a single sentence, which
     # produced a reported -11.31 grade "improvement" over 1000 pairs.
-    n_sents = len(sentences) if sentences is not None else ts.sentence_count(text)
+    # Count with textstat, not with the Processor. textstat.sentence_count
+    # discards any sentence whose lexicon_count is <= 2 and then clamps with
+    # max(1, ...), so a text the Processor splits into three or more sentences
+    # can still be one or two as far as smog_index is concerned -- and the
+    # sentinel leaked straight through a guard based on len(sentences).
+    # ["Cats sleep.", "Dogs bark.", "Birds fly.", "Fish swim."] is four
+    # sentences to the Processor, one to textstat, and scored 0.0. Short
+    # sentences are what a simplified target looks like, so the leak biased
+    # delta_smog downward -- the same direction as the XSum bug this guard was
+    # written for.
+    n_sents = ts.sentence_count(text)
     smog = float(ts.smog_index(text)) if n_sents >= _SMOG_MIN_SENTENCES else None
     return {
         "fkgl": float(ts.flesch_kincaid_grade(text)),

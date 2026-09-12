@@ -8,7 +8,9 @@ therefore reports three views:
 * M3b length-invariant measures (the ones that carry weight);
 * M3c a length-matched decomposition that splits the observed readability change
   into the part attributable to rewriting versus the part that is a length
-  artifact. ``share_attributable`` is the headline number.
+  artifact. ``share_attributable_corpus`` is the headline number; the
+  per-pair ``share_attributable`` is reported for its median and IQR, and
+  its mean is not usable (one pair has scored 6388.9).
 """
 
 from __future__ import annotations
@@ -410,7 +412,14 @@ def _corpus_share(per_pair: list[dict], measure: str) -> float | None:
     #     O(1) is one grade level, so 1e-6 summed over the corpus is nothing.
     #
     # Either way the honest answer is that the share is undefined, not large.
-    if scale == 0.0 or abs(den) < max(1e-6 * scale, 1e-6):
+    # 1% of the summed magnitudes. `1e-6 * scale` only caught near-exact
+    # cancellation: with 1000 pairs of magnitude ~1, scale is ~1000 and the
+    # threshold was 1e-3, so a corpus with a net change of 0.05 passed and
+    # published num/0.05 -- plausibly in the hundreds -- as the bold headline.
+    # Measured sign-coherence (|Σt| / Σ|t|) on the real Cochrane run runs from
+    # 0.031 for mtld to 0.861 for mean_zipf, so 0.01 clears every legitimate
+    # measure with margin while nulling a corpus that has no net direction.
+    if scale == 0.0 or abs(den) < max(0.01 * scale, 1e-6):
         return None
     return num / den
 

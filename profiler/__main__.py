@@ -52,16 +52,15 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
 
     proportions = {c: counts[c] / labelled for c in counts}
     m5 = metrics.get("modules", {}).get("elaboration", {}).get("corpus", {})
-    primary = m5.get("primary_scorer")
-    auto_rate = None
-    if primary and primary in m5.get("per_scorer", {}):
-        auto_rate = m5["per_scorer"][primary]["not_entailed_rate"]["rate"]
+    auto_rate = _corrected_rate_base(m5)
 
     corrected = {
         "n_labelled": labelled,
         "category_counts": counts,
         "category_proportions": proportions,
+        # Document-averaged, to match the stratified annotation draw.
         "automatic_not_entailed_rate": auto_rate,
+        "automatic_rate_unit": "mean over documents",
     }
     if auto_rate is not None:
         # Real content addition excludes alignment errors; hallucination and
@@ -81,6 +80,40 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
     print(f"Ingested {labelled} annotations into {metrics_path}")
     print(f"  corrected_not_entailed_rate: {corrected.get('corrected_not_entailed_rate')}")
     return 0
+
+
+def _corrected_rate_base(m5: dict) -> float | None:
+    """The automatic not-entailed rate to scale by the annotation proportions.
+
+    Must be the *document-averaged* rate, because the annotation sample is
+    drawn document-stratified (see m5_elaboration._annotation_sample). Round
+    robin gives a document with one not-entailed sentence the same weight as
+    one with 700, so the sample proportions estimate
+    P(genuine | not-entailed) per document, not per sentence. Multiplying them
+    by the sentence-pooled rate mixes the two units and biases the product:
+    swipeg3153 supplied 70% of the not-entailed sentence pool and, being a
+    vandalised revision, is where alignment_error concentrates, so a stratified
+    sample collapses P(alignment_error) and would overstate the corrected rate
+    against a pooled denominator.
+
+    This matches the choice made elsewhere for the same reason -- M6's
+    _stratified_effect, and M5 already publishing
+    not_entailed_rate_by_document alongside the pooled figure.
+
+    Returns None when the document-averaged rate is unavailable, rather than
+    silently falling back to the pooled one.
+    """
+
+    by_doc = m5.get("not_entailed_rate_by_document") or {}
+    rate = by_doc.get("mean") if isinstance(by_doc, dict) else None
+    return None if rate is None else float(rate)
+
+
+def _corrected_rate(corpus: dict, genuine_share: float) -> float | None:
+    """corrected rate = document-averaged automatic rate x genuine share."""
+
+    base = _corrected_rate_base(corpus)
+    return None if base is None else base * genuine_share
 
 
 def _append_report_section(report_path: Path, corrected: dict) -> None:
