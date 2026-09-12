@@ -43,7 +43,8 @@ column of deltas would not.
 ### Three traps worth knowing before reading any table
 
 **Ratio metrics are skewed.** `compression_ratio`, `sentence_ratio` and
-`share_attributable` are all per-pair ratios averaged across pairs. A pair with
+`share_attributable` are all per-pair ratios averaged across pairs (M1 and M3c
+also publish a corpus-level ratio-of-sums, which is the figure to read). A pair with
 a tiny denominator produces an enormous ratio, and the mean follows it. The
 median and IQR are the honest summary; the `ci95` is a CI of the *mean*, so it
 inherits the same skew. This is not hypothetical — see the worked example in

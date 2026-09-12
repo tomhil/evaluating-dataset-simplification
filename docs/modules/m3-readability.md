@@ -30,7 +30,7 @@ jointly):
 | `cli` | Coleman–Liau Index | grade; lower = easier |
 | `fre` | Flesch Reading Ease | 0–100; **higher = easier** (inverted vs. the rest) |
 | `ari` | Automated Readability Index | grade; lower = easier |
-| `smog` | SMOG Index | grade; lower = easier |
+| `smog` | SMOG Index | grade; lower = easier; **`None` below 3 sentences** |
 
 `None` for empty text. `textstat` is pinned to `0.7.3` — from 0.7.4 it fetches
 syllable data from NLTK's cmudict over the network, which breaks both offline
@@ -129,6 +129,17 @@ Computed over `DECOMP_MEASURES` — the six surface formulas **plus** `mean_zipf
 `attributable_to_rewriting`, `length_artifact`, `share_attributable`, and a
 `share_histogram`.
 
+### SMOG's minimum length
+
+`textstat.smog_index` returns `0.0`, not an error, for text with fewer than
+three sentences. 0.0 is a valid SMOG grade, so that sentinel read as a measured
+score: every XSum target is a single sentence, and the run reported a paired
+delta of −11.31 — a fabricated eleven-grade improvement, which M3c then
+decomposed. `smog` is now `None` below three sentences, so a corpus of
+single-sentence targets reports no SMOG rather than a wrong one, and `n` on the
+smog fields will be lower than on the other measures. Cochrane loses 31 of
+1000 pairs this way and its delta moves from −1.85 to −1.40.
+
 ### How to read `share_attributable`
 
 Roughly: **≈1** — the change is genuine rewriting, length explains none of it.
@@ -144,10 +155,29 @@ and attributable have opposite signs.
 guards exact division-by-zero (`None` when `|total| < 1e-9`) but nothing
 prevents a denominator of 0.001 from producing a value in the hundreds.
 
-Consequently **`share_attributable.mean` is not a usable summary**. Use the
-**median**, the IQR, and the `share_histogram`. The `ci95` is a bootstrap CI *of
-the mean*, so it is skewed too. On a real run this field has shown a mean of
-2.96 against a median of 1.0 — the median was the honest number.
+Consequently **`share_attributable.mean` is not a usable summary**. Use
+`share_attributable_corpus` (below), or the **median**, the IQR, and the
+`share_histogram`. The `ci95` is a bootstrap CI *of the mean*, so it is skewed
+too. On a real run this field has shown a mean of 2.96 against a median of 1.0 —
+the median was the honest number. In the committed CNN/DailyMail run, one pair
+scored 6388.9 on `mean_zipf` and contributed 6.39 of the reported corpus mean of
+6.87; `rare_word_rate`'s mean came out sign-flipped against its median (−0.72
+against +0.68).
+
+### `share_attributable_corpus` — the field to read
+
+Sums the numerator and the denominator over the corpus *before* dividing:
+
+```
+share_attributable_corpus = Σ attributable / Σ total
+```
+
+No single near-zero denominator can dominate it, because no pair contributes a
+denominator of its own. This is the same distinction M1 draws between its
+per-pair compression mean and its corpus-level ratio. It is `None` when the
+totals cancel — the share is genuinely undefined then, not large. It is a
+corpus-level quantity, so it has no CI: for spread, read the per-pair median and
+IQR alongside it.
 
 ---
 
@@ -186,7 +216,7 @@ every measure except `fre`, which is inverted.
 | `cli` | Difficulty from word length and sentence length in characters. | Lower |
 | `fre` | Reading ease on a 0–100 scale. **The one that runs the other way.** | Higher |
 | `ari` | Another character-based grade estimate. | Lower |
-| `smog` | Grade estimate driven by multi-syllable words. | Lower |
+| `smog` | Grade estimate driven by multi-syllable words. Needs at least 3 sentences; `None` below that. | Lower |
 
 ### M3b — the length-invariant measures
 
@@ -216,4 +246,5 @@ from the illusion created by shortening.
 | `length_artifact` | How much of that change you'd get for free just by making the text shorter, with no rewriting at all. |
 | `attributable_to_rewriting` | How much change is left once length is held constant — the part rewriting genuinely bought. |
 | `share_attributable` | The fraction of the change that is real rewriting. ≈1 = all genuine; ≈0 = entirely a length side-effect. **Use the median — the mean of this ratio is unreliable.** |
+| `share_attributable_corpus` | The same fraction computed for the corpus as a whole (sum of numerators over sum of denominators), so one near-zero denominator cannot dominate it. **This is the headline figure.** |
 | `share_histogram` | The spread of that fraction across documents. |
