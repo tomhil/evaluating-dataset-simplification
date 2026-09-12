@@ -218,6 +218,27 @@ def validate(cfg: Config) -> None:
     for t in cfg.run.tau_sweep:
         if not 0.0 <= float(t) <= 1.0:
             raise ConfigError(f"tau values must be in [0,1]; got {t}")
+    # These two were unvalidated while tau_sweep was. Out of range they produce
+    # no error and no obvious wrong number: m6_tau above 1 labels every source
+    # sentence deleted, so M6's contrast vanishes and every effect size goes
+    # null; nli_threshold above 1 makes M5's not-entailed rate exactly 1.0.
+    for name, value in (
+        ("m6_tau", cfg.run.m6_tau),
+        ("nli_threshold", cfg.run.nli_threshold),
+    ):
+        if not 0.0 <= float(value) <= 1.0:
+            raise ConfigError(f"{name} must be in [0,1]; got {value}")
+
+    # M5 and M6 read M4's alignment out of the shared context and raise if it is
+    # absent -- but only after the full-corpus M1-M3 pass, which is hours on a
+    # long-document corpus. Catch it at load instead.
+    requested = set(cfg.modules)
+    needs_alignment = requested & {"elaboration", "deletion_profile"}
+    if needs_alignment and "alignment" not in requested:
+        raise ConfigError(
+            f"modules {sorted(needs_alignment)} read M4's alignment and cannot "
+            f"run without it. Add 'alignment' to modules."
+        )
 
     # Language gating: requesting an English-only module on a non-English
     # corpus is a loud error, not a silent drop (PRD s2).

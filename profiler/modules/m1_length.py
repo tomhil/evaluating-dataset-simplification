@@ -4,12 +4,16 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from ..stats import Summary, dip_statistic, histogram, summarize
+from ..stats import Summary, bimodality_coefficient, histogram, summarize
 from .. import progress
 from ..types import Pair
 from .base import Context, ModuleResult
 
 NAME = "length"
+
+# Sarle's coefficient takes this value for a uniform distribution; above it a
+# sample is more consistent with two or more modes than with one.
+BIMODALITY_FLAG = 0.555
 
 
 def _safe_ratio(num: float, den: float) -> float | None:
@@ -60,16 +64,17 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         "mean_tgt_sent_len": summarize(col("mean_tgt_sent_len"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
         "expansion_rate": _rate([r["expansion"] for r in per_pair]),
         "compression_histogram": histogram(compression),
-        "compression_dip_statistic": dip_statistic(compression),
+        "compression_bimodality": bimodality_coefficient(compression),
     }
 
     notes = []
-    dip = corpus["compression_dip_statistic"]
-    if dip is not None and dip > 0.1:
+    bc = corpus["compression_bimodality"]
+    if bc is not None and bc > BIMODALITY_FLAG:
         notes.append(
-            f"Compression distribution shows possible bimodality (dip="
-            f"{dip:.3f}); a bimodal corpus is a mixed corpus and the mean "
-            f"compression is misleading. Inspect the compression histogram."
+            f"Compression distribution is more consistent with two or more "
+            f"modes than one (Sarle's bimodality coefficient={bc:.3f}, above "
+            f"{BIMODALITY_FLAG}); a mixed corpus has no representative mean "
+            f"compression. Inspect the compression histogram."
         )
 
     return ModuleResult(name=NAME, per_pair=per_pair, corpus=corpus, notes=notes)

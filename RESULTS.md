@@ -77,7 +77,7 @@ Three findings survive scrutiny, and one widely-quoted metric does not.
 | sentence ratio (median) | 0.667 | 0.028 | **1.000** | **1.000** | 0.102 | 0.071 |
 | mean sentence length src → tgt | 24.7 → 22.0 | 19.5 → 22.5 | 24.1 → 16.8 | — | 18.7 → 12.8 | — |
 | expansion rate | 0.092 | 0.000 | **0.289** | 0.233 | 0.000 | 0.001 |
-| bimodality dip | 0.249 | 0.577 | 0.882 | **0.971** | 0.520 | 0.729 |
+| bimodality dip *(retired)* | 0.249 | 0.577 | 0.882 | 0.971 | 0.520 | 0.729 |
 
 **Five of the six corpus-level ratios reproduce their published values**;
 SWiPE is the exception, and its published figure is the one at fault (see the
@@ -88,9 +88,10 @@ main validation that ingestion, sampling and measurement are sound.
 of 1.266 versus a published 0.55 is not a discrepancy in the data — it is the
 mean of *per-pair* ratios, which explodes on pairs with short sources. Two
 fields on the same run explain it: 28.9% of D-Wikipedia pairs have targets
-*longer* than their sources, and its dip statistic of 0.882 is far above the
-0.1 note threshold. D-Wikipedia is a mixture of two behaviours, and no single
-central-tendency number describes it. See
+*longer* than their sources, and Sarle's bimodality coefficient of
+0.726 confirms it is genuinely mixed -- one of only two corpora here that are.
+D-Wikipedia holds two behaviours, and no single central-tendency number
+describes it. See
 [m1-length.md](docs/modules/m1-length.md#the-mean-vs-the-corpus-level-ratio).
 
 Two corpora compress ~30× (PLOS 0.030, CNN/DM 0.064); two barely compress at all
@@ -517,8 +518,8 @@ against 0.298). That looks like an M5 failure and is not one: a corpus copying
 84% of its text at density 15.87 genuinely has little unsupported material. The
 metric is reporting the corpus correctly.
 
-**A caution on SWiPE's own numbers.** Its dip statistic is 0.971, the most
-bimodal of the five -- its mean describes no document in it. And the published
+**A caution on SWiPE's own numbers.** Its bimodality coefficient is 0.981, the
+highest of the six -- its mean describes no document in it. And the published
 "~1 (content-preserving)" in `profiler/reference.py` is not supported as a
 length figure: measured across all 143,359 released pairs, compression is
 **0.676**. The 1000-document sample profiled here reads 0.549, so this corpus is
@@ -655,9 +656,16 @@ could change a conclusion.
   far larger than the sample size. Those sentences are clustered within
   documents while the bootstrap resamples them independently, so M6's intervals
   are tighter than the clustering justifies.
-- **Three corpora are strongly bimodal** -- SWiPE 0.971, PLOS 0.577,
-  CNN/DailyMail 0.520 dip statistic. A bimodal corpus is a mixed corpus and its
-  mean describes no document in it.
+- **Two corpora are genuinely mixed, not the four this document once claimed.**
+  The `dip_statistic` these figures came from measured distance from *uniform*,
+  not bimodality, and was anti-correlated with its own claim: a unimodal
+  lognormal scores 0.724 against 0.208 for a true two-mode mixture. Compression
+  ratios are ratios of positive quantities and so lognormal-ish, which is why
+  it fired on every corpus. Replaced by Sarle's bimodality coefficient, which
+  flags **SWiPE (0.981) and D-Wikipedia (0.726)** and clears Cochrane (0.489),
+  PLOS (0.430), CNN/DailyMail (0.478) and XSum (0.493) -- matching the two
+  corpora whose expansion rates (23.3% and 28.9%) independently mark them as
+  mixed. The values below are pre-replacement; the runs have not been redone.
 
 ### Pipeline
 

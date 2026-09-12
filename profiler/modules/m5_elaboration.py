@@ -219,15 +219,25 @@ def _pairwise_agreement(scorer_scores: dict[str, list[float]], threshold: float)
 
 def _pattern_breakdown(records: list[dict], src_sents_by_id: dict, proc) -> dict:
     definitional = example = gloss = new_background = 0
+    # One source vocabulary per pair, not per record. Rebuilding it inside the
+    # loop cost (not-entailed sentences x source sentences) content_words calls
+    # -- 60,600 against 705 needed for a 605-sentence eLife document -- and
+    # since the Doc cache holds 64 entries against hundreds of distinct
+    # sentences, every call re-ran the full pipeline.
+    src_vocab: dict[str, set[str]] = {}
     for r in records:
         sent = r["sentence"]
         if _DEFINITIONAL.search(sent):
             definitional += 1
         if _EXAMPLE.search(sent):
             example += 1
-        src_content = set()
-        for s in src_sents_by_id.get(r["pair_id"], []):
-            src_content |= {w.lower() for w in proc.content_words(s)}
+        pid = r["pair_id"]
+        if pid not in src_vocab:
+            vocab: set[str] = set()
+            for s in src_sents_by_id.get(pid, []):
+                vocab |= {w.lower() for w in proc.content_words(s)}
+            src_vocab[pid] = vocab
+        src_content = src_vocab[pid]
         sent_content = {w.lower() for w in proc.content_words(sent)}
         if sent_content & src_content:
             gloss += 1  # candidate gloss (shares a source content word)

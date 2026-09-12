@@ -25,6 +25,16 @@ but to within whitespace for 296, and whitespace placement drifts.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Running `python scripts/x.py` puts scripts/ on sys.path, not the repo root, so
+# `import profiler` fails. Bootstrap it rather than relying on PYTHONPATH: a
+# missing import here silently disabled a correctness filter once already.
+_ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
 import argparse
 import json
 import re

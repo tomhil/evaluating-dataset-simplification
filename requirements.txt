@@ -3,6 +3,10 @@ numpy>=1.24
 scipy>=1.10
 pandas>=2.0
 pyarrow>=12.0
+# Used by scripts/fetch_all.py to range-read remote parquet shards. Arrives
+# transitively via pandas/huggingface, but four of the eight fetchers import it
+# directly, so a clean install from these deps must include it.
+fsspec>=2023.1
 pyyaml>=6.0
 matplotlib>=3.7
 # Pinned: >=0.7.4 fetches syllables from NLTK cmudict (network download);

@@ -13,6 +13,16 @@ the pipeline's own contract.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Running `python scripts/x.py` puts scripts/ on sys.path, not the repo root, so
+# `import profiler` fails. Bootstrap it rather than relying on PYTHONPATH: a
+# missing import here silently disabled a correctness filter once already.
+_ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
 import argparse
 import json
 from pathlib import Path
@@ -84,6 +94,37 @@ def _m6_effect(feature: dict) -> tuple[float | None, bool]:
     return feature.get("cohens_d_deleted_vs_retained"), True
 
 
+# Features the pipeline no longer computes must not be ranked out of an older
+# archive. rouge_recall_in_target was removed for restating M6's own dependent
+# variable, and without this filter it came back as the #1 deletion driver in 5
+# of 6 corpora -- the estimator change was flagged, its removal was not.
+def _current_m6_features() -> set[str]:
+    """The features M6 still computes. Raises rather than degrading quietly.
+
+    This previously swallowed an ImportError and returned an empty set, which
+    the caller read as "no filter" -- so a removed feature came back as the #1
+    deletion driver with nothing indicating the filter had not run.
+    """
+    from profiler.modules.m6_deletion import ALL_FEATURES
+
+    return set(ALL_FEATURES)
+
+
+def _rank_m6_features(feats: dict) -> list[tuple[str, float]]:
+    """M6 features by descending |effect|, restricted to ones still computed."""
+    current = _current_m6_features()
+    out = []
+    for name, v in feats.items():
+        if not isinstance(v, dict):
+            continue
+        if name not in current:
+            continue
+        eff = _m6_effect(v)[0]
+        if eff is not None:
+            out.append((name, eff))
+    return sorted(out, key=lambda kv: abs(kv[1]), reverse=True)
+
+
 def _dig(d: dict, *path, default=None):
     for p in path:
         if not isinstance(d, dict) or p not in d:
@@ -113,11 +154,7 @@ def row_values(m: dict) -> dict:
 
     # M6: features ranked by |Cohen's d| between deleted and retained sentences.
     feats = D.get("features", {}) or {}
-    ranked = sorted(
-        ((k, _m6_effect(v)[0]) for k, v in feats.items()
-         if isinstance(v, dict) and _m6_effect(v)[0] is not None),
-        key=lambda kv: abs(kv[1]), reverse=True,
-    )
+    ranked = _rank_m6_features(feats)
     return {
         "n_full": m.get("n_full"), "n_sample": m.get("n_sample"),
         "compression": L.get("compression_ratio"),

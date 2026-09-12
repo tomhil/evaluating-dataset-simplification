@@ -180,22 +180,34 @@ def point_biserial(values: Sequence[float], indicator: Sequence[int]) -> float |
     return float(np.corrcoef(v, ind)[0, 1])
 
 
-def dip_statistic(values: Sequence[float]) -> float | None:
-    """Hartigan-style unimodality dip: the maximum gap between the empirical CDF
-    and the closest unimodal (here, best-fitting uniform) CDF, a lightweight
-    bimodality indicator with no external dependency.
+def bimodality_coefficient(values: Sequence[float]) -> float | None:
+    """Sarle's bimodality coefficient: ``(skew^2 + 1) / kurtosis``.
 
-    This is a descriptive flag, not a hypothesis test. Larger values indicate a
-    less unimodal distribution; always read it against the emitted histogram.
+    Above roughly 0.555 -- the value a uniform distribution takes -- a sample is
+    more consistent with two or more modes than with one. A bimodal corpus is a
+    mixed corpus whose mean describes no document in it, so this is a prompt to
+    read the histogram, not a hypothesis test.
+
+    Replaces a ``dip_statistic`` that returned ``max|ECDF - uniform CDF|``, and
+    so measured distance from *uniform* rather than bimodality. It was
+    anti-correlated with its own claim: a unimodal lognormal scored 0.724
+    against 0.208 for a genuine two-mode mixture, and a unimodal normal 0.275.
+    Compression ratios are ratios of positive quantities and therefore
+    lognormal-ish, which is why every corpus profiled tripped the old flag.
+
+    ``None`` when the sample is too small or has no variance.
     """
 
-    arr = np.sort(_clean(values))
-    n = arr.size
-    if n < 4:
+    arr = _clean(values)
+    n = int(arr.size)
+    if n < 4 or float(np.std(arr)) == 0.0:
         return None
-    lo, hi = float(arr[0]), float(arr[-1])
-    if hi <= lo:
-        return 0.0
-    ecdf = np.arange(1, n + 1) / n
-    uniform_cdf = (arr - lo) / (hi - lo)
-    return float(np.max(np.abs(ecdf - uniform_cdf)))
+    from scipy.stats import kurtosis, skew
+
+    g = float(skew(arr, bias=False))
+    k = float(kurtosis(arr, fisher=True, bias=False))
+    # Sarle's denominator, carrying the small-sample correction.
+    denom = k + 3.0 * ((n - 1) ** 2) / ((n - 2) * (n - 3))
+    if denom <= 0:
+        return None
+    return (g * g + 1.0) / denom
