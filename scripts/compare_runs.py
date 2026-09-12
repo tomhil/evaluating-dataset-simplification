@@ -157,6 +157,10 @@ def row_values(m: dict) -> dict:
     ranked = _rank_m6_features(feats)
     return {
         "n_full": m.get("n_full"), "n_sample": m.get("n_sample"),
+        # Provenance, so build() can report the backends instead of asserting
+        # them. Absent in older archives, which read as unknown.
+        "embedder": _dig(m, "config", "embedder"),
+        "nli_backend": _dig(m, "config", "nli_backend"),
         "compression": L.get("compression_ratio"),
         "src_tokens": L.get("src_tokens"), "tgt_tokens": L.get("tgt_tokens"),
         "published": "",  # filled by build() once the label is known
@@ -187,6 +191,31 @@ def row_values(m: dict) -> dict:
     }
 
 
+REAL_BACKENDS = {"embedder": "sbert", "nli_backend": "nli"}
+
+
+def _backend_note(rows: dict[str, dict]) -> str:
+    """Describe the backends the runs actually used.
+
+    Names a stand-in loudly rather than letting it pass as a real model.
+    """
+
+    embedders = {r.get("embedder") for r in rows.values()}
+    nlis = {r.get("nli_backend") for r in rows.values()}
+    if embedders == {"sbert"} and nlis == {"nli"}:
+        return "real backends (SBERT + deberta-large-mnli)"
+    parts = [
+        f"embedder={_setstr(embedders)}",
+        f"nli_backend={_setstr(nlis)}",
+    ]
+    return (
+        "MIXED OR STAND-IN BACKENDS (" + ", ".join(parts) + ") -- the hashing "
+        "embedder and lexical scorer are deterministic stand-ins whose cosine "
+        "scale is unrelated to SBERT's, so every tau-derived figure below "
+        "(M4 coverage, M6 deletion split) is not comparable to a real run"
+    )
+
+
 def build(rows: dict[str, dict]) -> str:
     labels = [l for l in ORDER if l in rows] + [l for l in rows if l not in ORDER]
     for l in labels:
@@ -194,8 +223,14 @@ def build(rows: dict[str, dict]) -> str:
     out: list[str] = ["# Cross-corpus task profile\n"]
     n_full = {r["n_full"] for r in rows.values()}
     n_smp = {r["n_sample"] for r in rows.values()}
+    # The backend claim used to be hardcoded. Every metrics.json records
+    # config.embedder and config.nli_backend, and a run of configs/smoke.yaml
+    # (embedder: hashing, nli_backend: lexical) would have published stand-in
+    # numbers labelled as SBERT + DeBERTa -- and smoke.yaml itself warns that
+    # the hashing embedder's cosine scale is unrelated to SBERT's, which makes
+    # every tau-derived row meaningless. Report what was actually used.
     out.append(
-        f"{len(labels)} corpora profiled with real backends (SBERT + deberta-large-mnli). "
+        f"{len(labels)} corpora profiled with {_backend_note(rows)}. "
         f"M1-M3 over n={_setstr(n_full)} pairs; M4-M6 over a seeded n={_setstr(n_smp)} sample. "
         "Every number is copied from that corpus's `metrics.json`.\n"
     )

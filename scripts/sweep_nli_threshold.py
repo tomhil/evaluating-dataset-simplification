@@ -67,13 +67,22 @@ def rate_below(hist: dict, t: float) -> float:
 def load(runs_dir: Path) -> dict[str, dict]:
     out: dict[str, dict] = {}
     for mpath in sorted(runs_dir.glob("*/metrics.json")):
-        doc = json.loads(mpath.read_text())
+        # A run without the elaboration module, or a metrics.json left
+        # half-written by an interrupted run, used to abort the whole sweep on
+        # KeyError or JSONDecodeError. compare_runs and archive_results already
+        # guard both; skip and carry on.
+        try:
+            doc = json.loads(mpath.read_text())
+        except (json.JSONDecodeError, OSError):
+            continue
         label = doc.get("config", {}).get("dataset_label")
         if label not in ORDER:
             continue
-        e = doc["modules"]["elaboration"]["corpus"]
-        scorer = e["primary_scorer"]
-        hist = e["per_scorer"][scorer].get("score_histogram")
+        e = (doc.get("modules", {}).get("elaboration") or {}).get("corpus") or {}
+        scorer = e.get("primary_scorer")
+        if not scorer:
+            continue
+        hist = (e.get("per_scorer", {}).get(scorer) or {}).get("score_histogram")
         if hist:
             out[label] = hist  # later timestamps overwrite earlier ones
     return out
@@ -90,10 +99,14 @@ def main() -> int:
         raise SystemExit(f"no runs with elaboration histograms under {args.runs}/")
 
     header = "| threshold | " + " | ".join(f"{l} ({TASK[l]})" for l in labels)
-    if CONTROL in labels and all(p in labels for p in PLS):
+    has_delta = CONTROL in labels and all(p in labels for p in PLS)
+    if has_delta:
         header += " | PLS - SUM"
     print(header + " |")
-    print("|---" * (len(labels) + 2) + "|")
+    # Column count must follow the header: the separator was always
+    # len(labels)+2, so omitting the PLS-SUM column emitted a 3-column header
+    # with a 4-column separator and the markdown table did not render.
+    print("|---" * (len(labels) + 1 + int(has_delta)) + "|")
 
     for t in THRESHOLDS:
         r = {l: rate_below(hists[l], t) for l in labels}

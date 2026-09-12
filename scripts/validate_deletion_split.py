@@ -123,6 +123,27 @@ def sentence_labels(
     return out
 
 
+def _corpus_indices(cfg, n_docs: int) -> list[int] | None:
+    """Indices of the documents in the fetched swipe_gold corpus.
+
+    ``fetch_swipe_gold`` writes ids of the form ``swipeg<index>``, where the
+    index is the position in ``swipe_train.json``. Reading them back gives
+    exactly the population the pipeline profiles.
+    """
+
+    path = Path(cfg.dataset.path or "")
+    if not path.exists():
+        return None
+    out: list[int] = []
+    with path.open() as fh:
+        for line in fh:
+            pid = str(json.loads(line).get("id", ""))
+            m = re.fullmatch(r"swipeg(\d+)", pid)
+            if m and int(m.group(1)) < n_docs:
+                out.append(int(m.group(1)))
+    return out or None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=200, help="documents to check")
@@ -154,17 +175,47 @@ def main() -> int:
     if args.tau is None:
         args.tau = cfg.run.m6_tau
     proc = get_processor("en")
-    embedder = get_embedder(cfg, Cache(cfg.run.cache_dir, "alignment"))
+    # Same namespace the pipeline uses (profiler/run.py), so this reuses the
+    # run's embeddings instead of re-encoding every sentence into a duplicate
+    # cache tree. CachedEmbedder keys on content_hash(model, sentence), so the
+    # keys already matched -- they were just landing in another directory.
+    embedder = get_embedder(cfg, Cache(cfg.run.cache_dir, "profiler"))
 
     with urllib.request.urlopen(SWIPE_TRAIN, timeout=900) as resp:
         docs = json.load(resp)
 
+    # Validate the documents the pipeline actually profiles. This was
+    # `docs[:limit]` -- a deterministic head slice -- while fetch_swipe_gold
+    # draws a seeded random sample, so the threshold was calibrated on a
+    # population that largely was not in the corpus M6 then ran over, and the
+    # kappa figures quoted in three configs and RESULTS.md came from that slice.
+    # Reading the ids out of the fetched corpus ties the two together by
+    # construction rather than by both scripts happening to share an RNG.
+    chosen = _corpus_indices(cfg, len(docs))
+    if chosen is None:
+        print(
+            "NOTE: data/swipe_gold/train_1000.jsonl not found; falling back to a "
+            "seeded sample of the full file. Fetch the corpus first to validate "
+            "exactly the documents the pipeline profiles."
+        )
+        import random as _random
+
+        chosen = list(range(len(docs)))
+        _random.Random(cfg.run.seed).shuffle(chosen)
+    chosen = chosen[: args.limit]
+    print(f"validating {len(chosen)} of the corpus's own documents")
+
     tp = fp = fn = tn = 0
     skipped = 0
     used = 0
-    for doc in docs[: args.limit]:
+    for _i in chosen:
+        doc = docs[_i]
         source, target = doc.get("r_content") or "", doc.get("s_content") or ""
         if not source.strip() or not target.strip():
+            # Counted like every other rejection, so `used + skipped` accounts
+            # for the whole requested sample and the reader can see how much
+            # survived.
+            skipped += 1
             continue
         toks, flags = human_deleted_tokens(doc)
         if not toks:

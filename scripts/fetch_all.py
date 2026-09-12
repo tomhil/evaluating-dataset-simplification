@@ -15,7 +15,9 @@ shards are ~260MB and we only ever want the first thousand rows.
 from __future__ import annotations
 
 import argparse
+import codecs
 import json
+import os
 import random
 import urllib.request
 from pathlib import Path
@@ -31,20 +33,40 @@ STRATA = 5
 
 
 def _write(name: str, split: str, limit: int, rows: Iterator[Pair]) -> Path:
+    """Write a corpus sample, atomically.
+
+    The output used to be opened ``"w"`` before the row iterator ran, so any
+    mid-fetch failure -- an HTTP error, a renamed parquet column -- left a
+    truncated file at the real path. ``main`` caught the exception, printed
+    FAILED and carried on, but the next profiler run then read a short corpus
+    whose name still claimed ``_1000`` and published whatever ``n_full`` it
+    found. Write to a temp file and rename only on success, so a failed fetch
+    leaves the previous good corpus untouched.
+    """
+
     out = Path("data") / name / f"{split}_{limit}.jsonl"
     out.parent.mkdir(parents=True, exist_ok=True)
+    tmp = out.with_name(f"{out.name}.{os.getpid()}.tmp")
     n = skipped = 0
-    with out.open("w", encoding="utf-8") as fh:
-        for pid, src, tgt in rows:
-            src, tgt = src.strip(), tgt.strip()
-            if not src or not tgt:
-                skipped += 1
-                continue
-            fh.write(json.dumps({"id": pid, "source": src, "target": tgt}) + "\n")
-            n += 1
-            if n >= limit:
-                break
-    print(f"  {name}: wrote {n} pairs to {out}" + (f" ({skipped} empty skipped)" if skipped else ""))
+    try:
+        with tmp.open("w", encoding="utf-8") as fh:
+            for pid, src, tgt in rows:
+                src, tgt = src.strip(), tgt.strip()
+                if not src or not tgt:
+                    skipped += 1
+                    continue
+                fh.write(json.dumps({"id": pid, "source": src, "target": tgt}) + "\n")
+                n += 1
+                if n >= limit:
+                    break
+        os.replace(tmp, out)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+    note = f" ({skipped} empty skipped)" if skipped else ""
+    if n < limit:
+        note += f"  [SHORT: wanted {limit}; the corpus has no more usable pairs]"
+    print(f"  {name}: wrote {n} pairs to {out}{note}")
     return out
 
 
@@ -113,12 +135,22 @@ def _parquet_rows(
         {round(i * (len(groups) - 1) / max(strata - 1, 1)) for i in range(strata)}
     )
     chosen = [groups[i] for i in picks]
-    # Oversample: _write drops pairs with an empty side and we still want `limit`.
-    take = _allocate([g[2] for g in chosen], int(limit * 1.2))
+    # Oversample so _write's empty-side drops cannot leave us short, bounded
+    # because each stratum is materialised in full by to_pylist(). 2x survives
+    # a 50% empty rate; the old 1.2x survived 17%, and past that _write wrote a
+    # short file still named `_1000`. Interleaving below means the extra rows
+    # cost every stratum equally rather than starving the last.
+    take = _allocate([g[2] for g in chosen], int(limit * 2))
 
     rng = random.Random(SEED)
-    seen = 0
     handles: dict[str, object] = {}
+    # Collect per stratum, then interleave. Yielding stratum by stratum meant
+    # _write's truncation fell entirely on whichever came last: CNN/DailyMail's
+    # five row groups contributed 240/240/240/240/40 and XSum's 435/240/240/85,
+    # so the last stratum landed at a sixth of its share. Picking five
+    # spread-out row groups exists to get an even spread, and PLOS and eLife are
+    # ordered by year and journal, so the shortfall skews the population.
+    per_stratum: list[list[Pair]] = []
     for (url, rg, _), want in zip(chosen, take):
         if want <= 0:
             continue
@@ -126,9 +158,40 @@ def _parquet_rows(
             handles[url] = pq.ParquetFile(fsspec.open(url).open())
         table = handles[url].read_row_group(rg, columns=[src_field, tgt_field])
         recs = table.to_pylist()
-        for rec in rng.sample(recs, min(want, len(recs))):
-            yield f"{prefix}{rg}_{seen}", str(rec[src_field] or ""), str(rec[tgt_field] or "")
-            seen += 1
+        # The row-group index is file-local, so include the shard to keep ids
+        # unique across a multi-shard corpus (run.validate_corpus rejects
+        # duplicates, and M4 keys its similarity matrices by id).
+        shard = urls.index(url)
+        per_stratum.append(
+            [
+                (
+                    f"{prefix}{shard}_{rg}_{j}",
+                    str(rec[src_field] or ""),
+                    str(rec[tgt_field] or ""),
+                )
+                for j, rec in enumerate(rng.sample(recs, min(want, len(recs))))
+            ]
+        )
+    yield from _interleave(per_stratum)
+
+
+def _interleave(strata: list[list]) -> Iterator:
+    """Round-robin across strata, so a truncated read costs each one equally.
+
+    Deterministic and exactly even: after any prefix, the counts drawn from two
+    strata that still have rows differ by at most one. A stratum that runs out
+    simply drops out of the rotation.
+    """
+
+    if not strata:
+        return
+    depth = 0
+    longest = max((len(s) for s in strata), default=0)
+    while depth < longest:
+        for rows in strata:
+            if depth < len(rows):
+                yield rows[depth]
+        depth += 1
 
 
 def _lines(url: str) -> list[str]:
@@ -145,10 +208,23 @@ def _aligned_rows(base: str, split: str, src_ext: str, tgt_ext: str, prefix: str
     src = _lines(f"{base}/{split}.{src_ext}")
     tgt = _lines(f"{base}/{split}.{tgt_ext}")
     if len(src) != len(tgt):
-        raise SystemExit(f"{prefix}: {len(src)} source vs {len(tgt)} target lines")
-    # Oversample: _write drops pairs with an empty side, and we still want `limit`.
-    want = min(int(limit * 1.2), len(src))
-    picks = sorted(random.Random(SEED).sample(range(len(src)), want))
+        # ValueError, not SystemExit: main() catches Exception so it can report
+        # every corpus at the end, and SystemExit is a BaseException that walked
+        # straight past it -- one desynced corpus aborted every corpus after it.
+        raise ValueError(f"{prefix}: {len(src)} source vs {len(tgt)} target lines")
+    # Both files are already fully in memory, so yield a shuffled permutation of
+    # the *whole* index range and let _write stop when it has enough. This
+    # replaces a fixed 1.2x oversample that had two problems. It was sorted
+    # ascending, and _write stops at the first `limit` usable rows, so nothing
+    # past 1/1.2 = 83.3% of the file could ever be written -- the committed
+    # corpora top out at index 2959 of Cochrane's 3568, 6561 of D-Wikipedia's
+    # ~8000 and 3214 of SWiPE-gold's 3861. And 1.2x is only enough if under 17%
+    # of pairs have an empty side; past that _write silently wrote a short file
+    # still named `_1000`. A full permutation has neither failure mode: the
+    # prefix _write consumes is an unbiased sample of the whole corpus at any
+    # length, and the draw falls short only if the corpus genuinely is.
+    picks = list(range(len(src)))
+    random.Random(SEED).shuffle(picks)
     for i in picks:
         yield f"{prefix}{i}", src[i], tgt[i]
 
@@ -201,14 +277,22 @@ def _stream_json_array(url: str, chunk: int = 1 << 20) -> Iterator[dict]:
     a gigabyte of Python objects to hand back a thousand rows.
     """
     dec = json.JSONDecoder()
+    # Each chunk used to be decoded on its own, so any UTF-8 sequence straddling
+    # a 1MiB boundary became U+FFFD on both sides -- about 190 corruption sites
+    # in SWiPE's 190MB array. An incremental decoder carries the partial
+    # sequence across the boundary instead.
+    text_dec = codecs.getincrementaldecoder("utf-8")(errors="replace")
     req = urllib.request.Request(url, headers={"User-Agent": "fetch_all/1"})
     with urllib.request.urlopen(req, timeout=900) as resp:
         buf = ""
         started = False
+        closed = False
         while True:
             data = resp.read(chunk)
             if data:
-                buf += data.decode("utf-8", errors="replace")
+                buf += text_dec.decode(data)
+            else:
+                buf += text_dec.decode(b"", final=True)
             if not started:
                 buf = buf.lstrip()
                 if not buf:
@@ -216,13 +300,14 @@ def _stream_json_array(url: str, chunk: int = 1 << 20) -> Iterator[dict]:
                         return
                     continue
                 if buf[0] != "[":
-                    raise SystemExit(f"expected a JSON array at {url}")
+                    raise ValueError(f"expected a JSON array at {url}")
                 buf = buf[1:]
                 started = True
             while True:
                 buf = buf.lstrip().lstrip(",").lstrip()
                 if not buf or buf[0] == "]":
                     if buf[:1] == "]":
+                        closed = True
                         return
                     break
                 try:
@@ -232,6 +317,16 @@ def _stream_json_array(url: str, chunk: int = 1 << 20) -> Iterator[dict]:
                 buf = buf[end:]
                 yield obj
             if not data:
+                # A transfer that ends without the closing bracket was cut
+                # short. Returning quietly yielded a reservoir drawn from the
+                # prefix only, and SWiPE's corpus is ordered by page title, so
+                # that prefix is an alphabetical slice -- precisely the bias the
+                # reservoir exists to avoid.
+                if not closed:
+                    raise ValueError(
+                        f"truncated JSON array at {url}: stream ended without "
+                        f"a closing ']'"
+                    )
                 return
 
 
@@ -282,8 +377,11 @@ def fetch_swipe_gold(limit: int) -> Path:
     """
     with urllib.request.urlopen(f"{SWIPE_RAW}/swipe_train.json", timeout=600) as resp:
         docs = json.load(resp)
-    want = min(int(limit * 1.2), len(docs))
-    picks = sorted(random.Random(SEED).sample(range(len(docs)), want))
+    # Shuffled permutation, not sorted picks: _write stops at the first `limit`
+    # usable rows, so an ascending yield order made everything past 83.3% of the
+    # file unreachable -- the committed sample tops out at index 3214 of 3861.
+    picks = list(range(len(docs)))
+    random.Random(SEED).shuffle(picks)
     rows = (
         (f"swipeg{i}", str(docs[i].get("r_content") or ""), str(docs[i].get("s_content") or ""))
         for i in picks
