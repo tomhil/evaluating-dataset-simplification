@@ -126,20 +126,38 @@ class Config:
 
 
 def _opt_int(value: Any, name: str) -> int | None:
-    """Coerce a nullable integer field, raising ConfigError on junk.
-
-    ``sample_size`` was the one numeric run field taken as-is, to preserve
-    ``null``. PyYAML reads ``sample_size: 1e3`` as the *string* ``"1e3"`` (YAML
-    1.1 wants ``1.0e+3``), which then reached ``validate``'s ``<= 0`` and raised
-    a bare TypeError instead of a ConfigError naming the field.
-    """
+    """Coerce a nullable integer field, raising ConfigError on junk."""
 
     if value is None:
         return None
+    return _num(value, name, int, "an integer or null")
+
+
+def _num(value: Any, name: str, cast, expected: str):
+    """Coerce a numeric run field, reporting failure as a ConfigError.
+
+    Every numeric field went through a bare ``int()``/``float()``, so junk
+    raised ValueError or TypeError from inside the parser rather than a
+    ConfigError naming the field -- and ``profiler.__main__`` catches neither,
+    so the user saw a traceback. PyYAML makes this easy to hit: YAML 1.1 needs
+    ``1.0e+3``, so ``seed: 1e3`` arrives as the *string* ``"1e3"``.
+    """
+
     try:
-        return int(value)
+        return cast(value)
     except (TypeError, ValueError):
-        raise ConfigError(f"run.{name} must be an integer or null; got {value!r}") from None
+        raise ConfigError(f"run.{name} must be {expected}; got {value!r}") from None
+
+
+def _num_list(value: Any, name: str) -> list[float]:
+    """Coerce a list-of-floats run field (``tau_sweep``).
+
+    A scalar raised ``TypeError: 'int' object is not iterable`` from ``list()``.
+    """
+
+    if isinstance(value, (str, bytes)) or not isinstance(value, (list, tuple)):
+        raise ConfigError(f"run.{name} must be a list of numbers; got {value!r}")
+    return [_num(v, name, float, "a list of numbers") for v in value]
 
 
 def _require(d: dict, key: str, where: str) -> Any:
@@ -197,13 +215,15 @@ def parse_config(raw: dict) -> Config:
         raise ConfigError("'run' must be a mapping")
     run = RunConfig(
         sample_size=_opt_int(run_raw.get("sample_size", 1000), "sample_size"),
-        seed=int(run_raw.get("seed", 13)),
+        seed=_num(run_raw.get("seed", 13), "seed", int, "an integer"),
         language=str(run_raw.get("language", "en")),
         cache_dir=str(run_raw.get("cache_dir", ".cache/")),
         output_dir=str(run_raw.get("output_dir", "runs/")),
-        bootstrap_resamples=int(run_raw.get("bootstrap_resamples", 1000)),
-        tau_sweep=list(run_raw.get("tau_sweep", [0.4, 0.5, 0.6, 0.7, 0.8])),
-        nli_threshold=float(run_raw.get("nli_threshold", 0.5)),
+        bootstrap_resamples=_num(
+            run_raw.get("bootstrap_resamples", 1000), "bootstrap_resamples", int, "an integer"
+        ),
+        tau_sweep=_num_list(run_raw.get("tau_sweep", [0.4, 0.5, 0.6, 0.7, 0.8]), "tau_sweep"),
+        nli_threshold=_num(run_raw.get("nli_threshold", 0.5), "nli_threshold", float, "a number"),
         jargon_terms=list(run_raw.get("jargon_terms", []) or []),
         embedder=str(run_raw.get("embedder", "sbert")),
         embed_model=str(
@@ -212,7 +232,7 @@ def parse_config(raw: dict) -> Config:
         nli_backend=str(run_raw.get("nli_backend", "nli")),
         nli_model=str(run_raw.get("nli_model", "microsoft/deberta-large-mnli")),
         device=str(run_raw.get("device", "auto")),
-        m6_tau=float(run_raw.get("m6_tau", 0.5)),
+        m6_tau=_num(run_raw.get("m6_tau", 0.5), "m6_tau", float, "a number"),
         alignscore=bool(run_raw.get("alignscore", False)),
         summac=bool(run_raw.get("summac", False)),
         heuristic_only=bool(run_raw.get("heuristic_only", False)),
@@ -245,6 +265,8 @@ def validate(cfg: Config) -> None:
         raise ConfigError("run.sample_size must be positive or null")
     if cfg.run.bootstrap_resamples <= 0:
         raise ConfigError("run.bootstrap_resamples must be positive")
+    if not cfg.run.tau_sweep:
+        raise ConfigError("run.tau_sweep must not be empty")
     for t in cfg.run.tau_sweep:
         if not 0.0 <= float(t) <= 1.0:
             raise ConfigError(f"tau values must be in [0,1]; got {t}")

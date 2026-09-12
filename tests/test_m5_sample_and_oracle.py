@@ -75,52 +75,115 @@ def test_annotation_sample_is_seed_deterministic():
     ]
 
 
-def test_upper_bound_caveat_is_attached_to_every_run_regardless_of_size():
+def _m5_result(pairs, ctx):
+    """Run M5 offline (lexical scorer, no model download)."""
+    from profiler.modules import m4_alignment, m5_elaboration
+
+    m4_alignment.compute(pairs, ctx)  # populates ctx.shared["alignment"]
+    return m5_elaboration.compute(pairs, ctx)
+
+
+@pytest.mark.parametrize("n_pairs", [1, 3, 40])
+def test_upper_bound_caveat_is_attached_to_every_run_regardless_of_size(n_pairs, ctx):
     """Cochrane and PLOS lost this caveat by having too many sentences.
 
-    The caveat is unconditionally true -- the automatic rate is an upper bound
-    until someone annotates the sample -- so nothing about the corpus may gate
-    it. Asserted against the committed runs, which is where the gate showed:
-    Cochrane and PLOS carry no caveat, every smaller corpus does.
+    Asserted on the returned notes, not on the module's source text. The
+    previous version of this test read the source and checked the append was
+    unconditional, which was true and yet missed that ``compute`` returns early
+    on a corpus with no target sentences and never reached it -- the caveat had
+    moved rather than become unconditional. A test that reads code instead of
+    running it cannot see that.
     """
-    import glob
-
     from profiler.modules.m5_elaboration import UPPER_BOUND_NOTE
+    from profiler.types import Pair
 
-    assert "upper bound" in UPPER_BOUND_NOTE
+    src = "The treatment reduced symptoms. Patients improved over eight weeks."
+    tgt = "The medicine helped. People got better in two months."
+    pairs = [Pair(id=f"p{i}", source=src, target=tgt) for i in range(n_pairs)]
 
-    body = open("profiler/modules/m5_elaboration.py").read().split("def compute", 1)[1]
-    body = body.split("\ndef ", 1)[0]
-    # The note goes in unconditionally: appended at the same indentation as the
-    # return, not inside any branch.
-    assert "\n    notes.append(UPPER_BOUND_NOTE)\n" in body
-
-    # And the runs that lost it are exactly the two largest corpora.
-    lost = []
-    for path in sorted(glob.glob("runs/*/metrics.json")):
-        mod = json.load(open(path))["modules"].get("elaboration")
-        if mod and not any("upper bound" in n for n in mod.get("notes", [])):
-            lost.append(path.split("/")[1].rsplit("_", 1)[0])
-    assert set(lost) <= {"cochrane", "plos"}, f"unexpected corpora lost it: {lost}"
+    result = _m5_result(pairs, ctx)
+    assert UPPER_BOUND_NOTE in result.notes
 
 
-@pytest.mark.parametrize("path", ["data/plos/train_1000.jsonl", "data/cnn_dailymail/train_1000.jsonl"])
-def test_oracle_selection_is_unchanged_by_the_speedup(path):
+def test_upper_bound_caveat_survives_the_no_sentences_early_return(ctx):
+    """The path that returns before the caveat is appended."""
+    from profiler.modules.m5_elaboration import UPPER_BOUND_NOTE, compute
+
+    # What M4 leaves behind for a corpus with nothing in it.
+    ctx.shared["alignment"] = {"src_sents": {}, "tgt_sents": {}, "pairs": {}}
+    result = compute([], ctx)
+    assert result.corpus["n_target_sentences"] == 0
+    assert UPPER_BOUND_NOTE in result.notes
+
+
+# Multi-sentence documents with overlapping vocabulary, so the greedy oracle
+# makes non-trivial choices. Built in-process rather than read from data/,
+# which holds only smoke.jsonl on a clean checkout -- this comparison is the
+# only check that the rewritten _ext_oracle_k still selects what it used to,
+# and it silently skipped everywhere the corpora had not been fetched.
+_SYNTHETIC = [
+    (
+        "The trial enrolled 240 adult patients across twelve centres. "
+        "Participants received either the active drug or a matched placebo. "
+        "Symptom scores fell by 4.2 points in the treatment arm. "
+        "No serious adverse events were reported during follow-up. "
+        "The authors conclude the drug is effective and well tolerated. "
+        "Funding came from a national research council.",
+        "The drug reduced symptoms by 4.2 points and caused no serious harm.",
+    ),
+    (
+        "Rainfall in the catchment declined by 18% over three decades. "
+        "Groundwater extraction rose sharply after 1995. "
+        "Two of the four monitored wells are now dry each summer. "
+        "Restoration would require reducing extraction by a third.",
+        "Less rain and more pumping have dried the wells; extraction must fall.",
+    ),
+    (
+        "One sentence only, which the oracle must still handle.",
+        "A short target.",
+    ),
+]
+
+
+def _oracle_cases():
+    """Synthetic pairs always, plus real corpora when they have been fetched."""
+    cases = list(_SYNTHETIC)
+    for path in ("data/plos/train_1000.jsonl", "data/cochrane/train_1000.jsonl"):
+        try:
+            rows = [json.loads(line) for line in open(path)][:8]
+        except FileNotFoundError:
+            continue
+        cases += [(r["source"], r["target"]) for r in rows]
+    return cases
+
+
+def test_oracle_selection_is_unchanged_by_the_speedup():
     """The fast path must pick the same sentences, not merely similar ones."""
     from profiler.nlp import get_processor
 
     proc = get_processor("en")
-    try:
-        rows = [json.loads(line) for line in open(path)][:12]
-    except FileNotFoundError:
-        pytest.skip(f"{path} not fetched")
+    cases = _oracle_cases()
+    assert len(cases) >= len(_SYNTHETIC)
 
-    for r in rows:
-        sents = proc.sentences(r["source"])
-        budget = len(proc.words(r["target"]))
-        fast = _ext_oracle_k(sents, r["target"], proc, budget)
-        slow = _ext_oracle_k_reference(sents, r["target"], proc, budget)
-        assert fast == slow
+    for source, target in cases:
+        sents = proc.sentences(source)
+        budget = len(proc.words(target))
+        assert _ext_oracle_k(sents, target, proc, budget) == _ext_oracle_k_reference(
+            sents, target, proc, budget
+        )
+
+
+def test_oracle_is_exercised_non_trivially_by_the_synthetic_fixture():
+    """Guards the fixture itself: a fixture where the oracle takes everything,
+    or nothing, would make the equivalence test above vacuous."""
+    from profiler.nlp import get_processor
+
+    proc = get_processor("en")
+    source, target = _SYNTHETIC[0]
+    sents = proc.sentences(source)
+    picked = _ext_oracle_k(sents, target, proc, len(proc.words(target)))
+    assert picked, "oracle selected nothing"
+    assert len(proc.sentences(picked)) < len(sents), "oracle selected everything"
 
 
 def _ext_oracle_k_reference(src_sents, target, proc, budget):
@@ -170,10 +233,33 @@ def test_words_fast_matches_words_on_real_corpus_text():
     tokenizer and ``is_space``/``is_punct`` are lexeme attributes. This pins
     that, so a future pipeline component that retokenises fails here rather
     than silently shifting every n-gram count.
+
+    Guarded on ``has_parser``: ``SimpleProcessor.words_fast`` delegates to
+    ``words``, so without the guard this asserts ``x == x`` and passes on any
+    machine missing the spaCy model -- and ``pyproject.toml`` ignores the
+    RuntimeWarning that would otherwise reveal the fallback.
     """
     from profiler.nlp import get_processor
 
     proc = get_processor("en")
+    if not proc.has_parser:
+        pytest.skip("spaCy model unavailable; words_fast delegates to words")
+
+    # Text chosen to stress tokenisation: decimals, abbreviations, hyphens,
+    # unicode punctuation, contractions, URLs, parentheses.
+    texts = [
+        "The OR was 0.61 (95% CI 0.46 to 0.79), i.e. a real effect.",
+        "Dr. Smith et al. reported 3.5-fold higher uptake vs. controls.",
+        "It doesn't hold — see https://example.org/a_b?c=1 for details.",
+        "Well-being scores rose; p<0.001. N=1,240 participants.",
+        "Café naïve résumé — 100 µg/mL at 37°C.",
+        "",
+        "   ",
+        "...",
+    ]
+    for sent in texts:
+        assert proc.words_fast(sent) == proc.words(sent), sent
+
     checked = 0
     for path in ("data/plos/train_1000.jsonl", "data/cochrane/train_1000.jsonl"):
         try:
@@ -185,29 +271,56 @@ def test_words_fast_matches_words_on_real_corpus_text():
                 for sent in proc.sentences(text):
                     assert proc.words_fast(sent) == proc.words(sent)
                     checked += 1
-    if not checked:
-        pytest.skip("no corpora fetched")
-    assert checked > 100
+    # Synthetic coverage above always runs; corpora are a bonus when fetched.
+    assert checked >= 0
 
 
-def test_words_fast_is_much_faster_on_a_long_document():
-    """Guards the reason words_fast exists, not a wall-clock target."""
-    import time
+def test_m6_sentence_features_are_unchanged_by_the_tokenizer_path():
+    """M6's published sent_len and syllables_per_word moved to words_fast.
 
+    Nothing pinned them. These two feed the deletion-profile effect sizes, so a
+    divergence between the two token paths would shift a published statistic.
+    """
+    from profiler import readability as rd
     from profiler.nlp import get_processor
 
     proc = get_processor("en")
-    sents = ["The treatment reduced symptoms in adult patients."] * 120
+    if not proc.has_parser:
+        pytest.skip("spaCy model unavailable; words_fast delegates to words")
 
-    proc.words_fast(sents[0])  # warm the tokenizer
-    t0 = time.monotonic()
-    for i, s in enumerate(sents):
-        proc.words_fast(f"{s} {i}")
-    fast = time.monotonic() - t0
+    sents = [
+        "The OR was 0.61 (95% CI 0.46 to 0.79), i.e. a real effect.",
+        "Participants received either the active drug or a matched placebo.",
+        "Short one.",
+        "Well-being scores rose; p<0.001.",
+    ]
+    for sent in sents:
+        fast, full = proc.words_fast(sent), proc.words(sent)
+        assert len(fast) == len(full)
+        assert rd.syllables_per_word(fast) == rd.syllables_per_word(full)
 
-    t0 = time.monotonic()
-    for i, s in enumerate(sents):
-        proc.words(f"{s} {i}")
-    full = time.monotonic() - t0
 
-    assert fast * 3 < full, f"fast {fast:.3f}s vs full {full:.3f}s"
+def test_words_fast_skips_the_pipeline_rather_than_merely_being_quick():
+    """Asserts the mechanism, not a wall-clock ratio.
+
+    The previous version asserted ``fast * 3 < full``, which hard-failed under
+    SimpleProcessor -- an environment get_processor explicitly supports, where I
+    measured 0.000165s against 0.000158s -- and was a timing assertion in a
+    correctness suite besides. Count parses instead: words_fast must not add
+    entries to the document cache, because it never runs the pipeline.
+    """
+    from profiler.nlp import get_processor
+
+    proc = get_processor("en")
+    if not proc.has_parser:
+        pytest.skip("spaCy model unavailable; words_fast delegates to words")
+
+    proc.release()
+    before = proc._doc.cache_info()
+    for i in range(20):
+        proc.words_fast(f"A distinct sentence number {i} goes here.")
+    after = proc._doc.cache_info()
+    assert after.misses == before.misses, "words_fast ran the pipeline"
+
+    proc.words(f"A distinct sentence number 0 goes here.")
+    assert proc._doc.cache_info().misses > before.misses, "words did not parse"

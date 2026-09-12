@@ -5,6 +5,7 @@ is most needed, silently drop data, or waste hours before failing.
 """
 
 import json
+import pathlib
 import warnings
 
 import numpy as np
@@ -258,7 +259,8 @@ def test_undefined_m3c_component_is_not_plotted_as_a_zero_bar():
     assert "smog" not in measures, "an undefined measure was kept for plotting"
 
 
-def test_one_sided_histogram_overlay_does_not_crash():
+def test_hist_from_dict_ignores_a_missing_histogram():
+    """Unit-level companion to the overlay test above."""
     import matplotlib
 
     matplotlib.use("Agg")
@@ -267,7 +269,9 @@ def test_one_sided_histogram_overlay_does_not_crash():
     from profiler import plots as pl
 
     fig, ax = plt.subplots()
-    pl._hist_from_dict(ax, None)  # must be a no-op, not an AttributeError
+    pl._hist_from_dict(ax, None)
+    pl._hist_from_dict(ax, {})
+    assert not ax.patches, "drew bars for a missing histogram"
     plt.close(fig)
 
 
@@ -276,9 +280,7 @@ def test_one_sided_histogram_overlay_does_not_crash():
 
 
 def test_cache_write_is_atomic(tmp_path):
-    """A run killed mid-write left a truncated file at a valid key, and every
-    later run took `exists()` as a hit. progress.write_status already uses the
-    tmp-then-replace pattern."""
+    """A run killed mid-write must not leave a readable partial entry."""
     from profiler.cache import Cache
 
     c = Cache(str(tmp_path), "t")
@@ -287,14 +289,65 @@ def test_cache_write_is_atomic(tmp_path):
     c.put_array("arr", np.arange(4, dtype=float))
     assert np.array_equal(c.get_array("arr"), np.arange(4, dtype=float))
 
-    # No temp files left behind.
-    leftovers = [p.name for p in tmp_path.rglob("*") if ".tmp" in p.name]
-    assert not leftovers, leftovers
+    assert not [p.name for p in tmp_path.rglob("*") if ".tmp" in p.name]
 
-    # A crash during serialisation must not leave a readable partial entry.
     class Unserialisable:
         pass
 
     with pytest.raises(Exception):
         c.put_json("bad", {"x": Unserialisable()})
     assert c.get_json("bad") is None, "a failed write left a cache hit behind"
+    assert not [p.name for p in tmp_path.rglob("*") if ".tmp" in p.name]
+
+
+def test_a_truncated_cache_entry_is_a_miss_not_a_crash(tmp_path):
+    """The failure the atomic write exists to prevent, simulated directly.
+
+    Atomic writes stop *new* corruption, but entries written before that fix --
+    or damaged by a disk error -- are still on disk, and an unreadable entry
+    used to abort the run with an opaque decode error hours in, recoverable only
+    by deleting the cache tree by hand. A miss costs one recomputation, and the
+    atomic write then replaces the bad entry.
+    """
+    from profiler.cache import Cache
+
+    c = Cache(str(tmp_path), "t")
+    c.put_json("k", {"a": 1})
+    c.put_array("arr", np.arange(4, dtype=float))
+
+    # Exactly what a process killed mid-write would leave behind.
+    (tmp_path / "t" / "k.json").write_text('{"a":')
+    (tmp_path / "t" / "arr.npy").write_bytes(b"\x93NUMPY\x01\x00truncated")
+
+    with pytest.warns(RuntimeWarning, match="unreadable cache entry"):
+        assert c.get_json("k") is None
+    with pytest.warns(RuntimeWarning, match="unreadable cache entry"):
+        assert c.get_array("arr") is None
+
+    # And the entry is repairable by the next write.
+    c.put_json("k", {"a": 2})
+    assert c.get_json("k") == {"a": 2}
+
+
+def test_deletion_overlay_with_only_one_side_still_writes_a_plot(tmp_path):
+    """Drives the function that had the bug.
+
+    The guard in _deletion_overlays skips only when *both* histograms are
+    missing, so one-sided data reaches _hist_from_dict -- which dereferenced
+    None. The previous test called _hist_from_dict(None) directly and asserted
+    nothing, so it could not see whether the caller survived.
+    """
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from profiler import plots as pl
+    from profiler.stats import histogram
+
+    hist = histogram([0.1, 0.2, 0.3, 0.4], bins=4)
+    written = pl._deletion_overlays(
+        {"overlays": {"feat": {"deleted": hist, "retained": None}}}, tmp_path
+    )
+    assert written, "no plot written for one-sided overlay data"
+    assert all(pathlib.Path(w).exists() for w in written)
+
+

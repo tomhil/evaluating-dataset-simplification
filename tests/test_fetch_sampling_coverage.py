@@ -92,9 +92,13 @@ def test_mismatched_line_counts_do_not_kill_the_whole_fetch(monkeypatch):
         return ["a"] * (10 if calls["n"] == 1 else 9)
 
     monkeypatch.setattr(fa, "_lines", fake_lines)
-    with pytest.raises(Exception) as ei:
+    # BaseException, not Exception: pytest.raises(Exception) does not catch
+    # SystemExit, so a regression would escape the context manager entirely and
+    # the assertion below would never run.
+    with pytest.raises(BaseException) as ei:
         list(fa._aligned_rows("b", "train", "s", "t", "c", 5))
-    assert not isinstance(ei.value, SystemExit)
+    assert not isinstance(ei.value, SystemExit), "SystemExit escapes main()'s handler"
+    assert isinstance(ei.value, Exception)
 
 
 # --------------------------------------------------------------------------

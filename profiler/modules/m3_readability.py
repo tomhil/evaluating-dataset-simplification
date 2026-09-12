@@ -389,14 +389,28 @@ def _corpus_share(per_pair: list[dict], measure: str) -> float | None:
     the totals cancel, since the share is then undefined rather than large.
     """
 
-    num = den = 0.0
+    num = den = scale = 0.0
     for r in per_pair:
         a, t = r.get(f"attributable_{measure}"), r.get(f"total_{measure}")
         if a is None or t is None:
             continue
         num += float(a)
         den += float(t)
-    if abs(den) < 1e-9:
+        scale += abs(float(t))
+    # Two ways the denominator makes this ratio meaningless, and `abs(den) <
+    # 1e-9` caught neither for a sum over up to 1000 pairs -- totals summing to
+    # 1e-8 passed it and returned a share of 1e8, relocating the per-pair
+    # instability to the corpus level instead of removing it.
+    #
+    #   cancellation -- the signed sum is negligible beside the sum of
+    #     magnitudes, so the corpus has no *net* change to attribute even
+    #     though individual pairs moved. Relative test.
+    #   no change -- the corpus genuinely did not move. Absolute test, which is
+    #     meaningful here because readability measures are graded scales where
+    #     O(1) is one grade level, so 1e-6 summed over the corpus is nothing.
+    #
+    # Either way the honest answer is that the share is undefined, not large.
+    if scale == 0.0 or abs(den) < max(1e-6 * scale, 1e-6):
         return None
     return num / den
 

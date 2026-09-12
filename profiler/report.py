@@ -150,14 +150,35 @@ def _m3(r: ModuleResult) -> str:
         "weight; the surface formulas (M3a) are reported for comparability only._\n"
     )
 
-    out.append(_h(3, "M3c — Length-matched decomposition (headline: share_attributable)"))
+    # The headline is the corpus-level ratio of sums, matching what
+    # m3_readability declares in params. The per-pair mean is kept in the last
+    # column but must not lead: its denominator is a difference of readability
+    # scores and goes to zero whenever a pair changed little, so one
+    # CNN/DailyMail pair scoring 6388.9 supplied 6.39 of a reported mean of
+    # 6.87. The report used to print only that mean, under a heading naming it
+    # the headline, while metrics.json already carried the stable figure.
+    out.append(
+        _h(3, "M3c — Length-matched decomposition (headline: share (corpus))")
+    )
     decomp = c.get("m3c_decomposition", {})
-    out.append("| measure | total Δ | attributable to rewriting | length artifact | share_attributable |\n|---|---|---|---|---|")
+    out.append(
+        "| measure | total Δ | attributable to rewriting | length artifact "
+        "| **share (corpus)** | share per-pair (median; mean unstable) |"
+        "\n|---|---|---|---|---|---|"
+    )
     for m, d in decomp.items():
+        corpus_share = d.get("share_attributable_corpus")
+        cs = "—" if corpus_share is None else f"**{corpus_share:.3f}**"
         out.append(
             f"| {m} | {_summary(d['total'])} | {_summary(d['attributable_to_rewriting'])} "
-            f"| {_summary(d['length_artifact'])} | {_summary(d['share_attributable'])} |"
+            f"| {_summary(d['length_artifact'])} | {cs} | {_summary(d['share_attributable'])} |"
         )
+    out.append(
+        "\n_`share (corpus)` is Σattributable / Σtotal over the corpus, so no "
+        "single near-zero denominator can dominate it; `—` means the totals "
+        "cancel and the share is undefined. Read the per-pair column's median, "
+        "never its mean._\n"
+    )
 
     out.append("\n" + _h(3, "M3b — Length-invariant measures (source → target)"))
     m3b = c.get("m3b_length_invariant", {})

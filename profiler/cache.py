@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -34,21 +35,14 @@ class Cache:
 
     # --- arrays -----------------------------------------------------------
     def get_array(self, key: str) -> np.ndarray | None:
-        p = self._path(key, ".npy")
-        if p.exists():
-            return np.load(p)
-        return None
+        return self._read(self._path(key, ".npy"), np.load)
 
     def put_array(self, key: str, arr: np.ndarray) -> None:
         self._atomic(self._path(key, ".npy"), lambda fh: np.save(fh, arr))
 
     # --- json -------------------------------------------------------------
     def get_json(self, key: str) -> Any | None:
-        p = self._path(key, ".json")
-        if p.exists():
-            with p.open() as fh:
-                return json.load(fh)
-        return None
+        return self._read(self._path(key, ".json"), lambda fh: json.load(fh))
 
     def put_json(self, key: str, value: Any) -> None:
         self._atomic(
@@ -57,6 +51,33 @@ class Cache:
         )
 
     # --- durability -------------------------------------------------------
+    @staticmethod
+    def _read(path: Path, load: Any) -> Any | None:
+        """Read a cache entry, treating an unreadable one as a miss.
+
+        Writes are atomic now, so this cannot be produced by an interrupted run
+        any more -- but entries written *before* that fix, or damaged by a disk
+        error, are still out there, and an unreadable entry used to abort the
+        run with an opaque decode error hours in, with no way to recover short
+        of deleting the cache tree by hand. A miss costs one recomputation and
+        the atomic write then replaces the bad entry.
+        """
+
+        if not path.exists():
+            return None
+        try:
+            with path.open("rb") as fh:
+                return load(fh)
+        except Exception as exc:
+            warnings.warn(
+                f"discarding unreadable cache entry {path.name} "
+                f"({type(exc).__name__}); recomputing",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            return None
+
+
     @staticmethod
     def _atomic(path: Path, write: Any) -> None:
         """Write via a temp file and rename, so a key is never half-written.

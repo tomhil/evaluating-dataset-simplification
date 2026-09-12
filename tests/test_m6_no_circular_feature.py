@@ -24,7 +24,8 @@ def test_salience_still_has_independent_features():
 
 def test_feature_is_not_computed_at_all():
     """Not merely excluded from ranking -- gone, so it cannot be read by mistake."""
-    src = pathlib.Path("profiler/modules/m6_deletion.py").read_text()
+    src = (pathlib.Path(__file__).resolve().parents[1]
+           / "profiler" / "modules" / "m6_deletion.py").read_text()
     assert '"rouge_recall_in_target"' not in src
 
 

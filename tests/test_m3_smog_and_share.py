@@ -16,6 +16,7 @@ common case, not an outlier. In the committed CNN/DailyMail run one pair scores
 import pytest
 
 from profiler import readability as rd
+from profiler.modules.m3_readability import _corpus_share
 
 ONE = "Clean-up operations are continuing across the Scottish Borders today."
 TWO = ONE + " A second sentence follows here."
@@ -25,7 +26,14 @@ THREE = TWO + " And a third one as well."
 def test_smog_is_none_below_three_sentences():
     """textstat returns 0.0 there; 0.0 is a valid SMOG score, so it must not pass through."""
     assert rd.surface_scores(ONE, sentences=[ONE])["smog"] is None
-    assert rd.surface_scores(TWO, sentences=[ONE, TWO])["smog"] is None
+    # A real segmentation: the second element is the second sentence, not the
+    # whole text. [ONE, TWO] made ONE both its own sentence and a prefix of the
+    # next, which _normalise_for_textstat concatenates into a text with the
+    # first sentence duplicated -- harmless only because the guard reads
+    # len(sentences), so the fixture would mislead if that ever changed.
+    assert rd.surface_scores(
+        TWO, sentences=[ONE, "A second sentence follows here."]
+    )["smog"] is None
 
 
 def test_smog_is_computed_from_three_sentences_up():
@@ -60,11 +68,41 @@ def test_corpus_share_is_a_ratio_of_sums_not_a_mean_of_ratios():
 
 
 def test_corpus_share_is_none_when_totals_cancel():
-    from profiler.modules.m3_readability import _corpus_share
+    """Exact cancellation."""
+    rows = [
+        {"attributable_fkgl": 1.0, "total_fkgl": 2.0},
+        {"attributable_fkgl": 1.0, "total_fkgl": -2.0},
+    ]
+    assert _corpus_share(rows, "fkgl") is None
 
-    rows = [{"attributable_x": 1.0, "total_x": 1.0}, {"attributable_x": 1.0, "total_x": -1.0}]
-    assert _corpus_share(rows, "x") is None
 
+@pytest.mark.parametrize(
+    "totals",
+    [
+        (1.0, -0.9999999),      # near-cancellation with O(1) summands
+        (5e-9, 5e-9),           # no cancellation, but no change either
+        (1e3, -1e3 + 1e-7),     # large summands, negligible net
+        (0.0, 0.0),
+    ],
+)
+def test_corpus_share_is_none_when_the_net_change_is_negligible(totals):
+    """The guard must be relative, not an absolute 1e-9 on the sum.
+
+    ``abs(den) < 1e-9`` was meaningless for a sum of readability-grade
+    differences over up to 1000 pairs: totals of 5e-9 each passed it and
+    produced a share of 1e8, relocating the per-pair instability this function
+    exists to remove up to the corpus level instead of removing it.
+    """
+    rows = [{"attributable_fkgl": 1.0, "total_fkgl": t} for t in totals]
+    assert _corpus_share(rows, "fkgl") is None
+
+
+def test_corpus_share_is_the_ratio_of_sums_when_the_corpus_did_change():
+    rows = [
+        {"attributable_fkgl": 1.0, "total_fkgl": 2.0},
+        {"attributable_fkgl": 3.0, "total_fkgl": 6.0},
+    ]
+    assert _corpus_share(rows, "fkgl") == pytest.approx(0.5)
 
 def test_corpus_share_ignores_nulls():
     from profiler.modules.m3_readability import _corpus_share

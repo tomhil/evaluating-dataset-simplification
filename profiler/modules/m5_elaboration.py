@@ -67,7 +67,15 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             records.append({"pair_id": p.id, "sent_idx": si, "sentence": sent})
 
     if not records:
-        return ModuleResult(name=NAME, corpus={"n_target_sentences": 0}, notes=["No target sentences."])
+        # UPPER_BOUND_NOTE belongs here too. Ungating it from the record count
+        # further down still left this path, which returns before reaching it --
+        # the caveat moved rather than becoming unconditional, and a source-text
+        # assertion did not notice.
+        return ModuleResult(
+            name=NAME,
+            corpus={"n_target_sentences": 0},
+            notes=["No target sentences.", UPPER_BOUND_NOTE],
+        )
 
     # --- scorers ---------------------------------------------------------
     scorer_scores: dict[str, list[float]] = {}
