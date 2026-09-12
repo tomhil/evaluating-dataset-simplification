@@ -16,6 +16,9 @@ import numpy as np
 
 DEFAULT_RESAMPLES = 1000
 
+# Cap on index cells held at once inside bootstrap_ci (~8MB at int64).
+_BOOTSTRAP_CELLS = 1_000_000
+
 
 @dataclass
 class Summary:
@@ -63,8 +66,21 @@ def bootstrap_ci(
         v = float(statistic(arr))
         return [v, v]
     rng = np.random.default_rng(seed)
-    idx = rng.integers(0, arr.size, size=(resamples, arr.size))
-    stats = np.array([statistic(arr[row]) for row in idx])
+    # Draw in row blocks rather than one (resamples x n) matrix. n here is
+    # whatever the caller pooled -- M5 passes one score per target sentence and
+    # M6 one row per source sentence -- so at eLife scale the monolithic index
+    # is ~4.8GB, and _summarize_features asks for 22 of them. numpy fills a
+    # (R, n) draw in C order, so block-wise drawing continues the identical
+    # stream and the resulting CI is unchanged.
+    stats = np.empty(resamples, dtype=float)
+    block = max(1, min(resamples, _BOOTSTRAP_CELLS // max(arr.size, 1)))
+    done = 0
+    while done < resamples:
+        rows = min(block, resamples - done)
+        idx = rng.integers(0, arr.size, size=(rows, arr.size))
+        for k in range(rows):
+            stats[done + k] = statistic(arr[idx[k]])
+        done += rows
     low = float(np.percentile(stats, 100 * (alpha / 2)))
     high = float(np.percentile(stats, 100 * (1 - alpha / 2)))
     return [low, high]

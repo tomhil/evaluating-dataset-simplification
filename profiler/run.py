@@ -180,18 +180,28 @@ def run(config: Config, output_dir: str | Path | None = None) -> Path:
     active = config.active_modules()
     results = {}
 
-    for name in CHEAP_ORDER:
-        if name in active:
-            progress.stage(f"module {name}", f"n={len(full_pairs)} (full corpus)")
-            _t0 = time.monotonic()
-            results[name] = CHEAP[name].compute(full_pairs, ctx)
-            progress.stage(f"module {name} done", f"{time.monotonic() - _t0:.1f}s")
-    for name in EXPENSIVE_ORDER:
-        if name in active:
-            progress.stage(f"module {name}", f"n={len(sample)} (sample)")
-            _t0 = time.monotonic()
-            results[name] = EXPENSIVE[name].compute(sample, ctx)
-            progress.stage(f"module {name} done", f"{time.monotonic() - _t0:.1f}s")
+    # Parsed documents are large, and get_processor is module-level lru_cached,
+    # so without releasing them the last corpus's Docs stay resident for any
+    # caller running more than one config in a process. try/finally so a raising
+    # module does not skip it.
+    try:
+        for name in CHEAP_ORDER:
+            if name in active:
+                progress.stage(f"module {name}", f"n={len(full_pairs)} (full corpus)")
+                _t0 = time.monotonic()
+                results[name] = CHEAP[name].compute(full_pairs, ctx)
+                progress.stage(f"module {name} done", f"{time.monotonic() - _t0:.1f}s")
+        # M1-M3 are done with the corpus; drop the parses before M4-M6 allocate
+        # embeddings and bootstrap arrays.
+        ctx.processor.release()
+        for name in EXPENSIVE_ORDER:
+            if name in active:
+                progress.stage(f"module {name}", f"n={len(sample)} (sample)")
+                _t0 = time.monotonic()
+                results[name] = EXPENSIVE[name].compute(sample, ctx)
+                progress.stage(f"module {name} done", f"{time.monotonic() - _t0:.1f}s")
+    finally:
+        ctx.processor.release()
 
     # Assemble outputs.
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")

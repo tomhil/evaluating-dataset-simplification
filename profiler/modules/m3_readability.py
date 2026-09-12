@@ -127,15 +127,64 @@ def _tree_depth(head_map: dict[int, int]) -> int:
 # --------------------------------------------------------------------------
 # Length-invariant scalar vector (for M3c decomposition; no parser)
 # --------------------------------------------------------------------------
-def _readability_vector(text: str, proc: Processor) -> dict[str, float | None]:
-    vec = rd.surface_scores(text, sentences=proc.sentences(text))
+def _assemble_vector(
+    surface: dict[str, float | None], length_invariant: dict[str, float | None]
+) -> dict[str, float | None]:
+    """Build a decomposition vector from values M3a and M3b already computed.
+
+    ``_readability_vector`` recomputes all of this: the surface scores are
+    byte-identical to the M3a block for the same text, and the four
+    length-invariant measures duplicate the M3b block. M3 runs on the full
+    corpus, so a pair paid twice for the module's most expensive work.
+
+    The reuse must be exact rather than approximate -- the decomposition is a
+    difference of these vectors, so any drift would move ``share_attributable``.
+    """
+
+    vec = dict(surface)
+    # Derived from DECOMP_MEASURES rather than hardcoded: adding a measure there
+    # that lives in the M3b block (jargon_rate is the obvious candidate) would
+    # otherwise leave it absent here, and the `rs is None` branch would null
+    # that measure's whole decomposition column corpus-wide, silently.
+    for m in DECOMP_MEASURES:
+        if m not in vec:
+            vec[m] = length_invariant.get(m)
+    return vec
+
+
+def _length_invariant(text: str, proc: Processor, jargon: list[str] | None = None) -> dict:
+    """The M3b measures for one text, in one place.
+
+    Both the per-pair M3b block and the M3c controls need these, and having two
+    copies is how a measure ends up supplied for the source and target but not
+    for LEAD-k/EXT-ORACLE-k -- which silently nulls its whole decomposition
+    column, since the `ro is None` branch then fires for every pair.
+    """
+
     words = proc.words(text)
     content = proc.content_words(text)
-    vec["mean_zipf"] = rd.mean_zipf(content)
-    vec["syllables_per_word"] = rd.syllables_per_word(words)
-    vec["mtld"] = rd.mtld(words)
-    vec["rare_word_rate"] = rd.rare_word_rate(content)
-    return vec
+    return {
+        "mean_zipf": rd.mean_zipf(content),
+        "rare_word_rate": rd.rare_word_rate(content),
+        "syllables_per_word": rd.syllables_per_word(words),
+        "mtld": rd.mtld(words),
+        "jargon_rate": rd.jargon_rate(content, jargon or []),
+    }
+
+
+def _readability_vector(
+    text: str, proc: Processor, jargon: list[str] | None = None
+) -> dict[str, float | None]:
+    """A decomposition vector for text the M3a/M3b blocks never scored.
+
+    Used for the LEAD-k and EXT-ORACLE-k controls. For the source and target,
+    _assemble_vector reuses what those blocks already computed.
+    """
+
+    return _assemble_vector(
+        rd.surface_scores(text, sentences=proc.sentences(text)),
+        _length_invariant(text, proc, jargon),
+    )
 
 
 # --------------------------------------------------------------------------
@@ -219,6 +268,7 @@ def _merge(a: dict, b: dict) -> dict:
 # --------------------------------------------------------------------------
 def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     proc = ctx.processor
+    jargon = ctx.config.run.jargon_terms
     per_pair: list[dict] = []
 
     for p in progress.track(pairs, "M3 readability"):
@@ -240,24 +290,11 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
                 row[f"delta_{m}"] = None
 
         # M3b length-invariant
-        src_words = proc.words(p.source)
         tgt_words = proc.words(p.target)
-        src_content = proc.content_words(p.source)
-        tgt_content = proc.content_words(p.target)
-        li_src = {
-            "mean_zipf": rd.mean_zipf(src_content),
-            "rare_word_rate": rd.rare_word_rate(src_content),
-            "syllables_per_word": rd.syllables_per_word(src_words),
-            "mtld": rd.mtld(src_words),
-            "jargon_rate": rd.jargon_rate(src_content, ctx.config.run.jargon_terms),
-        }
-        li_tgt = {
-            "mean_zipf": rd.mean_zipf(tgt_content),
-            "rare_word_rate": rd.rare_word_rate(tgt_content),
-            "syllables_per_word": rd.syllables_per_word(tgt_words),
-            "mtld": rd.mtld(tgt_words),
-            "jargon_rate": rd.jargon_rate(tgt_content, ctx.config.run.jargon_terms),
-        }
+        # One definition of the M3b measures, shared with the M3c controls, so
+        # the two paths cannot diverge on which measures they can supply.
+        li_src = _length_invariant(p.source, proc, jargon)
+        li_tgt = _length_invariant(p.target, proc, jargon)
         src_syn = _syntactic_features(p.source, proc)
         tgt_syn = _syntactic_features(p.target, proc)
         li_src.update(src_syn)
@@ -272,10 +309,12 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         budget = len(tgt_words)
         lead = _lead_k(src_sents, proc, budget) if src_sents else ""
         oracle = _ext_oracle_k(src_sents, p.target, proc, budget) if src_sents else ""
-        R_src = _readability_vector(p.source, proc)
-        R_tgt = _readability_vector(p.target, proc)
-        R_lead = _readability_vector(lead, proc) if lead else {m: None for m in DECOMP_MEASURES}
-        R_oracle = _readability_vector(oracle, proc) if oracle else {m: None for m in DECOMP_MEASURES}
+        # Reuse the M3a/M3b vectors for this pair; only the two controls below
+        # are new text and genuinely need computing.
+        R_src = _assemble_vector(src_surface, li_src)
+        R_tgt = _assemble_vector(tgt_surface, li_tgt)
+        R_lead = _readability_vector(lead, proc, jargon) if lead else {m: None for m in DECOMP_MEASURES}
+        R_oracle = _readability_vector(oracle, proc, jargon) if oracle else {m: None for m in DECOMP_MEASURES}
         for m in DECOMP_MEASURES:
             rs, rt, ro = R_src.get(m), R_tgt.get(m), R_oracle.get(m)
             row[f"oracle_{m}"] = ro

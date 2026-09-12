@@ -15,6 +15,8 @@ Modules always go through :func:`get_processor`; nothing imports spaCy directly.
 
 from __future__ import annotations
 
+import functools
+
 import re
 import warnings
 from dataclasses import dataclass
@@ -59,6 +61,10 @@ class Processor(Protocol):
 
     def analyze_sentence(self, sent: str) -> list[Token]: ...
 
+    def release(self) -> None:
+        """Drop any cached parses. Part of the contract: run.py calls it."""
+        ...
+
 
 class SimpleProcessor:
     """Regex-based, dependency-free processor. No syntactic parsing."""
@@ -74,6 +80,9 @@ class SimpleProcessor:
     def content_words(self, text: str) -> list[str]:
         return [w for w in self.words(text) if w.lower() not in _STOPWORDS and not w.isdigit()]
 
+    def release(self) -> None:
+        """No cache to drop; present so callers need not know which processor."""
+
     def analyze_sentence(self, sent: str) -> list[Token]:
         toks = []
         for i, w in enumerate(self.words(sent)):
@@ -82,6 +91,9 @@ class SimpleProcessor:
                 Token(text=w, lemma=w.lower(), pos="", is_content=is_content, i=i)
             )
         return toks
+
+
+_DOC_CACHE = 64
 
 
 class SpacyProcessor:
@@ -93,17 +105,50 @@ class SpacyProcessor:
         import spacy
 
         self._nlp = spacy.load(model, disable=["ner"])
+        # Each accessor used to run the full pipeline, so M3 parsed the same
+        # document about twenty times per pair -- on the full corpus, not the
+        # sample.
+        #
+        # The cache is shared with analyze_sentence, which runs once per
+        # sentence, so it has to hold a document *and* its sentences to be
+        # useful: at 8 slots a document of 7+ sentences evicted itself before
+        # being reused. Replaying M3's per-pair sequence on a 20-sentence source
+        # and 10-sentence target: 8 slots gave 54 pipeline runs per pair, 64
+        # gave 32. Bound to the instance rather than module-level, so a corpus
+        # sweep retains a working set rather than one Doc per document.
+        # Keyed on the text itself and bound to this instance. Note the cache
+        # holds spaCy Doc objects, which are large on long sources, and
+        # get_processor is itself module-level lru_cached -- so without
+        # release() the working set survives for the process lifetime, through
+        # M4-M6, long after M3 has finished with it. run.py calls release()
+        # between modules.
+        # One cache, shared by the document-level accessors and
+        # analyze_sentence. Splitting it into separate document and sentence
+        # caches was tried on the hypothesis that long sources evict their own
+        # Doc: measured on 15 PLOS articles (6,800 words each) it made no
+        # difference (36.4s split vs 36.0s shared) and lowered the document hit
+        # rate, because _lead_k and _ext_oracle_k call words() per *sentence*,
+        # so sentence-level lookups land in the document cache either way. On
+        # D-Wikipedia the split was slower (108s vs 92s). Keeping it simple.
+        self._doc = functools.lru_cache(maxsize=_DOC_CACHE)(self._parse)
+
+    def _parse(self, text: str):
+        return self._nlp(text)
+
+    def release(self) -> None:
+        """Drop cached parses. Safe to call at any point; costs a re-parse."""
+        self._doc.cache_clear()
 
     def sentences(self, text: str) -> list[str]:
-        doc = self._nlp(text)
+        doc = self._doc(text)
         return [s.text.strip() for s in doc.sents if s.text.strip()]
 
     def words(self, text: str) -> list[str]:
-        return [t.text for t in self._nlp(text) if not t.is_space and not t.is_punct]
+        return [t.text for t in self._doc(text) if not t.is_space and not t.is_punct]
 
     def content_words(self, text: str) -> list[str]:
         out = []
-        for t in self._nlp(text):
+        for t in self._doc(text):
             if t.is_space or t.is_punct or t.is_stop:
                 continue
             if t.pos_ in {"NOUN", "PROPN", "VERB", "ADJ", "ADV"}:
@@ -111,7 +156,7 @@ class SpacyProcessor:
         return out
 
     def analyze_sentence(self, sent: str) -> list[Token]:
-        doc = self._nlp(sent)
+        doc = self._doc(sent)
         toks = []
         for t in doc:
             if t.is_space:
