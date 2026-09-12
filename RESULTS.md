@@ -1,5 +1,34 @@
 # Results — cross-corpus task profile
 
+> [!IMPORTANT]
+> **Every number on this page is superseded and needs a re-run.** Two
+> corrections landed after these figures were produced, and the second changes
+> the corpora themselves:
+>
+> 1. **Pipeline fixes** — M6 now estimates effects per document rather than
+>    pooling, τ is set per corpus, `rouge_recall_in_target` was dropped as
+>    circular, the parquet fetchers were reading only shard 0, SMOG is no longer
+>    fabricated for short targets, and M3c's headline is now a corpus-level
+>    ratio. See the per-section notes below.
+> 2. **The corpus draw was biased** — the sampler sorted its oversampled indices
+>    and then truncated, so **no document past 83.3% of any line-aligned file
+>    could ever be selected** (Cochrane's highest sampled index is 2959 of 3568;
+>    D-Wikipedia's 6561 of ~8000; SWiPE-gold's 3214 of 3861), and the parquet
+>    strata were starved from the last group inward (CNN/DailyMail
+>    240/240/240/240/**40**, XSum 435/240/240/**85**). PLOS and eLife are ordered
+>    by year and journal, so this is a population skew, not a cosmetic one.
+>
+> The sampler is fixed, but **the data files in `data/` were fetched with the old
+> one**, so they must be re-fetched before the re-run. The kappa figures quoted
+> below (0.462 at τ=0.5, 0.767 at τ=0.7) additionally came from a head slice of
+> the first 200 annotated documents rather than the sampled corpus, and need
+> re-measuring against the population M6 actually profiles.
+>
+> The *conclusions* below are mostly about effects far larger than a one-sixth
+> sampling shift, and the methodological findings (the segmentation defect, the
+> premise-window defect, the length confound) do not depend on which documents
+> were drawn. Treat the prose as current and every table as provisional.
+
 Six published corpora profiled end to end with the pipeline in this repo, under
 **identical run parameters**, so their numbers are directly comparable.
 
