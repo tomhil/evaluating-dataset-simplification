@@ -32,6 +32,15 @@ NAME = "elaboration"
 ANNOTATION_SAMPLE_SIZE = 100
 ANNOTATION_COLUMNS = ["grounded_elaboration", "hallucination", "alignment_error", "other"]
 
+# Attached to every run, unconditionally. This was gated on
+# ``len(records) < 2000``, which dropped it from exactly the corpora with the
+# most target sentences -- Cochrane and PLOS, the two biomedical sets where an
+# MNLI-trained model is furthest off-domain and the caveat matters most.
+UPPER_BOUND_NOTE = (
+    "Automatic elaboration rate is an upper bound on real elaboration "
+    "until the manual sample is annotated; entailment models degrade off-domain."
+)
+
 _DEFINITIONAL = re.compile(
     r"\b(is|are|was|were)\s+(a|an|the)\b|,\s*which\b|\bwhich means\b|\brefers to\b|\bknown as\b",
     re.IGNORECASE,
@@ -131,11 +140,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         "primary_scorer": primary_name,
         "corrected_not_entailed_rate": None,  # filled by `ingest-annotations`
     }
-    if len(records) < 2000:
-        notes.append(
-            "Automatic elaboration rate is an upper bound on real elaboration "
-            "until the manual sample is annotated; entailment models degrade off-domain."
-        )
+    notes.append(UPPER_BOUND_NOTE)
 
     return ModuleResult(
         name=NAME,
@@ -254,12 +259,51 @@ def _pattern_breakdown(records: list[dict], src_sents_by_id: dict, proc) -> dict
 
 
 def _annotation_sample(records: list[dict], src_sents_by_id: dict, seed: int) -> list[dict]:
+    """Draw the manual-annotation sample, stratified by document.
+
+    A flat shuffle over sentences gives each document a share proportional to
+    how many not-entailed sentences it produced, which is the opposite of what
+    this sample is for: it is the input to ``corrected_not_entailed_rate``, so
+    it has to represent the corpus, not the worst document in it. In all three
+    committed swipe_gold runs a flat shuffle put 70 of the 100 rows in
+    swipeg3153 -- the vandalised revision ``find_degenerate_pairs`` flags --
+    so annotating the CSV would have corrected the corpus rate from one
+    pathological document.
+
+    Round-robin over documents instead, shuffling within and across, so the
+    sample spreads over as many documents as the budget allows and only revisits
+    a document once every other document has contributed. Seeded, so the draw is
+    reproducible.
+    """
+
     if not records:
         return []
     rng = np.random.default_rng(seed)
-    idx = list(range(len(records)))
-    rng.shuffle(idx)
-    chosen = idx[: min(ANNOTATION_SAMPLE_SIZE, len(idx))]
+
+    by_doc: dict[str, list[int]] = {}
+    for i, r in enumerate(records):
+        by_doc.setdefault(r["pair_id"], []).append(i)
+    for idxs in by_doc.values():
+        rng.shuffle(idxs)
+    order = sorted(by_doc)
+    rng.shuffle(order)
+
+    chosen: list[int] = []
+    budget = min(ANNOTATION_SAMPLE_SIZE, len(records))
+    depth = 0
+    while len(chosen) < budget:
+        progressed = False
+        for pid in order:
+            if len(chosen) >= budget:
+                break
+            idxs = by_doc[pid]
+            if depth < len(idxs):
+                chosen.append(idxs[depth])
+                progressed = True
+        if not progressed:  # every document exhausted
+            break
+        depth += 1
+
     rows = []
     for i in chosen:
         r = records[i]

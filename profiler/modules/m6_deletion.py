@@ -182,11 +182,11 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
                     "centroid_sim": float(centroid_sim[i]),
                     "norm_position": i / (n - 1) if n > 1 else 0.0,
                     "fkgl": _sent_fkgl(sent),
-                    "syllables_per_word": rd.syllables_per_word(proc.words(sent)),
+                    "syllables_per_word": rd.syllables_per_word(proc.words_fast(sent)),
                     "rare_word_rate": rd.rare_word_rate(sent_tokens) if sent_tokens else None,
                     "mean_dependency_distance": syn,
                     "jargon_rate": rd.jargon_rate(sent_tokens, jargon) if sent_tokens else None,
-                    "sent_len": len(proc.words(sent)),
+                    "sent_len": len(proc.words_fast(sent)),
                     "max_sim_other": float(max_sim_other[i]),
                 }
             )

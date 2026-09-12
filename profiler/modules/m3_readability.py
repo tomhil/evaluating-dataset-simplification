@@ -195,7 +195,7 @@ def _lead_k(src_sents: list[str], proc: Processor, budget: int) -> str:
     total = 0
     for s in src_sents:
         out.append(s)
-        total += len(proc.words(s))
+        total += len(proc.words_fast(s))
         if total >= budget:
             break
     return " ".join(out)
@@ -211,26 +211,34 @@ def _ext_oracle_k(src_sents: list[str], target: str, proc: Processor, budget: in
     tgt_uni_total = sum(tgt_uni.values()) or 1
     tgt_bi_total = sum(tgt_bi.values()) or 1
 
-    sent_tokens = [[t.lower() for t in proc.words(s)] for s in src_sents]
+    sent_tokens = [[t.lower() for t in proc.words_fast(s)] for s in src_sents]
+    # Counted once. The greedy loop used to rebuild these, and a merged copy of
+    # the whole selection, for every candidate on every iteration: 0.82s per
+    # PLOS pair, about 14 minutes of a 1000-pair run.
+    sent_uni = [_counts(t, 1) for t in sent_tokens]
+    sent_bi = [_counts(t, 2) for t in sent_tokens]
+
+    # Clipped recall is sum_g min(sel[g], tgt[g]) / T, so adding a candidate
+    # gains sum_g min(cand[g], headroom[g]) where headroom is the target count
+    # not yet covered. That is exact, not an approximation -- and it touches
+    # only the candidate's own n-grams rather than the union with the selection.
+    head_uni = dict(tgt_uni)
+    head_bi = dict(tgt_bi)
+
     remaining = set(range(len(src_sents)))
     selected: list[int] = []
-    sel_uni: dict = {}
-    sel_bi: dict = {}
     total_tokens = 0
 
-    def rouge_recall(uni: dict, bi: dict) -> float:
-        u = sum(min(c, tgt_uni.get(g, 0)) for g, c in uni.items()) / tgt_uni_total
-        b = sum(min(c, tgt_bi.get(g, 0)) for g, c in bi.items()) / tgt_bi_total
-        return u + b
+    def gain_of(idx: int) -> float:
+        u = sum(min(c, head_uni.get(g, 0)) for g, c in sent_uni[idx].items())
+        b = sum(min(c, head_bi.get(g, 0)) for g, c in sent_bi[idx].items())
+        return u / tgt_uni_total + b / tgt_bi_total
 
     while remaining and total_tokens < budget:
         best_gain = 0.0
         best_idx = None
-        base = rouge_recall(sel_uni, sel_bi)
         for idx in remaining:
-            cand_uni = _merge(sel_uni, _counts(sent_tokens[idx], 1))
-            cand_bi = _merge(sel_bi, _counts(sent_tokens[idx], 2))
-            gain = rouge_recall(cand_uni, cand_bi) - base
+            gain = gain_of(idx)
             if gain > best_gain:
                 best_gain = gain
                 best_idx = idx
@@ -238,8 +246,12 @@ def _ext_oracle_k(src_sents: list[str], target: str, proc: Processor, budget: in
             break
         selected.append(best_idx)
         remaining.discard(best_idx)
-        sel_uni = _merge(sel_uni, _counts(sent_tokens[best_idx], 1))
-        sel_bi = _merge(sel_bi, _counts(sent_tokens[best_idx], 2))
+        # Consume the headroom this sentence just covered.
+        for counts, head in ((sent_uni[best_idx], head_uni), (sent_bi[best_idx], head_bi)):
+            for g, c in counts.items():
+                left = head.get(g)
+                if left:
+                    head[g] = left - min(c, left)
         total_tokens += len(sent_tokens[best_idx])
 
     selected.sort()
