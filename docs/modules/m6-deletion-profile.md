@@ -35,8 +35,8 @@ pipeline. Against SWiPE's human deletion annotations, per sentence
 
 | τ | pipeline says deleted | precision | recall | Cohen's κ |
 |---|---|---|---|---|
-| 0.5 | 27.2% | 0.959 | 0.497 | 0.462 |
-| 0.7 | 50.0% | 0.909 | 0.865 | **0.767** |
+| 0.5 | 25.2% | 0.972 | 0.448 | 0.410 |
+| 0.7 | 47.9% | 0.941 | 0.825 | **0.754** |
 | 0.75 | 52.9% | 0.875 | 0.918 | 0.775 |
 
 Annotators mark 52.5% of source sentences as deleted. **Precision is high at

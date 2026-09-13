@@ -4,7 +4,7 @@
   "dataset_label": "swipe",
   "embedder": "sbert",
   "language": "en",
-  "m6_tau": 0.5,
+  "m6_tau": 0.7,
   "modules": [
    "length",
    "abstractiveness",
@@ -20,7 +20,9 @@
   "tau_sweep": [
    0.4,
    0.5,
-   0.6
+   0.6,
+   0.7,
+   0.8
   ]
  },
  "dataset_label": "swipe",
@@ -385,13 +387,137 @@
        "n": 250,
        "std": 0.259422
       }
+     },
+     "0.70": {
+      "alignment_type_counts": {
+       "n_0_1_insertion": 358,
+       "n_1_0_deletion": 776,
+       "n_1_1": 481,
+       "n_1_n_split": 131,
+       "n_n_1_merge": 128
+      },
+      "alignment_type_distribution": {
+       "n_0_1_insertion": 0.191035,
+       "n_1_0_deletion": 0.414088,
+       "n_1_1": 0.25667,
+       "n_1_n_split": 0.069904,
+       "n_n_1_merge": 0.068303
+      },
+      "kendall_tau": {
+       "ci95": [
+        0.832767,
+        0.933501
+       ],
+       "extra": {},
+       "iqr": [
+        1.0,
+        1.0
+       ],
+       "mean": 0.888986,
+       "median": 1.0,
+       "n": 163,
+       "std": 0.334027
+      },
+      "source_coverage": {
+       "ci95": [
+        0.565738,
+        0.646531
+       ],
+       "extra": {},
+       "iqr": [
+        0.285714,
+        1.0
+       ],
+       "mean": 0.607055,
+       "median": 0.563492,
+       "n": 250,
+       "std": 0.329525
+      },
+      "target_groundedness": {
+       "ci95": [
+        0.669972,
+        0.739092
+       ],
+       "extra": {},
+       "iqr": [
+        0.5,
+        1.0
+       ],
+       "mean": 0.704014,
+       "median": 0.666667,
+       "n": 250,
+       "std": 0.280008
+      }
+     },
+     "0.80": {
+      "alignment_type_counts": {
+       "n_0_1_insertion": 480,
+       "n_1_0_deletion": 909,
+       "n_1_1": 546,
+       "n_1_n_split": 14,
+       "n_n_1_merge": 16
+      },
+      "alignment_type_distribution": {
+       "n_0_1_insertion": 0.244275,
+       "n_1_0_deletion": 0.462595,
+       "n_1_1": 0.277863,
+       "n_1_n_split": 0.007125,
+       "n_n_1_merge": 0.008142
+      },
+      "kendall_tau": {
+       "ci95": [
+        0.935591,
+        0.993437
+       ],
+       "extra": {},
+       "iqr": [
+        1.0,
+        1.0
+       ],
+       "mean": 0.969377,
+       "median": 1.0,
+       "n": 136,
+       "std": 0.187357
+      },
+      "source_coverage": {
+       "ci95": [
+        0.467792,
+        0.555325
+       ],
+       "extra": {},
+       "iqr": [
+        0.2,
+        1.0
+       ],
+       "mean": 0.511399,
+       "median": 0.428571,
+       "n": 250,
+       "std": 0.362037
+      },
+      "target_groundedness": {
+       "ci95": [
+        0.544496,
+        0.626339
+       ],
+       "extra": {},
+       "iqr": [
+        0.333333,
+        1.0
+       ],
+       "mean": 0.585795,
+       "median": 0.5,
+       "n": 250,
+       "std": 0.331729
+      }
      }
     },
     "n": 250,
     "tau_sweep": [
      0.4,
      0.5,
-     0.6
+     0.6,
+     0.7,
+     0.8
     ]
    },
    "notes": [
@@ -400,11 +526,13 @@
    "params": {
     "embedder": "sentence-transformers/all-MiniLM-L6-v2",
     "matching": "greedy many-to-many: link(i,j) iff cos(i,j) >= tau",
-    "primary_tau_for_m5_m6": 0.5,
+    "primary_tau_for_m5_m6": 0.7,
     "tau_sweep": [
      0.4,
      0.5,
-     0.6
+     0.6,
+     0.7,
+     0.8
     ]
    }
   },
@@ -412,386 +540,453 @@
    "corpus": {
     "features": {
      "centroid_sim": {
-      "cohens_d_deleted_vs_retained": -1.089936,
+      "cohens_d_deleted_vs_retained": -0.781841,
       "deleted": {
        "ci95": [
-        0.34566,
-        0.366499
+        0.401943,
+        0.419427
        ],
        "extra": {},
        "iqr": [
-        0.291009,
-        0.412943
+        0.336793,
+        0.486531
        ],
-       "mean": 0.355986,
-       "median": 0.359164,
-       "n": 408,
-       "std": 0.109444
+       "mean": 0.411038,
+       "median": 0.402628,
+       "n": 776,
+       "std": 0.122322
       },
-      "point_biserial_with_deletion": -0.437367,
+      "point_biserial_with_deletion": -0.364028,
       "retained": {
        "ci95": [
-        0.495723,
-        0.513336
+        0.510039,
+        0.533606
        ],
        "extra": {},
        "iqr": [
-        0.410782,
-        0.579815
+        0.419287,
+        0.598794
        ],
-       "mean": 0.504709,
-       "median": 0.491581,
-       "n": 1082,
-       "std": 0.145325
+       "mean": 0.52153,
+       "median": 0.507951,
+       "n": 714,
+       "std": 0.159428
+      },
+      "stratified_effect": {
+       "effect": -0.617643,
+       "iqr": [
+        -1.346557,
+        -0.092326
+       ],
+       "median": -0.903159,
+       "n_documents": 164,
+       "n_source_sentences": 1227
       }
      },
      "fkgl": {
-      "cohens_d_deleted_vs_retained": -0.030147,
+      "cohens_d_deleted_vs_retained": 0.068317,
       "deleted": {
        "ci95": [
-        10.596765,
-        11.781311
-       ],
-       "extra": {},
-       "iqr": [
-        7.2,
-        14.6
-       ],
-       "mean": 11.167157,
-       "median": 10.55,
-       "n": 408,
-       "std": 6.202872
-      },
-      "point_biserial_with_deletion": -0.013451,
-      "retained": {
-       "ci95": [
-        11.014087,
-        11.604817
+        11.098692,
+        11.869166
        ],
        "extra": {},
        "iqr": [
         8.0,
+        14.6
+       ],
+       "mean": 11.455026,
+       "median": 11.1,
+       "n": 776,
+       "std": 5.589229
+      },
+      "point_biserial_with_deletion": 0.034132,
+      "retained": {
+       "ci95": [
+        10.739587,
+        11.456737
+       ],
+       "extra": {},
+       "iqr": [
+        7.675,
         14.2
        ],
-       "mean": 11.326063,
-       "median": 11.1,
-       "n": 1082,
-       "std": 4.87437
+       "mean": 11.095098,
+       "median": 10.7,
+       "n": 714,
+       "std": 4.896158
+      },
+      "stratified_effect": {
+       "effect": -0.23121,
+       "iqr": [
+        -1.089127,
+        0.452335
+       ],
+       "median": -0.259106,
+       "n_documents": 164,
+       "n_source_sentences": 1227
       }
      },
      "jargon_rate": {
-      "cohens_d_deleted_vs_retained": 0.048157,
+      "cohens_d_deleted_vs_retained": 0.041161,
       "deleted": {
        "ci95": [
-        0.000107,
-        0.001835
+        0.000217,
+        0.001438
        ],
        "extra": {},
        "iqr": [
         0.0,
         0.0
        ],
-       "mean": 0.000852,
+       "mean": 0.000727,
        "median": 0.0,
-       "n": 406,
-       "std": 0.009378
+       "n": 774,
+       "std": 0.008827
       },
-      "point_biserial_with_deletion": 0.02146,
+      "point_biserial_with_deletion": 0.020573,
       "retained": {
        "ci95": [
-        7.7e-05,
-        0.000965
+        0.0,
+        0.001012
        ],
        "extra": {},
        "iqr": [
         0.0,
         0.0
        ],
-       "mean": 0.000457,
+       "mean": 0.000389,
        "median": 0.0,
-       "n": 1082,
-       "std": 0.007732
+       "n": 714,
+       "std": 0.007491
+      },
+      "stratified_effect": {
+       "effect": 0.025899,
+       "iqr": [
+        0.0,
+        0.0
+       ],
+       "median": 0.0,
+       "n_documents": 163,
+       "n_source_sentences": 1223
       }
      },
      "max_sim_other": {
-      "cohens_d_deleted_vs_retained": -0.6302,
+      "cohens_d_deleted_vs_retained": -0.151402,
       "deleted": {
        "ci95": [
-        0.443875,
-        0.47081
+        0.509291,
+        0.529009
        ],
        "extra": {},
        "iqr": [
-        0.376676,
-        0.557864
+        0.435547,
+        0.625261
        ],
-       "mean": 0.457474,
-       "median": 0.463004,
-       "n": 408,
-       "std": 0.137723
+       "mean": 0.519564,
+       "median": 0.535896,
+       "n": 776,
+       "std": 0.141871
       },
-      "point_biserial_with_deletion": -0.270708,
+      "point_biserial_with_deletion": -0.075471,
       "retained": {
        "ci95": [
-        0.548887,
-        0.569889
+        0.530535,
+        0.558579
        ],
        "extra": {},
        "iqr": [
-        0.47563,
-        0.680365
+        0.443827,
+        0.69766
        ],
-       "mean": 0.559777,
-       "median": 0.587669,
-       "n": 1082,
-       "std": 0.170684
+       "mean": 0.545023,
+       "median": 0.578628,
+       "n": 714,
+       "std": 0.192691
+      },
+      "stratified_effect": {
+       "effect": -0.541122,
+       "iqr": [
+        -1.282176,
+        0.050421
+       ],
+       "median": -0.798069,
+       "n_documents": 164,
+       "n_source_sentences": 1227
       }
      },
      "mean_dependency_distance": {
-      "cohens_d_deleted_vs_retained": -0.065464,
+      "cohens_d_deleted_vs_retained": -0.045554,
       "deleted": {
        "ci95": [
-        3.003219,
-        3.168764
+        3.048,
+        3.165467
        ],
        "extra": {},
        "iqr": [
-        2.5,
-        3.480676
+        2.539263,
+        3.52
        ],
-       "mean": 3.084824,
+       "mean": 3.106511,
        "median": 3.0,
-       "n": 406,
-       "std": 0.872355
+       "n": 774,
+       "std": 0.831629
       },
-      "point_biserial_with_deletion": -0.029166,
+      "point_biserial_with_deletion": -0.022768,
       "retained": {
        "ci95": [
-        3.089679,
-        3.191373
+        3.081017,
+        3.208696
        ],
        "extra": {},
        "iqr": [
-        2.571429,
+        2.560625,
         3.571429
        ],
-       "mean": 3.139981,
+       "mean": 3.144899,
        "median": 3.0,
-       "n": 1082,
-       "std": 0.831115
+       "n": 714,
+       "std": 0.854531
+      },
+      "stratified_effect": {
+       "effect": -0.129321,
+       "iqr": [
+        -1.009231,
+        0.614779
+       ],
+       "median": -0.119608,
+       "n_documents": 164,
+       "n_source_sentences": 1225
       }
      },
      "norm_position": {
-      "cohens_d_deleted_vs_retained": 0.543489,
+      "cohens_d_deleted_vs_retained": 0.693197,
       "deleted": {
        "ci95": [
-        0.599357,
-        0.652856
+        0.579891,
+        0.620816
        ],
        "extra": {},
        "iqr": [
-        0.415441,
+        0.333333,
         0.857143
        ],
-       "mean": 0.625263,
-       "median": 0.647059,
-       "n": 408,
-       "std": 0.271887
+       "mean": 0.601041,
+       "median": 0.625,
+       "n": 776,
+       "std": 0.289189
       },
-      "point_biserial_with_deletion": 0.235684,
+      "point_biserial_with_deletion": 0.327429,
       "retained": {
        "ci95": [
-        0.420126,
-        0.463249
-       ],
-       "extra": {},
-       "iqr": [
-        0.090909,
-        0.75
-       ],
-       "mean": 0.441676,
-       "median": 0.4,
-       "n": 1082,
-       "std": 0.35949
-      }
-     },
-     "rare_word_rate": {
-      "cohens_d_deleted_vs_retained": -0.098169,
-      "deleted": {
-       "ci95": [
-        0.435483,
-        0.478432
-       ],
-       "extra": {},
-       "iqr": [
-        0.333333,
-        0.6
-       ],
-       "mean": 0.457312,
-       "median": 0.4375,
-       "n": 406,
-       "std": 0.219691
-      },
-      "point_biserial_with_deletion": -0.043715,
-      "retained": {
-       "ci95": [
-        0.465857,
-        0.489131
-       ],
-       "extra": {},
-       "iqr": [
-        0.333333,
-        0.6
-       ],
-       "mean": 0.477377,
-       "median": 0.473684,
-       "n": 1082,
-       "std": 0.198356
-      }
-     },
-     "rouge_recall_in_target": {
-      "cohens_d_deleted_vs_retained": -1.67676,
-      "deleted": {
-       "ci95": [
-        0.103186,
-        0.128578
+        0.348872,
+        0.399624
        ],
        "extra": {},
        "iqr": [
         0.0,
-        0.166667
+        0.666667
        ],
-       "mean": 0.115536,
-       "median": 0.090909,
-       "n": 406,
-       "std": 0.137439
+       "mean": 0.373378,
+       "median": 0.267857,
+       "n": 714,
+       "std": 0.366337
       },
-      "point_biserial_with_deletion": -0.598652,
-      "retained": {
+      "stratified_effect": {
+       "effect": 1.126474,
+       "iqr": [
+        0.596285,
+        1.767767
+       ],
+       "median": 1.463591,
+       "n_documents": 164,
+       "n_source_sentences": 1227
+      }
+     },
+     "rare_word_rate": {
+      "cohens_d_deleted_vs_retained": -0.145321,
+      "deleted": {
        "ci95": [
-        0.588614,
-        0.626488
+        0.442598,
+        0.47193
        ],
        "extra": {},
        "iqr": [
-        0.3,
-        1.0
+        0.333333,
+        0.588235
        ],
-       "mean": 0.607491,
-       "median": 0.625,
-       "n": 1082,
-       "std": 0.333549
+       "mean": 0.457673,
+       "median": 0.440972,
+       "n": 774,
+       "std": 0.207733
+      },
+      "point_biserial_with_deletion": -0.072459,
+      "retained": {
+       "ci95": [
+        0.473363,
+        0.501714
+       ],
+       "extra": {},
+       "iqr": [
+        0.357143,
+        0.619048
+       ],
+       "mean": 0.487326,
+       "median": 0.5,
+       "n": 714,
+       "std": 0.19998
+      },
+      "stratified_effect": {
+       "effect": -0.082771,
+       "iqr": [
+        -0.981364,
+        0.710673
+       ],
+       "median": -0.146352,
+       "n_documents": 163,
+       "n_source_sentences": 1223
       }
      },
      "sent_len": {
-      "cohens_d_deleted_vs_retained": -0.022252,
+      "cohens_d_deleted_vs_retained": 0.028552,
       "deleted": {
        "ci95": [
-        20.257108,
-        22.627819
-       ],
-       "extra": {},
-       "iqr": [
-        13.0,
-        27.0
-       ],
-       "mean": 21.443627,
-       "median": 19.5,
-       "n": 408,
-       "std": 12.113175
-      },
-      "point_biserial_with_deletion": -0.009929,
-      "retained": {
-       "ci95": [
-        21.034104,
-        22.323521
+        20.98953,
+        22.609633
        ],
        "extra": {},
        "iqr": [
         14.0,
         27.0
        ],
-       "mean": 21.691312,
+       "mean": 21.775773,
        "median": 20.0,
-       "n": 1082,
-       "std": 10.737508
-      }
-     },
-     "syllables_per_word": {
-      "cohens_d_deleted_vs_retained": -0.113725,
-      "deleted": {
+       "n": 776,
+       "std": 11.692235
+      },
+      "point_biserial_with_deletion": 0.014272,
+      "retained": {
        "ci95": [
-        1.63821,
-        1.691378
+        20.676366,
+        22.234069
        ],
        "extra": {},
        "iqr": [
-        1.496212,
-        1.809086
+        14.0,
+        27.0
        ],
-       "mean": 1.664835,
-       "median": 1.666667,
-       "n": 408,
-       "std": 0.283204
+       "mean": 21.457983,
+       "median": 20.0,
+       "n": 714,
+       "std": 10.484961
       },
-      "point_biserial_with_deletion": -0.050681,
+      "stratified_effect": {
+       "effect": -0.266779,
+       "iqr": [
+        -1.183484,
+        0.496275
+       ],
+       "median": -0.361795,
+       "n_documents": 164,
+       "n_source_sentences": 1227
+      }
+     },
+     "syllables_per_word": {
+      "cohens_d_deleted_vs_retained": -0.00071,
+      "deleted": {
+       "ci95": [
+        1.669035,
+        1.70748
+       ],
+       "extra": {},
+       "iqr": [
+        1.516719,
+        1.833333
+       ],
+       "mean": 1.68752,
+       "median": 1.670543,
+       "n": 776,
+       "std": 0.272124
+      },
+      "point_biserial_with_deletion": -0.000355,
       "retained": {
        "ci95": [
-        1.680027,
-        1.713215
+        1.66562,
+        1.706596
        ],
        "extra": {},
        "iqr": [
         1.5,
-        1.853872
+        1.846154
        ],
-       "mean": 1.696204,
+       "mean": 1.687716,
        "median": 1.666667,
-       "n": 1082,
-       "std": 0.272997
+       "n": 714,
+       "std": 0.280524
+      },
+      "stratified_effect": {
+       "effect": -0.082019,
+       "iqr": [
+        -0.902509,
+        0.734005
+       ],
+       "median": -0.026876,
+       "n_documents": 164,
+       "n_source_sentences": 1227
       }
      },
      "textrank": {
-      "cohens_d_deleted_vs_retained": -0.567334,
+      "cohens_d_deleted_vs_retained": -0.638116,
       "deleted": {
        "ci95": [
-        0.098009,
-        0.11189
+        0.115294,
+        0.128094
        ],
        "extra": {},
        "iqr": [
-        0.055156,
-        0.126107
+        0.06211,
+        0.148249
        ],
-       "mean": 0.104612,
-       "median": 0.083849,
-       "n": 408,
-       "std": 0.070574
+       "mean": 0.121706,
+       "median": 0.096094,
+       "n": 776,
+       "std": 0.088559
       },
-      "point_biserial_with_deletion": -0.245414,
+      "point_biserial_with_deletion": -0.303908,
       "retained": {
        "ci95": [
-        0.181011,
-        0.202546
+        0.204852,
+        0.233175
        ],
        "extra": {},
        "iqr": [
-        0.079272,
-        0.229694
+        0.087023,
+        0.268638
        ],
-       "mean": 0.191606,
-       "median": 0.139916,
-       "n": 1082,
-       "std": 0.174614
+       "mean": 0.217866,
+       "median": 0.155323,
+       "n": 714,
+       "std": 0.197148
+      },
+      "stratified_effect": {
+       "effect": -0.601247,
+       "iqr": [
+        -1.302435,
+        0.0
+       ],
+       "median": -0.774774,
+       "n_documents": 164,
+       "n_source_sentences": 1227
       }
      }
     },
-    "n_deleted": 408,
+    "n_deleted": 776,
+    "n_documents_total": 250,
     "n_source_sentences": 1490,
-    "primary_tau": 0.5
+    "primary_tau": 0.7
    },
    "notes": [
-    "Deletion defined at primary tau=0.5. Alignment noise at this tau propagates into the deleted/retained split."
+    "Deletion defined at primary tau=0.7. Alignment noise at this tau propagates into the deleted/retained split."
    ],
    "params": {
     "difficulty_features": [
@@ -803,16 +998,17 @@
      "sent_len"
     ],
     "note": "No regression or fitted model; effect sizes are the answer.",
-    "primary_tau": 0.5,
+    "primary_effect_size": "stratified_effect.effect",
+    "primary_tau": 0.7,
     "redundancy_features": [
      "max_sim_other"
     ],
     "salience_features": [
      "textrank",
      "centroid_sim",
-     "norm_position",
-     "rouge_recall_in_target"
-    ]
+     "norm_position"
+    ],
+    "why": "cohens_d_deleted_vs_retained pools sentences across documents, which lets document length into the comparison -- textrank is a per-document stationary distribution and correlates with its own document's sentence count at rho=-0.92. stratified_effect computes the deleted-vs-retained difference inside each document and averages those, so a document that cannot support the comparison for a feature is absent from it rather than diluting it."
    }
   },
   "elaboration": {
@@ -827,6 +1023,15 @@
      "definitional": 63,
      "example_marker": 8,
      "n_not_entailed": 282
+    },
+    "not_entailed_rate_by_document": {
+     "iqr": [
+      0.0,
+      0.493421
+     ],
+     "mean": 0.227868,
+     "median": 0.0,
+     "n": 250
     },
     "pairwise_agreement": {},
     "per_scorer": {
@@ -872,7 +1077,7 @@
   },
   "length": {
    "corpus": {
-    "compression_dip_statistic": 0.970583,
+    "compression_bimodality": 0.98007,
     "compression_ratio": {
      "ci95": [
       0.772502,
@@ -970,7 +1175,7 @@
     }
    },
    "notes": [
-    "Compression distribution shows possible bimodality (dip=0.971); a bimodal corpus is a mixed corpus and the mean compression is misleading. Inspect the compression histogram."
+    "Compression distribution is more consistent with two or more modes than one (Sarle's bimodality coefficient=0.980, above 0.555); a mixed corpus has no representative mean compression. Inspect the compression histogram."
    ],
    "params": {}
   },
@@ -1215,48 +1420,48 @@
      "smog": {
       "delta": {
        "ci95": [
-        -2.973615,
-        -2.191695
+        -2.279027,
+        -1.938018
        ],
        "extra": {},
        "iqr": [
-        -4.8,
-        0.0
+        -3.4,
+        -0.45
        ],
-       "mean": -2.6025,
-       "median": -1.6,
-       "n": 1000,
-       "std": 6.283573
+       "mean": -2.107207,
+       "median": -1.9,
+       "n": 555,
+       "std": 2.111483
       },
       "source": {
        "ci95": [
-        9.00525,
-        9.72657
+        12.432859,
+        12.754732
        ],
        "extra": {},
        "iqr": [
-        0.0,
-        13.525
+        11.2,
+        14.2
        ],
-       "mean": 9.3767,
-       "median": 11.5,
-       "n": 1000,
-       "std": 5.836411
+       "mean": 12.586174,
+       "median": 12.5,
+       "n": 745,
+       "std": 2.299879
       },
       "target": {
        "ci95": [
-        6.436785,
-        7.105475
+        10.262797,
+        10.627168
        ],
        "extra": {},
        "iqr": [
-        0.0,
-        11.2
+        8.8,
+        11.9
        ],
-       "mean": 6.7742,
-       "median": 8.8,
-       "n": 1000,
-       "std": 5.335468
+       "mean": 10.454012,
+       "median": 10.5,
+       "n": 648,
+       "std": 2.329493
       }
      }
     },
@@ -1732,6 +1937,7 @@
        "n": 925,
        "std": 1.992706
       },
+      "share_attributable_corpus": 1.455017,
       "total": {
        "ci95": [
         -3.700552,
@@ -1794,6 +2000,7 @@
        "n": 922,
        "std": 4.720685
       },
+      "share_attributable_corpus": 0.981943,
       "total": {
        "ci95": [
         -2.069448,
@@ -1856,6 +2063,7 @@
        "n": 917,
        "std": 7.246411
       },
+      "share_attributable_corpus": 2.084361,
       "total": {
        "ci95": [
         -0.617905,
@@ -1918,6 +2126,7 @@
        "n": 913,
        "std": 3.040298
       },
+      "share_attributable_corpus": 1.468632,
       "total": {
        "ci95": [
         -2.840302,
@@ -1980,6 +2189,7 @@
        "n": 919,
        "std": 6.187733
       },
+      "share_attributable_corpus": 1.212006,
       "total": {
        "ci95": [
         1.261044,
@@ -2042,6 +2252,7 @@
        "n": 926,
        "std": 5.35055
       },
+      "share_attributable_corpus": 1.312384,
       "total": {
        "ci95": [
         0.037364,
@@ -2104,6 +2315,7 @@
        "n": 878,
        "std": 3.915179
       },
+      "share_attributable_corpus": 0.840666,
       "total": {
        "ci95": [
         -11.815839,
@@ -2166,6 +2378,7 @@
        "n": 900,
        "std": 13.271624
       },
+      "share_attributable_corpus": 1.121786,
       "total": {
        "ci95": [
         -0.03193,
@@ -2185,63 +2398,64 @@
      "smog": {
       "attributable_to_rewriting": {
        "ci95": [
-        0.734175,
-        1.3481
+        -2.003857,
+        -1.626674
        ],
        "extra": {},
        "iqr": [
-        -1.4,
-        0.0
+        -2.9,
+        -0.1
        ],
-       "mean": 1.0288,
-       "median": 0.0,
-       "n": 1000,
-       "std": 5.040925
+       "mean": -1.816063,
+       "median": -1.5,
+       "n": 442,
+       "std": 1.988
       },
       "length_artifact": {
        "ci95": [
-        -4.018535,
-        -3.269675
-       ],
-       "extra": {},
-       "iqr": [
-        -10.1,
-        0.0
-       ],
-       "mean": -3.6313,
-       "median": 0.0,
-       "n": 1000,
-       "std": 6.021605
-      },
-      "share_attributable": {
-       "ci95": [
-        -0.214541,
-        0.321515
+        0.012868,
+        0.226516
        ],
        "extra": {},
        "iqr": [
         0.0,
-        1.0
+        0.5
        ],
-       "mean": 0.076228,
-       "median": 0.925926,
-       "n": 781,
-       "std": 4.034029
+       "mean": 0.115158,
+       "median": 0.0,
+       "n": 442,
+       "std": 1.085055
       },
-      "total": {
+      "share_attributable": {
        "ci95": [
-        -2.973615,
-        -2.191695
+        0.934113,
+        1.32141
        ],
        "extra": {},
        "iqr": [
-        -4.8,
-        0.0
+        0.885684,
+        1.156052
        ],
-       "mean": -2.6025,
-       "median": -1.6,
-       "n": 1000,
-       "std": 6.283573
+       "mean": 1.112233,
+       "median": 1.0,
+       "n": 386,
+       "std": 1.901839
+      },
+      "share_attributable_corpus": 1.067704,
+      "total": {
+       "ci95": [
+        -1.88009,
+        -1.51823
+       ],
+       "extra": {},
+       "iqr": [
+        -2.8,
+        -0.1
+       ],
+       "mean": -1.700905,
+       "median": -1.4,
+       "n": 442,
+       "std": 1.932488
       }
      },
      "syllables_per_word": {
@@ -2290,6 +2504,7 @@
        "n": 922,
        "std": 15.790684
       },
+      "share_attributable_corpus": 1.036393,
       "total": {
        "ci95": [
         -0.065882,
@@ -2327,7 +2542,7 @@
      "mtld",
      "rare_word_rate"
     ],
-    "headline": "share_attributable = (R(target)-R(EXT-ORACLE-k)) / (R(target)-R(source))",
+    "headline": "share_attributable_corpus = sum(attributable) / sum(total)",
     "surface_measures": [
      "fkgl",
      "dcrs",
@@ -2335,15 +2550,16 @@
      "fre",
      "ari",
      "smog"
-    ]
+    ],
+    "why": "share_attributable is a per-pair ratio whose denominator is near zero whenever a pair changed little, so its mean is dominated by those pairs -- one contributed 6.39 of a reported corpus mean of 6.87. Read share_attributable_corpus, or the per-pair median."
    }
   }
  },
  "n_full": 1000,
  "n_sample": 250,
  "provenance": {
-  "git_commit": "57ecb26",
-  "run_dir": "swipe_20260830T191642Z",
-  "source_file": "runs/swipe_20260830T191642Z/metrics.json"
+  "git_commit": "356954b",
+  "run_dir": "swipe_20260913T100612Z",
+  "source_file": "runs/swipe_20260913T100612Z/metrics.json"
  }
 }

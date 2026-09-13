@@ -1,58 +1,48 @@
 # Results — cross-corpus task profile
 
-> [!IMPORTANT]
-> **Every number on this page is superseded and needs a re-run.** Two
-> corrections landed after these figures were produced, and the second changes
-> the corpora themselves:
->
-> 1. **Pipeline fixes** — M6 now estimates effects per document rather than
->    pooling, τ is set per corpus, `rouge_recall_in_target` was dropped as
->    circular, the parquet fetchers were reading only shard 0, SMOG is no longer
->    fabricated for short targets, and M3c's headline is now a corpus-level
->    ratio. See the per-section notes below.
-> 2. **The corpus draw was biased** — the sampler sorted its oversampled indices
->    and then truncated, so **no document past 83.3% of any line-aligned file
->    could ever be selected** (Cochrane's highest sampled index is 2959 of 3568;
->    D-Wikipedia's 6561 of ~8000; SWiPE-gold's 3214 of 3861), and the parquet
->    strata were starved from the last group inward (CNN/DailyMail
->    240/240/240/240/**40**, XSum 435/240/240/**85**). PLOS and eLife are ordered
->    by year and journal, so this is a population skew, not a cosmetic one.
->
-> The sampler is fixed, but **the data files in `data/` were fetched with the old
-> one**, so they must be re-fetched before the re-run. The kappa figures quoted
-> below (0.462 at τ=0.5, 0.767 at τ=0.7) additionally came from a head slice of
-> the first 200 annotated documents rather than the sampled corpus, and need
-> re-measuring against the population M6 actually profiles.
->
-> The *conclusions* below are mostly about effects far larger than a one-sixth
-> sampling shift, and the methodological findings (the segmentation defect, the
-> premise-window defect, the length confound) do not depend on which documents
-> were drawn. Treat the prose as current and every table as provisional.
+Seven published corpora profiled end to end with the pipeline in this repo,
+under **identical run parameters**, so their numbers are directly comparable.
+An eighth, SWiPE's annotated subset, is profiled separately and used only to
+validate the pipeline against human labels.
 
-Six published corpora profiled end to end with the pipeline in this repo, under
-**identical run parameters**, so their numbers are directly comparable.
+Every figure below is copied from that corpus's `results/<corpus>.json`, which
+is distilled from `runs/<dir>/metrics.json` by `scripts/archive_results.py`.
+This document adds comparison and interpretation; it introduces no new
+measurement, and it assigns no task label to any corpus — the pipeline emits no
+verdict and neither does this page.
 
-Every figure below is copied from that corpus's `runs/<dir>/metrics.json`. This
-document adds comparison and interpretation; it introduces no new measurement,
-and it assigns no task label to any corpus — the pipeline emits no verdict and
-neither does this page.
+**Provenance.** These numbers come from a complete re-run on 2026-09-13, after
+two rounds of correction. The corpus sampler had been drawing only the first
+83.3% of every line-aligned file and starving the trailing row groups of every
+parquet file, so the corpora were re-fetched before the run; and six review
+passes over the pipeline fixed, among other things, a fabricated SMOG score, a
+crash that aborted runs at M6, and an M3c headline that was a mean of ratios one
+outlier could dominate. The previous revision of this page has been superseded
+in full. See [Defects found and fixed](#defects-found-and-fixed).
 
 ## What was run
 
 | Corpus | Labelled task | Source | n (M1–M3) | n (M4–M6) |
 |---|---|---|---|---|
 | **Cochrane** (Devaraj et al. 2021) | PLS | paper's GitHub `data-1024` | 1000 | 250 |
-| **PLOS** (Goldsack et al. 2022) | PLS | HF parquet branch | 1000 | 250 |
+| **PLOS** (Goldsack et al. 2022) | PLS | HF parquet branch | 1000 | 60 |
+| **eLife** (Goldsack et al. 2022) | PLS | HF parquet branch | 1000 | 60 |
 | **D-Wikipedia** (Sun et al. 2021) | DS | paper's GitHub, test split | 1000 | 250 |
 | **SWiPE** (Laban et al. 2023) | DS | paper's GitHub, full 143k corpus | 1000 | 250 |
 | **CNN/DailyMail** | SUM | HF `abisee/cnn_dailymail` | 1000 | 250 |
 | **XSum** (Narayan et al. 2018) | SUM | HF `EdinburghNLP/xsum` | 1000 | 250 |
+| *SWiPE-gold* (validation only) | DS | paper's GitHub, annotated subset | 1000 | 250 |
 
 Backends: SBERT `all-MiniLM-L6-v2` + `microsoft/deberta-large-mnli`, seed 13,
-1000 bootstrap resamples, τ swept over {0.4, 0.5, 0.6} with τ=0.5 feeding M5/M6,
-one shared jargon list across all six corpora.
+1000 bootstrap resamples, τ swept over {0.4, 0.5, 0.6, 0.7, 0.8}. The τ feeding
+M5/M6 is 0.5 except on the two document-simplification corpora, where 0.7 is
+used — it measures far better against human deletion labels (κ 0.754 against
+0.410) but does not transfer to the summarization corpora, where it labels
+98.3% of source sentences deleted and leaves M6 with no contrast. One shared
+jargon list across all corpora.
 
-**eLife is not included** — see [Not covered here](#not-covered-here).
+PLOS and eLife use a 60-pair M4–M6 sample rather than 250: their articles
+average 6,000 and 8,900 tokens, and eLife alone took 6.3 hours at that size.
 
 CNN/DailyMail is the control: a generic-summarization corpus that should *not*
 look like simplification on any axis. It earns its place by failing in the
@@ -62,136 +52,213 @@ expected direction, which is what makes the other columns readable.
 
 ## The short version
 
-Three findings survive scrutiny, and one widely-quoted metric does not.
+Five findings survive scrutiny. One earlier headline conclusion does not, and
+it was overturned by this re-run.
 
-0. **SUM is the only coherent task class.** PLOS and Cochrane disagree within
-   PLS; SWiPE and D-Wikipedia disagree within DS. But CNN/DailyMail and XSum
-   agree, despite sitting at opposite ends of summarization style -- XSum is the
-   most abstractive corpus in the set and CNN/DailyMail among the most
-   extractive.
-1. **M4 alignment separates the tasks cleanly.** Deletion versus splitting sorts
-   summarization from simplification better than any other measure here.
-2. **Compression reproduces the literature** — once you use the right statistic.
-3. **Surface readability formulas are fragile.** A sentence-segmentation
-   defect made Cochrane's FKGL report the *opposite* of its published
-   direction; after the fix it matches. Even corrected, the formulas
-   contradict each other on the same corpus.
-4. **M5 works once entailment is judged against multi-sentence premises.** As
-   originally written it could not separate the summarization control from the
-   plain-language corpora; corrected, the gap goes from +0.05 to +0.24. It is
-   also the only module whose agreement with human labels survives controlling
-   for document length.
-5. **M4's deletion split is validated per sentence** against human labels
-   (precision 0.959, kappa 0.462 at tau=0.5 and 0.767 at 0.7) -- but the
-   *count* correlation that an earlier revision relied on was confounded by
-   length in both directions, which first hid this and then had to be
-   corrected.
-6. **M6's effect sizes are confounded by document length** and its "salience
-   dominates" conclusion is unverified. A corrected estimator exists but no
-   corpus has been re-run. This is the third instance of the same failure mode:
-   an effect that looks real until document length is controlled.
+0. **Compression separates the corpora better than their task labels do, and
+   PLS is the class that does not hold together.** The previous revision
+   concluded that SUM was the only coherent class; that was an artifact of
+   reading the *mean* compression and of eLife being absent. On the median,
+   within-class spread is 0.008 for SUM and 0.045 for DS, but **0.552 for
+   PLS** — Cochrane compresses at 0.584, PLOS and eLife at 0.031 and 0.041.
+   Cochrane is paragraph-level plain-language rewriting and compresses like a
+   document-simplification corpus; PLOS and eLife are whole-article lay
+   summarisation and compress twenty times harder. The shared "PLS" label spans
+   both.
+1. **Two measures track the task labels; most do not.** Ratio of mean
+   within-class gap to mean between-class gap, all at τ=0.5 so the columns are
+   comparable — below 1 means the label predicts the measure:
+
+   | measure | ratio | |
+   |---|---|---|
+   | M4 1:n split rate | 0.57 | tracks the label |
+   | compression (median) | 0.60 | tracks the label |
+   | M4 1:0 deletions | 0.64 | mixed |
+   | Zipf delta | 0.65 | mixed |
+   | M4 source coverage | 0.66 | mixed |
+   | M5 not-entailed | 0.95 | mixed |
+   | M4 groundedness | 1.08 | does **not** track |
+   | FKGL delta | 1.16 | does **not** track |
+   | novel 1-gram / coverage | 1.40 | does **not** track |
+
+   Only two measures separate the two task families with **no overlap at all**:
+   the split rate (simplification 0.210–0.400 against summarization 0.000–0.087,
+   gap +0.122) and the Zipf delta (simplification +0.057 to +0.547 against
+   summarization −0.053 and −0.008, gap +0.065). Abstractiveness is the worst
+   predictor in the set — XSum and CNN/DailyMail are both SUM and sit at
+   opposite extremes.
+2. **Compression reproduces the literature — once you use the right
+   statistic.** The corpus-level ratio (total target tokens over total source
+   tokens) lands within 0.006 of the published figure for five of seven corpora
+   and within 0.075 for a sixth. The per-pair *mean* does not: D-Wikipedia's is
+   1.228 against a published 0.55, because 27.5% of its pairs have targets
+   longer than their sources. The median is better but still misses
+   D-Wikipedia by 0.092 against the corpus-level ratio's 0.003. SWiPE is the
+   one corpus no statistic reconciles, and its published ≈1 is the figure at
+   fault.
+3. **Surface readability formulas are fragile, but Cochrane now reproduces its
+   published FKGL almost exactly.** A sentence-segmentation defect had made
+   Cochrane's FKGL report the *opposite* of its published direction. Corrected
+   and re-run on a corrected sample: **14.33 → 12.81**, against a published
+   14.4 → 12.9. The delta is −1.52 against −1.50. PLOS still moves the wrong
+   way (+1.88 against a published −0.28), and the formulas still contradict one
+   another on the same corpus.
+4. **M5 separates the plain-language corpora from the extractive control, but
+   not from abstractive summarization.** Against CNN/DailyMail the gap is
+   +0.293 (PLS mean 0.554 against 0.261). Against XSum there is no gap at all —
+   XSum scores 0.854, above every PLS corpus. M5 measures *content not entailed
+   by the source*, and abstractive summarization produces that in quantity, so
+   a high score is not evidence of plain-language elaboration.
+5. **M4's deletion split is validated per sentence against human labels**, now
+   on the same documents the pipeline profiles rather than a head slice of the
+   file: precision 0.972, κ 0.410 at τ=0.5 rising to 0.754 at τ=0.7, over 1,140
+   source sentences from 200 of 200 annotated documents with none unmappable.
+6. **M6's effect sizes are estimated within documents, not pooled**, which is
+   what the corrected estimator does; salience features take two of the top
+   three slots on six of seven corpora, and all three on SWiPE. The pooled
+   version of this statistic was a document-length proxy (ρ = −0.92) and is
+   retained only as a secondary column.
 
 ---
 
 ## M1 — Length and compression
 
-| | Cochrane (PLS) | PLOS (PLS) | D-Wikipedia (DS) | SWiPE (DS) | CNN/DM (SUM) | XSum (SUM) |
-|---|---|---|---|---|---|---|
-| source words | 354.6 | 5969.1 | 129.4 | 122.8 | 651.8 | 379.1 |
-| target words | 214.8 | 181.2 | 66.0 | 67.4 | 42.0 | 21.7 |
-| **compression, corpus-level** | **0.606** | **0.030** | **0.510** | **0.549** | **0.064** | **0.057** |
-| compression, median | 0.575 | 0.031 | 0.645 | 0.687 | 0.068 | 0.071 |
-| compression, mean | 0.620 | 0.034 | *1.266* | *0.999* | 0.083 | 0.100 |
-| **published** | 0.53 | 0.033 | 0.55 | ~1 (unsupported) | ~0.08 | **0.054** |
-| sentence ratio (median) | 0.667 | 0.028 | **1.000** | **1.000** | 0.102 | 0.071 |
-| mean sentence length src → tgt | 24.7 → 22.0 | 19.5 → 22.5 | 24.1 → 16.8 | — | 18.7 → 12.8 | — |
-| expansion rate | 0.092 | 0.000 | **0.289** | 0.233 | 0.000 | 0.001 |
-| bimodality dip *(retired)* | 0.249 | 0.577 | 0.882 | 0.971 | 0.520 | 0.729 |
+| | cochrane (PLS) | plos (PLS) | elife (PLS) | dwikipedia (DS) | swipe (DS) | cnn_dailymail (SUM) | xsum (SUM) |
+|---|---|---|---|---|---|---|---|
+| source tokens | 359.2 | 5994.9 | 8939.6 | 129.3 | 122.8 | 681.0 | 386.6 |
+| target tokens | 216.7 | 181.1 | 355.8 | 71.5 | 67.4 | 50.5 | 21.7 |
+| **compression, corpus-level** † | **0.6033** | **0.0302** | **0.0398** | **0.5532** | **0.5487** | **0.0742** | **0.0560** |
+| compression, median | 0.584 | 0.031 | 0.041 | 0.642 | 0.687 | 0.077 | 0.069 |
+| compression, mean | 0.616 | 0.034 | 0.045 | 1.228 | 0.999 | 0.089 | 0.098 |
+| **published** | **0.53** | **0.033** | **0.045** | **0.55** | **~1 (unsupported)** | **~0.08** | **0.054** |
+| sentence ratio (median) | 0.667 | 0.027 | 0.034 | 1.000 | 1.000 | 0.109 | 0.067 |
+| mean sentence length src → tgt | 25.4 → 22.0 | 19.6 → 22.6 | 18.6 → 20.8 | 23.6 → 16.7 | 20.7 → 19.0 | 19.0 → 13.6 | 20.8 → 21.6 |
+| expansion rate | 0.075 | 0.000 | 0.000 | 0.275 | 0.233 | 0.000 | 0.001 |
+| bimodality (Sarle) | 0.473 | 0.499 | 0.474 | 0.830 | 0.980 | 0.457 | 0.484 |
 
-**Five of the six corpus-level ratios reproduce their published values**;
-SWiPE is the exception, and its published figure is the one at fault (see the
-DS section below). That is the
-main validation that ingestion, sampling and measurement are sound.
-
-**Use the corpus-level ratio or the median, never the mean.** D-Wikipedia's mean
-of 1.266 versus a published 0.55 is not a discrepancy in the data — it is the
-mean of *per-pair* ratios, which explodes on pairs with short sources. Two
-fields on the same run explain it: 28.9% of D-Wikipedia pairs have targets
-*longer* than their sources, and Sarle's bimodality coefficient of
-0.726 confirms it is genuinely mixed -- one of only two corpora here that are.
-D-Wikipedia holds two behaviours, and no single central-tendency number
-describes it. See
+† **Derived, not emitted.** The corpus-level ratio is `tgt_tokens.mean /
+src_tokens.mean`, computed here from two fields the pipeline does emit. M1 does
+not publish it directly — worth knowing, because the previous revision of this
+page printed it as the bolded headline under a blanket claim that every figure
+was copied from `metrics.json`. The derivation is documented in
 [m1-length.md](docs/modules/m1-length.md#the-mean-vs-the-corpus-level-ratio).
 
-Two corpora compress ~30× (PLOS 0.030, CNN/DM 0.064); two barely compress at all
-(Cochrane 0.606, D-Wikipedia 0.510). Note that this split does **not** follow the
-task labels — PLOS is labelled PLS and compresses like the summarization control.
-Compression alone cannot separate these tasks.
+**Six of the seven corpus-level ratios reproduce their published values**, four
+of them to within 0.006: PLOS 0.0302 against 0.033, eLife 0.0398 against 0.045,
+D-Wikipedia 0.5532 against 0.55, CNN/DailyMail 0.0742 against ~0.08, XSum
+0.0560 against 0.054, Cochrane 0.6033 against 0.53. SWiPE is the exception at
+0.5487 against a published ≈1, and its published figure is the one at fault
+(see the DS section below). This is the main evidence that ingestion, sampling
+and measurement are sound.
+
+**Use the corpus-level ratio, not the mean.** D-Wikipedia's mean of 1.228
+against a published 0.55 is not a discrepancy in the data — it is the mean of
+*per-pair* ratios, which explodes on pairs with short sources. Two fields on
+the same run explain it: 0.275 of D-Wikipedia pairs have targets
+*longer* than their sources, and Sarle's bimodality coefficient of
+0.830 confirms the distribution is genuinely mixed. D-Wikipedia holds
+two behaviours and no single central-tendency number describes it. The median
+is the more robust *per-pair* summary but still misses by 0.092 here, against
+the corpus-level ratio's 0.003.
+
+**Compression does not follow the task labels.** PLOS and eLife (PLS) compress
+at 0.030 and 0.040 — harder than either summarization corpus — while Cochrane
+(also PLS) sits at 0.603, closer to the two DS corpora at 0.553 and 0.549. The
+split is document-level lay summarisation against paragraph-level rewriting,
+which cuts straight across PLS. Compression alone cannot separate these tasks,
+and the label does not predict it.
 
 ---
 
 ## M2 — Abstractiveness
 
-| | Cochrane | PLOS | D-Wikipedia | SWiPE | CNN/DM | XSum |
-|---|---|---|---|---|---|---|
-| novel unigrams | **0.300** | 0.093 | **0.285** | 0.162 | 0.145 | **0.365** |
-| novel content unigrams | **0.390** | 0.149 | **0.347** | **0.191** | 0.194 | **0.486** |
-| Grusky coverage | 0.700 | 0.907 | 0.715 | 0.838 | 0.855 | **0.635** |
-| Grusky density | 4.11 | 3.58 | 5.29 | **15.87** | 3.14 | **1.04** |
-| content type overlap | 0.513 | 0.809 | 0.616 | 0.787 | 0.795 | 0.512 |
+|  | cochrane (PLS) | plos (PLS) | elife (PLS) | dwikipedia (DS) | swipe (DS) | cnn_dailymail (SUM) | xsum (SUM) |
+|---|---|---|---|---|---|---|---|
+| novel unigrams | 0.299 | 0.093 | 0.177 | 0.289 | 0.162 | 0.127 | 0.359 |
+| novel bigrams | 0.692 | 0.482 | 0.697 | 0.561 | 0.370 | 0.521 | 0.833 |
+| novel content unigrams | 0.389 | 0.149 | 0.292 | 0.353 | 0.191 | 0.173 | 0.478 |
+| Grusky coverage | 0.701 | 0.907 | 0.823 | 0.711 | 0.838 | 0.873 | 0.641 |
+| Grusky density | 3.90 | 3.42 | 1.49 | 5.96 | 15.87 | 3.80 | 1.06 |
+| content type overlap | 0.516 | 0.808 | 0.612 | 0.612 | 0.787 | 0.816 | 0.520 |
 
-Cochrane and D-Wikipedia rewrite: ~29–30% of target words never appear in the
-source, rising to 35–39% on content words. PLOS and CNN/DM copy — coverage
-0.86–0.91, novel unigrams under 0.15.
+XSum is the most abstractive corpus in the set on every measure — 0.359 novel
+unigrams, 0.833 novel bigrams, the lowest coverage at 0.641 and a density of
+1.06, meaning essentially no copied runs longer than a word. Cochrane and
+D-Wikipedia follow at 0.299 and 0.289 novel unigrams. PLOS copies most heavily
+(coverage 0.907, novel unigrams 0.093), and eLife sits between its sibling and
+the rewriting corpora at 0.177.
 
-Densities cluster at 3.1–5.3, meaning short copied runs everywhere rather than
-long lifted passages. High coverage with low density is reuse of *vocabulary*,
-not wholesale extraction.
+**Abstractiveness cuts across the task labels more sharply than any other
+module.** Within-class spread exceeds between-class spread here (ratio 1.40 on
+both novel unigrams and coverage): XSum and CNN/DailyMail are both SUM yet sit
+at opposite ends (0.359 against 0.127), while PLOS and eLife are both PLS and
+differ by nearly a factor of two. Whatever the labels capture, it is not how
+much new wording the target introduces.
 
-`content_type_overlap` splits the same way: 0.51/0.62 for the rewriting corpora
-against 0.80/0.81 for the copying ones — the rewriting corpora introduce
-substantially more vocabulary the source never used.
+Densities cluster at 1.1–6.0 for six of seven corpora, meaning short copied
+runs rather than long lifted passages. SWiPE is the outlier at 15.87: it is
+content-preserving revision, so long spans survive verbatim. High coverage with
+low density is reuse of *vocabulary*, not wholesale extraction.
 
 **ROUGE recall is omitted from this table on purpose.** As implemented it is
 recall *of the source* (denominator = source n-grams), so it falls mechanically
-as compression rises and carries no independent information here.
+as compression rises and carries no independent information here. It was also
+removed from M6's feature set for being circular — it ranked first on every
+corpus by construction.
 
 ---
 
 ## M3 — Readability
 
-> **Segmentation fix applied.** M3a originally took its sentence counts from
-> `textstat`, which treats every period — including decimals — as a sentence
-> end. All six corpora were run or re-run after the fix and every figure below is
-> post-fix. M1, M2, M3b, M4 and M5 are unaffected and verified identical across
-> both runs.
+> **Two fixes applied since the previous revision.** M3a originally took its
+> sentence counts from `textstat`, which treats every period — including
+> decimals — as a sentence end; and SMOG was reported as 0.0 for any text
+> textstat counted as fewer than three sentences, which is a valid grade and so
+> read as a measurement. All seven corpora were re-run after both fixes and
+> every figure below is post-fix.
 
 ### The surface formulas disagree with each other and with the literature
 
-| FKGL | Cochrane | PLOS | D-Wikipedia | SWiPE | CNN/DM | XSum |
-|---|---|---|---|---|---|---|
-| source → target | 14.06 → 12.81 | 12.78 → 14.60 | 11.81 → 8.19 | 10.69 → 9.29 | 9.39 → 7.15 | 9.48 → 10.16 |
-| **delta** | **−1.25** | **+1.81** | −3.62 | −1.40 | −2.24 | **+0.69** |
-| 95% CI | [−1.42, −1.08] | [1.69, 1.94] | [−3.96, −3.29] | [−2.84, 0.86] | [−2.40, −2.09] | [0.50, 0.89] |
-| published delta | 14.4 → 12.9 (−1.5) | 15.04 → 14.76 (−0.3) | — | — | — | — |
-| Dale–Chall delta | −0.45 | +3.25 | −0.78 | −0.42 | **+2.17** | **+1.86** |
+| FKGL | cochrane (PLS) | plos (PLS) | elife (PLS) | dwikipedia (DS) | swipe (DS) | cnn_dailymail (SUM) | xsum (SUM) |
+|---|---|---|---|---|---|---|---|
+| source → target | 14.33 → 12.81 | 12.81 → 14.69 | 12.73 → 11.26 | 11.70 → 8.11 | 10.69 → 9.29 | 9.19 → 7.12 | 9.53 → 10.07 |
+| **delta** | **-1.52** | **+1.88** | **-1.47** | **-3.59** | **-1.40** | **-2.07** | **+0.54** |
+| 95% CI | [-1.68, -1.34] | [1.76, 1.99] | [-1.60, -1.35] | [-3.88, -3.33] | [-2.84, 0.86] | [-2.22, -1.93] | [0.35, 0.73] |
+| published | 14.4 → 12.9 (−1.50) | 15.04 → 14.76 (−0.28) | 15.57 → 10.92 (−4.65) | — | — | — | — |
+| Dale–Chall delta | -0.44 | +3.26 | +1.52 | -0.84 | -0.42 | +2.21 | +1.75 |
+| SMOG delta (n) | -1.50 (n=980) | +1.46 (n=998) | -1.20 (n=1000) | -3.06 (n=505) | -2.11 (n=555) | -1.63 (n=931) | — (n=0) |
 
-**Cochrane now reproduces its published values**: source within 0.34 grades,
-target within 0.09, and the delta negative as published. Before the segmentation
-fix it read 10.22 → 12.55, delta **+2.33** — the wrong sign, from textstat
-splitting its decimal-dense sources into roughly three times as many sentences
-as spaCy found.
+**Cochrane reproduces its published values almost exactly**: source within 0.07
+grades (14.33 against 14.4), target within 0.09 (12.81 against 12.9), delta
+−1.52 against −1.50. Before the segmentation fix it read 10.22 → 12.55, delta
+**+2.33** — the wrong sign, from textstat splitting its decimal-dense sources
+into roughly three times as many sentences as spaCy found. This is the single
+strongest piece of evidence that the corrected pipeline measures what it claims
+to.
 
-PLOS remains the one corpus whose targets score as harder, and the re-run
-confirms this is not a segmentation artifact — the fix moved it only
-+1.69 → +1.81. Its two segmenters agree within 19%, and M3b
-independently shows longer words (+0.137 syllables/word) and deeper nesting
-(+1.133 parse depth). Its lay summaries are lexically easier and structurally
-harder.
+**PLOS remains the one corpus whose targets score as harder** (+1.88), and this
+is not a segmentation artifact — the fix moved it only +1.69 → +1.81, and the
+corrected re-sample moved it again only to +1.88. M3b independently shows longer
+words (+0.144 syllables/word) and deeper nesting (+1.154 parse depth). Its lay
+summaries are lexically easier and structurally harder.
 
-Formulas still contradict each other on the same corpus: on CNN/DM, FKGL falls
-2.24 (easier) while Dale–Chall rises 2.17 (harder). They are not measuring one
-underlying quantity.
+**eLife moves in the published direction but a third as far**: −1.47 against a
+published −4.65. Its target matches well (11.26 against 10.92) but its source
+scores much easier than published (12.73 against 15.57), which is where the
+discrepancy sits. Both eLife figures come from the same 1000-pair sample, so
+this is a measurement difference on the source side rather than a disagreement
+about the targets.
+
+**XSum reports no SMOG at all** (n=0). Every XSum target is a single sentence,
+and SMOG is undefined below three — the previous revision reported a SMOG delta
+of −11.31 over n=1000 for XSum, which was the 0.0 sentinel being averaged as a
+measured grade.
+
+Formulas still contradict each other on the same corpus: on CNN/DailyMail, FKGL
+falls 2.07 (easier) while Dale–Chall rises 2.21 (harder). On eLife, FKGL falls
+1.47 while Dale–Chall rises 1.52. They are not measuring one underlying
+quantity, and within-class spread on FKGL delta exceeds between-class spread
+(ratio 1.16).
 
 #### Why Cochrane's delta was inverted
 
@@ -199,7 +266,7 @@ underlying quantity.
 sentence. Cochrane's sources are meta-analytic abstracts dense with statistics,
 and its worst document carries 52 periods of which **38 are decimal points**
 ("OR 0.61, 95% CI 0.46 to 0.79") and none are abbreviations. Measured against
-spaCy:
+spaCy at the time of the fix:
 
 | words per sentence | spaCy | textstat | ratio |
 |---|---|---|---|
@@ -219,141 +286,191 @@ The fix makes `surface_scores` take the caller's segmentation and neutralise
 sentence-internal terminators, so textstat keeps its formula implementations but
 counts the sentences spaCy found. Affected: **M3a, M3c** (which scores the same
 formulas over its length-matched controls) and **M6's `fkgl` feature**. Not
-affected: M1, M2, M3b, M4, M5 — verified identical across the two runs.
+affected: M1, M2, M3b, M4, M5.
 
 ### The length-invariant measures — where the evidence actually is
 
-Paired deltas (target − source). Bold = the direction indicating simplification.
+Paired deltas (target − source).
 
-| | Cochrane | PLOS | D-Wikipedia | SWiPE | CNN/DM | XSum |
-|---|---|---|---|---|---|---|
-| mean Zipf (↑ easier) | **+0.179** | **+0.214** | **+0.056** | **+0.057** | −0.046 | −0.009 |
-| rare word rate (↓ easier) | **−0.076** | **−0.035** | **−0.033** | **−0.026** | +0.031 | +0.017 |
-| syllables/word (↓ easier) | −0.007 | +0.137 | **−0.065** | **−0.057** | +0.053 | +0.058 |
-| jargon rate (↓ easier) | **−0.011** | +0.007 | −0.000 | −0.000 | +0.000 | −0.000 |
-| parse depth (↓ easier) | −0.052 | +1.133 | **−1.040** | +1.295 | **−0.796** | +0.639 |
-| subordinate clauses (↓ easier) | +0.100 | +0.175 | **−0.116** | **−0.136** | **−0.096** | −0.005 |
-| dependency distance (↓ easier) | **−0.630** | **−0.432** | **−0.343** | **−0.101** | **−0.613** | **−0.393** |
-| passive rate (↓ easier) | +0.024 | −0.075 | **−0.033** | −0.009 | −0.036 | +0.037 |
+|  | cochrane (PLS) | plos (PLS) | elife (PLS) | dwikipedia (DS) | swipe (DS) | cnn_dailymail (SUM) | xsum (SUM) |
+|---|---|---|---|---|---|---|---|
+| mean Zipf (↑ easier) | +0.180 | +0.214 | +0.547 | +0.080 | +0.057 | -0.053 | -0.008 |
+| rare word rate (↓ easier) | -0.077 | -0.034 | -0.131 | -0.048 | -0.026 | +0.024 | +0.016 |
+| syllables/word (↓ easier) | -0.011 | +0.144 | -0.052 | -0.074 | -0.057 | +0.054 | +0.050 |
+| jargon rate (↓ easier) | -0.010 | +0.008 | +0.004 | -0.000 | -0.000 | -0.000 | -0.000 |
+| MTLD (↑ = more varied) | +0.616 | +3.699 | -2.489 | -9.418 | -9.599 | +6.920 | -16.555 |
+| parse depth (↓ easier) | -0.109 | +1.154 | +1.144 | -1.042 | +1.295 | -0.662 | +0.535 |
+| subordinate clauses (↓ easier) | +0.091 | +0.179 | +0.340 | -0.124 | -0.136 | -0.114 | +0.008 |
+| dependency distance (↓ easier) | -0.692 | -0.425 | -0.892 | -0.410 | -0.101 | -0.555 | -0.351 |
+| passive rate (↓ easier) | +0.006 | -0.069 | -0.024 | -0.036 | -0.009 | -0.016 | +0.061 |
 
 This is a more honest picture than FKGL gives:
 
-- **Cochrane simplifies vocabulary but not syntax.** Commoner words (+0.179
-  Zipf, the largest lexical shift of the four), fewer rare words, less jargon,
-  flatter dependencies — yet *more* subordinate clauses (+0.100) and slightly
-  more passives. It rewrites words, not sentence structure.
-- **PLOS moves in both directions at once.** Commonest-vocabulary gain of the
-  four (+0.214 Zipf) alongside genuinely more complex syntax (+1.133 parse
-  depth, +0.175 subordination, +0.137 syllables/word). Lay summaries here are
-  lexically easier and structurally harder.
-- **D-Wikipedia is the only corpus simplifying on every axis** — the sole column
-  with no counter-signal.
-- **CNN/DM confirms the control works.** Its lexical measures move the *wrong*
-  way (Zipf −0.046, rare words +0.031): summarizing makes text denser, not
-  simpler. Its syntactic gains are a byproduct of extracting short lead
+- **eLife has the largest lexical shift in the set** (+0.547 Zipf, −0.131 rare
+  words) alongside *more* complex syntax (+1.144 parse depth, +0.340
+  subordination). Like PLOS, it trades word difficulty for structural
+  complexity — which is what a lay summary of an 8,900-token article looks like.
+- **Cochrane simplifies vocabulary but not syntax.** Commoner words (+0.180
+  Zipf), fewer rare words, less jargon, flatter dependencies (−0.692) — yet
+  *more* subordinate clauses (+0.091). It rewrites words, not sentence
+  structure.
+- **PLOS moves in both directions at once**: +0.214 Zipf alongside +1.154 parse
+  depth, +0.179 subordination and +0.144 syllables/word.
+- **D-Wikipedia is the only corpus simplifying on every lexical and syntactic
+  axis** — the sole column with no counter-signal.
+- **CNN/DailyMail confirms the control works.** Its lexical measures move the
+  *wrong* way (Zipf −0.053, rare words +0.024): summarizing makes text denser,
+  not simpler. Its syntactic gains are a byproduct of extracting short lead
   sentences.
 
 ### M3c decomposition
 
-| FKGL | Cochrane | PLOS | D-Wikipedia | SWiPE | CNN/DM | XSum |
-|---|---|---|---|---|---|---|
-| total change | −1.248 | +1.812 | −3.620 | −1.401 | −2.240 | +0.686 |
-| attributable to rewriting | −3.421 | −6.006 | −5.402 | −2.058 | −5.656 | −2.466 |
-| length artifact | +2.173 | +7.818 | +1.782 | +0.657 | +3.415 | +3.152 |
-| share attributable (median) | 1.249 | −1.750 | 1.000 | 1.000 | 1.690 | 0.626 |
+| FKGL | cochrane (PLS) | plos (PLS) | elife (PLS) | dwikipedia (DS) | swipe (DS) | cnn_dailymail (SUM) | xsum (SUM) |
+|---|---|---|---|---|---|---|---|
+| total change | -1.52 | +1.88 | -1.47 | -3.61 | -1.40 | -2.07 | +0.56 |
+| attributable to rewriting | -3.94 | -6.10 | -11.29 | -5.01 | -2.06 | -5.48 | -2.53 |
+| length artifact | +2.42 | +7.98 | +9.81 | +1.40 | +0.66 | +3.41 | +3.10 |
+| **share (corpus)** | **2.595** | **-3.255** | **7.655** | **1.387** | **1.469** | **2.646** | **-4.487** |
+| share per-pair (median) | 1.372 | -1.696 | 4.261 | 1.000 | 1.000 | 1.741 | 0.562 |
 
-Read this column with care. `share_attributable` is a ratio whose denominator is
-the total change, and on PLOS that total is small relative to its components
-(+1.812 against parts of −6.006 and +7.818), producing an uninterpretable
-−1.750. The useful reading is the **components**: on PLOS, shortening alone
-would have raised FKGL by 7.8 and rewriting pulled it back down by 6.0. On
-D-Wikipedia rewriting does the work (−5.402) against a smaller length artifact
-(+1.782) — genuine simplification, not a length effect. The same pattern now
-holds for Cochrane (−3.421 rewriting against +2.173 artifact): shortening alone
-would have made it *harder*, and rewriting more than compensated.
+`share (corpus)` is Σattributable / Σtotal over the corpus — the figure to read,
+because the per-pair ratio's denominator is a difference of two readability
+scores and approaches zero whenever a pair barely changed. In the previous
+revision one CNN/DailyMail pair scored 6388.9 on `mean_zipf` and supplied 6.39
+of a reported corpus mean of 6.87.
+
+A share above 1 means rewriting moved further than the net total, because
+shortening pushed the other way. **Negative shares mean total and attributable
+have opposite signs**: on PLOS the total is +1.88 (harder) while rewriting
+contributed −6.10 (easier) against a +7.98 length artifact, so shortening alone
+would have raised FKGL by 8 and rewriting pulled it back by 6 — not far enough.
+XSum is the same shape (+0.56 total, −2.53 rewriting, +3.10 artifact).
+
+The useful reading is the **components**, not the ratio. On D-Wikipedia
+rewriting does the work (−5.01) against a smaller length artifact (+1.40) —
+genuine simplification. The same holds for Cochrane (−3.94 against +2.42):
+shortening alone would have made it harder, and rewriting more than
+compensated. eLife shows the largest rewriting contribution in the set (−11.29)
+against the largest artifact (+9.81), which is what compressing 8,900 tokens to
+356 does to every length-sensitive term at once.
 
 ---
 
 ## M4 — Alignment and content preservation (τ = 0.5)
 
-**The clearest task separator in the profile.**
+**The clearest task separator in the profile.** Every column here is at
+**τ = 0.5**, so the corpora are directly comparable. The two
+document-simplification corpora additionally use τ = 0.7 for the alignment that
+feeds M5 and M6, because that threshold measures far better against human
+deletion labels — see [Validation](#validation-against-human-labels) — but a
+per-corpus τ cannot be used for cross-corpus comparison, since a stricter
+threshold mechanically lowers coverage, splits and groundedness together.
 
-| | Cochrane (PLS) | PLOS (PLS) | D-Wikipedia (DS) | SWiPE (DS) | CNN/DM (SUM) | XSum (SUM) |
-|---|---|---|---|---|---|---|
-| source coverage | **0.765** | 0.376 | **0.769** | **0.806** | 0.283 | **0.146** |
-| target groundedness | 0.858 | 0.975 | 0.808 | 0.866 | 0.908 | 0.740 |
-| 1:n splits | **0.405** | 0.278 | 0.269 | 0.299 | 0.064 | 0.000 ‡ |
-| n:1 merges | 0.337 | 0.028 | 0.239 | 0.283 | 0.068 | 0.030 |
-| 1:0 deletions | 0.159 | **0.692** | 0.258 | 0.218 | **0.840** | **0.938** |
-| 0:1 insertions | 0.069 | 0.001 | **0.152** | 0.092 | 0.010 | 0.016 |
-| 1:1 | 0.030 | 0.000 | 0.082 | 0.108 | 0.019 | 0.016 |
-| Kendall's τ (order) | 0.330 | 0.222 | 0.753 | **0.799** | 0.419 | n/a ‡ |
+|  | cochrane (PLS) | plos (PLS) | elife (PLS) | dwikipedia (DS) | swipe (DS) | cnn_dailymail (SUM) | xsum (SUM) |
+|---|---|---|---|---|---|---|---|
+| source coverage | 0.769 | 0.382 | 0.288 | 0.772 | 0.806 | 0.316 | 0.150 |
+| target groundedness | 0.851 | 0.972 | 0.901 | 0.776 | 0.866 | 0.908 | 0.762 |
+| **1:n splits** | **0.400** | **0.286** | **0.210** | **0.250** | **0.299** | **0.087** | **0.000** |
+| n:1 merges | 0.325 | 0.031 | 0.029 | 0.233 | 0.283 | 0.079 | 0.030 |
+| **1:0 deletions** | **0.161** | **0.682** | **0.757** | **0.237** | **0.218** | **0.808** | **0.946** |
+| 0:1 insertions | 0.079 | 0.001 | 0.003 | 0.190 | 0.092 | 0.010 | 0.013 |
+| 1:1 | 0.036 | 0.001 | 0.001 | 0.090 | 0.108 | 0.015 | 0.011 |
+| Kendall's τ (order) | 0.305 | 0.187 | 0.163 | 0.729 | 0.799 | 0.491 | — |
 
-‡ structural, not measured: every XSum summary is a single sentence, so a 1:n
-split is impossible and Kendall's τ is undefined. See the SUM section.
+XSum's 1:n split rate of 0.000 and undefined Kendall's τ are **structural, not
+measured**: every XSum summary is a single sentence, so a split is impossible
+and there is no ordering to correlate.
+
+**The split rate separates the two task families with no overlap.** The five
+simplification-labelled corpora run 0.210 to 0.400; the two
+summarization corpora are at 0.087 and 0.000. Deletions run the other
+way (0.808–0.946 for SUM), though PLOS and eLife reach into
+summarization territory there (0.682 and 0.757) because they compress so
+hard. **Splitting is the discriminator that survives; deletion alone is not.**
 
 The deletion-versus-splitting contrast does the work:
 
-- **CNN/DM**: discards 84% of source sentences, splits almost nothing (0.064).
-  Pure content selection — the summarization signature.
-- **Cochrane**: retains 77% of sources and splits at 0.405, the highest of the
-  four. Content-preserving restructuring — the simplification signature.
-- **D-Wikipedia**: retains 77%, splits 0.269, and has by far the highest
-  insertion rate (0.152) and the most preserved ordering (τ=0.753). It rewrites
-  in place, in order, and adds material.
-- **PLOS**: deletes like a summarizer (0.692) because it compresses 30×, yet
-  still splits at 0.278 — both operations at once, which is why single-axis
-  metrics misclassify it.
+- **CNN/DailyMail**: discards 80.8% of source sentences, retains 31.6% of
+  source content, and splits at 0.087. Pure content selection — the
+  summarization signature.
+- **XSum**: the most extreme in the set — 94.6% deletions, 15.0%
+  coverage, no splits possible.
+- **Cochrane**: retains 76.9% and splits at 0.400, the highest here, with
+  merges close behind at 0.325. Content-preserving restructuring — the
+  simplification signature.
+- **D-Wikipedia and SWiPE**: retain 77.2% and 80.6%, split at 0.250 and
+  0.299, and show by far the most preserved ordering (Kendall's τ 0.729
+  and 0.799) plus the highest insertion rates (0.190 and 0.092).
+  They rewrite in place, in order, and add material.
+- **PLOS and eLife**: delete like summarizers (0.682 and 0.757) yet still split
+  at 0.286 and 0.210 — both operations at once, which is why single-axis
+  metrics misclassify them.
 
-Note `n_1_1` is near zero everywhere (0.000–0.082): almost nothing is a clean
-one-to-one rewrite at this threshold. Also note the five categories are counted
-over different populations (links, source sentences, target sentences), so read
-these as relative shape, not as a partition.
+Groundedness is high everywhere (0.76–0.97): the targets are mostly
+traceable to source content even where coverage is low.
+
+**Read the five category rows as relative shape, not as a partition.** They are
+counted over different populations — links for splits and merges, source
+sentences for deletions, target sentences for insertions — so they do not sum to
+1 and a difference between two of them is not a difference in the same unit.
+This is a known unresolved issue in how the distribution is reported, not a
+property of the corpora; it is flagged in
+[Caveats](#statistical) and deliberately left unpatched pending a decision on
+what the denominator should be.
 
 ---
 
 ## M5 — Content addition
 
-> **Premise-granularity fix applied.** M5 originally scored each target sentence
-> against source sentences **one at a time**, taking the max. A target sentence
-> that merges facts from several source sentences is entailed by none of them
-> individually, so faithful merges were reported as unsupported. The scorer now
-> also evaluates a multi-sentence premise. All six corpora below are post-fix;
-> SWiPE was first run after the fix, so it has no pre-fix figure to compare.
+> **Two fixes applied since the previous revision.** M5 originally scored each
+> target sentence against source sentences **one at a time**, taking the max, so
+> a target merging facts from several source sentences was entailed by none of
+> them individually and faithful merges were reported as unsupported; the scorer
+> now also evaluates a multi-sentence premise. And the headline rate is now
+> averaged **per document** rather than pooled over sentences, so one long or
+> pathological document cannot dominate it.
 
-| | Cochrane (PLS) | PLOS (PLS) | D-Wikipedia (DS) | SWiPE (DS) | CNN/DM (SUM) | XSum (SUM) |
-|---|---|---|---|---|---|---|
-| **not-entailed rate** | **0.534** | **0.425** | **0.537** | **0.266** | **0.298** | **0.812** |
-| *before the fix* | *0.651* | *0.567* | *0.605* | — | *0.556* | — |
-| gap vs CNN/DM | **+0.236** | **+0.127** | **+0.239** | **−0.032** | (control) | **+0.514** |
-| *gap before the fix* | *+0.095* | *+0.011* | *+0.049* | — | — | — |
-| target sentences scored | 2487 | 2131 | 928 | 1061 | 863 | 250 |
-| candidate gloss | 1270 | 898 | 395 | 238 | 253 | 201 |
-| candidate new background | 57 | 7 | **103** | 44 | 4 | 2 |
-| definitional cue | 80 | 126 | 138 | 63 | 6 | 9 |
+|  | cochrane (PLS) | plos (PLS) | elife (PLS) | dwikipedia (DS) | swipe (DS) | cnn_dailymail (SUM) | xsum (SUM) |
+|---|---|---|---|---|---|---|---|
+| **not-entailed (by document)** | **0.558** | **0.441** | **0.664** | **0.469** | **0.228** | **0.261** | **0.854** |
+| not-entailed (pooled) | 0.547 | 0.434 | 0.660 | 0.587 | 0.266 | 0.257 | 0.853 |
+| gap vs CNN/DailyMail | +0.297 | +0.180 | +0.403 | +0.208 | -0.033 | (control) | +0.593 |
+| target sentences scored | 2370 | 507 | 1066 | 1023 | 1061 | 920 | 251 |
+| candidate gloss | 1252 | 220 | 704 | 450 | 238 | 235 | 211 |
+| candidate new background | 45 | 0 | 0 | 151 | 44 | 1 | 3 |
+| definitional cue | 91 | 28 | 75 | 150 | 63 | 3 | 7 |
+| example marker | 72 | 10 | 44 | 25 | 8 | 1 | 0 |
 
-### The metric now separates the tasks
+### What the metric does and does not separate
 
 CNN/DailyMail is the control: it adds no content by construction, so a working
-measure must place it clearly below the simplification corpora. Before the fix
-it sat at 0.556, within 0.05 of everything else. It now sits at **0.298**, with
-both simplification corpora ~0.24 above it — a **five-fold** improvement in
-separation.
+measure must place it clearly below the plain-language corpora. It sits at
+0.261, and the three PLS corpora average 0.554 — a gap of
+**+0.293**. Before the premise fix the control sat at 0.556, within 0.05 of
+everything else, so this is roughly a five-fold improvement in separation.
 
-Every corpus fell, but by very different amounts — CNN/DailyMail −0.258, PLOS
-−0.142, Cochrane −0.117, D-Wikipedia −0.068 — and that ordering is the
-diagnostic signature rather than a coincidence:
-the drop tracks how heavily a corpus merges. CNN/DailyMail has the lowest split
-rate of the four (0.064) and a 0.840 deletion rate, so its summary sentences are
-the heaviest n:1 merges and were the most damaged by single-sentence premises.
-D-Wikipedia, which rewrites largely in place, was damaged least.
+**But XSum breaks the ordering entirely.** It scores 0.854 — the highest in
+the set, above every plain-language corpus. That is not a defect; it is what the
+metric measures. M5 detects *content not entailed by the source*, and
+one-sentence abstractive summarisation produces exactly that. So a high M5
+score is evidence of unsupported content, not of plain-language elaboration, and
+within-class spread on M5 (0.593 across the two SUM corpora) exceeds
+between-class spread. **M5 cannot be used on its own to identify
+simplification.** It has to be read with M2 and M4: XSum pairs its high rate
+with the lowest coverage (0.150) and the highest novel-unigram rate
+(0.359) in the set, which together say "abstractive summary", not
+"explained for a lay reader".
 
-**PLOS separates least among the three simplification corpora** (+0.127 against
-+0.236 and +0.239). That is consistent with the rest of its profile: on
-compression, copying and source coverage it behaves like the summarization
-control rather than like Cochrane, its own class-mate.
+**PLOS separates least among the PLS corpora** (+0.180 against +0.297 for
+Cochrane and +0.403 for eLife). That is consistent with the rest of its
+profile: on compression, copying and source coverage it behaves like the
+summarization control rather than like its class-mates.
 
-### How the defect was found, and what the earlier evidence meant
+**SWiPE sits below the control** (-0.033), which is expected: it is
+content-preserving revision of existing text, so most target sentences have a
+close source counterpart and little is unentailed.
+
+### How the premise defect was found, and what the earlier evidence meant
 
 Two observations showed the original numbers were wrong:
 
@@ -361,10 +478,9 @@ Two observations showed the original numbers were wrong:
    held the control below the plain-language corpora by more than 0.087, and
    below 0.40 the gap was negative. Reproduce with
    `scripts/sweep_nli_threshold.py`.
-2. **They contradicted M2, which uses no model.** PLOS assembles 90.7% of its
+2. **They contradicted M2, which uses no model.** PLOS assembles 0.907 of its
    summary from copied source spans (M2 `coverage`) yet was scored 56.7%
-   unsupported *by that source*. Every corpus overshot its own novel-content
-   share by 0.32–0.47.
+   unsupported *by that source*.
 
 Both were sound, and both pointed at the scores rather than the cutoff. The
 cause was not off-domain model degradation, as first supposed, but a
@@ -378,10 +494,11 @@ codebase.
 ### Still read the pattern breakdown
 
 The surface-cue counts use no model and remain the most interpretable evidence
-here. D-Wikipedia shows 103 candidate-new-background sentences against
-CNN/DailyMail's 4 and PLOS's 7 — a 15–26× separation in the expected direction.
-D-Wikipedia also leads on definitional cues (138), with PLOS close behind (126),
-consistent with texts that stop to define terms.
+here. D-Wikipedia shows 151 candidate-new-background sentences against
+CNN/DailyMail's 1 and PLOS's 0, and leads on definitional cues
+(150) — consistent with texts that stop to define terms. These are
+raw counts over different numbers of scored sentences, so compare them against
+the `target sentences scored` row rather than directly.
 
 ### The remaining caveat
 
@@ -396,237 +513,283 @@ python -m profiler ingest-annotations --run runs/<dir> --file <annotated>.csv
 
 ---
 
-> **⚠ The M6 effect sizes below are confounded and should not be read as
-> sentence-level evidence.** They pool every sentence from every document into
-> one array. TextRank is a per-document stationary distribution and sums to 1
-> per document, so a sentence in a 5-sentence document scores ~0.2 and one in a
-> 400-sentence document ~0.0025; measured on D-Wikipedia, raw textrank
-> correlates with its own document's sentence count at **rho = -0.92**,
-> `centroid_sim` at -0.43 and `max_sim_other` at +0.31. The two features ranking
-> 1st-3rd in every corpus are therefore substantially measuring document length.
->
-> The pipeline now estimates the effect inside each document and aggregates
-> (`stratified_effect` in `metrics.json`, primary in `report.md`), but **no
-> corpus has been re-run**, so the numbers here are the pooled ones. On a
-> 20-document probe the correction cut `centroid_sim` from -1.34 to -0.49 and
-> `textrank` from -0.71 to -0.48, so the ranking below may not survive.
->
-> Since these numbers were produced, three further things changed: `m6_tau` is
-> now per corpus (0.7 for the Wikipedia corpora, 0.5 elsewhere, after
-> per-sentence validation against human labels), and
-> `rouge_recall_in_target` -- which ranks **first in every column below** -- has
-> been **removed** for restating M6's own dependent variable, since "retained"
-> is defined as aligning to the target.
->
-> **The "salience dominates" conclusion in this section is unverified**, and its
-> top-ranked feature no longer exists.
-
 ## M6 — Deletion basis
 
-Features ranked by |Cohen's d| between deleted and retained source sentences.
-Negative = the feature is **lower** in deleted sentences.
+> **Estimator corrected and all corpora re-run.** The previous revision pooled
+> every sentence from every document into one array and took Cohen's *d*. But
+> TextRank is a per-document stationary distribution summing to 1, so a sentence
+> in a 5-sentence document scores ~0.2 and one in a 400-sentence document
+> ~0.0025 — measured on D-Wikipedia, raw textrank correlated with its own
+> document's sentence count at **ρ = −0.92**. The pooled statistic was
+> substantially measuring document length. Effects are now estimated *within*
+> each document and aggregated, and `rouge_recall_in_target` — which ranked
+> first in every column of the old table — has been removed for restating M6's
+> own dependent variable, since "retained" is defined as aligning to the target.
+> The pooled value is shown below for one feature so the size of the difference
+> is visible.
 
-| Rank | Cochrane | PLOS | D-Wikipedia | SWiPE | CNN/DM | XSum |
-|---|---|---|---|---|---|---|
-| 1 | rouge_recall_in_target −1.29 | **centroid_sim −1.55** | rouge_recall_in_target −1.43 | rouge_recall_in_target −1.68 | rouge_recall_in_target −1.43 | rouge_recall_in_target −1.26 |
-| 2 | centroid_sim −1.13 | rouge_recall_in_target −1.31 | centroid_sim −1.23 | centroid_sim −1.09 | centroid_sim −1.24 | centroid_sim −1.05 |
-| 3 | max_sim_other −1.03 | textrank −0.86 | textrank −0.66 | max_sim_other −0.63 | max_sim_other −0.82 | max_sim_other −0.79 |
-| 4 | fkgl −0.62 | fkgl −0.80 | norm_position +0.62 | textrank −0.57 | textrank −0.71 | sent_len −0.44 |
-| deletion rate | 0.227 | 0.633 | 0.341 | 0.274 | 0.762 | 0.866 |
-| source sentences | 3616 | 78460 | 1202 | 1490 | 9366 | 4368 |
+Features ranked by |within-document effect| between deleted and retained source
+sentences. Negative = the feature is **lower** in deleted sentences.
+¹ salience feature, ² difficulty feature.
 
-**Salience dominates in all six corpora, across every task class.** Deleted
-sentences are consistently less central (`centroid_sim` −1.13 to −1.55) and
-share less vocabulary with the target. Difficulty features rank low everywhere:
-`rare_word_rate` never exceeds |0.31|, and `jargon_rate` never exceeds |0.15|.
+| Rank | cochrane (PLS) | plos (PLS) | elife (PLS) | dwikipedia (DS) | swipe (DS) | cnn_dailymail (SUM) | xsum (SUM) |
+|---|---|---|---|---|---|---|---|
+| 1 | centroid_sim -1.18 ¹ | textrank -1.22 ¹ | centroid_sim -1.09 ¹ | norm_position +1.26 ¹ | norm_position +1.13 ¹ | centroid_sim -1.05 ¹ | textrank -0.87 ¹ |
+| 2 | textrank -1.18 ¹ | centroid_sim -1.22 ¹ | textrank -1.08 ¹ | max_sim_other -0.66 | centroid_sim -0.62 ¹ | textrank -1.05 ¹ | centroid_sim -0.87 ¹ |
+| 3 | max_sim_other -1.10 | fkgl -0.85 ² | fkgl -0.94 ² | textrank -0.63 ¹ | textrank -0.60 ¹ | max_sim_other -0.89 | max_sim_other -0.78 |
+| 4 | fkgl -0.67 ² | sent_len -0.78 ² | sent_len -0.89 ² | centroid_sim -0.62 ¹ | max_sim_other -0.54 | sent_len -0.58 ² | sent_len -0.46 ² |
+| *pooled centroid_sim* | *-0.90* | *-1.52* | *-1.36* | *-0.96* | *-0.78* | *-1.27* | *-1.11* |
+| deletion rate | 0.224 | 0.623 | 0.734 | 0.618 | 0.521 | 0.732 | 0.867 |
+| source sentences | 3430 | 16832 | 31983 | 1208 | 1490 | 9076 | 5094 |
+| documents | 250 | 60 | 60 | 250 | 250 | 250 | 250 |
+| τ | 0.5 | 0.5 | 0.5 | 0.7 | 0.7 | 0.5 | 0.5 |
+
+**Salience still dominates, and now on a statistic that document length cannot
+explain.** Salience features take two of the top three slots on six of seven
+corpora and all three on SWiPE. Deleted sentences are consistently less central:
+`centroid_sim` ranges -1.22 to -0.62 across the set. The
+correction mattered in magnitude but not in conclusion — on Cochrane, pooled
+`centroid_sim` reads -0.90 against a within-document -1.18.
+
+**Difficulty features remain low everywhere.** `rare_word_rate` and
+`jargon_rate` never exceed |0.25| on any corpus. Where a difficulty
+feature does enter the top three it is `fkgl` on the two long-document PLS
+corpora (-0.85 on PLOS, -0.94 on eLife), and its sign says deleted
+sentences are *easier*, not harder.
 
 This survived a fix designed to give difficulty its best chance. M6 originally
 carried both `fkgl` and `sent_len`, but on a single sentence FKGL is
 `0.39·sent_len + 11.8·syllables_per_word − 15.59` — its dominant term is the
 sentence's length, so the two features competed for the same variance and buried
-the vocabulary component. `syllables_per_word`, the length-free half, was added
-and enters at −0.62 (PLOS), −0.24 (Cochrane), −0.20 (CNN/DM) and −0.12
-(D-Wikipedia) — never above the salience features. Its **sign** is the
-informative part and it is negative everywhere: deleted sentences use *shorter*
-words, the opposite of difficulty-driven deletion.
+the vocabulary component. `syllables_per_word`, the length-free half, was added;
+it enters at -0.64 on PLOS and -0.29 on Cochrane, never above the
+salience features, and its sign is negative on every corpus: deleted sentences
+use *shorter* words, the opposite of difficulty-driven deletion.
+
+**The two DS corpora delete differently from everything else.** On D-Wikipedia
+and SWiPE the top feature is `norm_position` (+1.26 and +1.13) — and
+positive, meaning deleted sentences come *later* in the document. The other five
+corpora are led by centrality. Position-based deletion is what revising an
+article in place looks like: the tail gets cut.
 
 **No corpus here deletes on the basis of difficulty.** Even the plain-language
-corpora drop material because it is peripheral, not because it is hard. That is
-a substantive finding — the PRD's interpretation guide treats
+corpora drop material because it is peripheral or late, not because it is hard.
+That is a substantive finding — the interpretation guide treats
 difficulty-driven deletion as the simplification signature, and none of these
 corpora show it.
 
-Two caveats. `rouge_recall_in_target` partly restates what "retained" means, so
-its top rank is less informative than `centroid_sim` sitting at #1–#2
-throughout — the latter is the load-bearing evidence. And these statistics are
-over source *sentences* clustered within documents, while the bootstrap
-resamples sentences independently, so the CIs are tighter than the clustering
-warrants.
+One caveat remains: these statistics are over source *sentences* clustered
+within documents, and while the effect is now estimated within document, the
+bootstrap still resamples sentences independently, so the CIs are tighter than
+the clustering warrants.
 
 ---
 
 ## The SUM class, with two corpora
 
 XSum was added to do for SUM what SWiPE did for DS: test whether the label names
-a behaviour. It does.
+a behaviour. It does — on the structural measures, and not on style.
 
 | | XSum | CNN/DailyMail | agreement |
 |---|---|---|---|
-| compression (corpus-level) | 0.057 | 0.064 | close |
-| source coverage | 0.146 | 0.283 | both very low |
-| 1:0 deletions | **0.938** | **0.840** | both very high |
-| deletion rate | 0.866 | 0.762 | close |
-| **Zipf delta** | **-0.009** | **-0.046** | **both non-positive** |
-| novel content words | **0.486** | 0.194 | **opposite** |
-| Grusky coverage | 0.635 | 0.855 | **opposite** |
-| Grusky density | **1.04** | 3.14 | **opposite** |
+| compression (corpus-level) | 0.0560 | 0.0742 | close |
+| source coverage (τ=.5) | 0.150 | 0.316 | both very low |
+| **1:0 deletions** | **0.946** | **0.808** | both very high |
+| **1:n splits** | **0.000** | **0.087** | both lowest in set |
+| deletion rate (M6) | 0.867 | 0.732 | close |
+| **Zipf delta** | **-0.008** | **-0.053** | **both negative** |
+| novel content words | **0.478** | 0.173 | **opposite** |
+| Grusky coverage | 0.641 | 0.873 | **opposite** |
+| Grusky density | **1.06** | 3.80 | **opposite** |
+| **M5 not-entailed** | **0.854** | **0.261** | **opposite** |
 
 The two corpora were chosen to differ maximally on style, and they do: XSum has
-the highest novel-content rate and the lowest density of any corpus here -- 1.04
-means essentially no copied runs at all -- while CNN/DailyMail copies heavily.
-Yet they land together on compression, source retention, deletion, and the sign
-of the Zipf delta.
+the highest novel-content rate and the lowest density of any corpus here —
+1.06 means essentially no copied runs longer than a word — while
+CNN/DailyMail copies heavily. Yet they land together on compression, source
+retention, deletion, splitting, and the sign of the Zipf delta.
 
-**The Zipf separation is now clean across six corpora with no overlap:**
-simplification-labelled corpora run +0.056 to +0.214, summarization-labelled
--0.046 and -0.009. That a maximally-abstractive and a maximally-extractive
+**The Zipf separation is clean across all seven corpora with no overlap:**
+simplification-labelled corpora run +0.057 to +0.547, summarization-labelled
+-0.053 and -0.008. That a maximally-abstractive and a maximally-extractive
 summarization corpus fall on the same side is the strongest evidence here that
 Zipf delta tracks the task rather than the rewriting style.
 
-**The split-rate half of the discriminator gets no support from XSum**, and the
-0.000 in the M4 table is marked accordingly. Every XSum summary is exactly one
-sentence -- 100% of the 250 sampled documents -- and a 1:n split requires at
-least two target sentences. Zero documents *could* have registered a split, so
-the figure is structural, not measured. Kendall's tau is undefined for the same
-reason and reported as n/a.
+**XSum has no split rate to report.** Every XSum summary is exactly one
+sentence, so a 1:n split requires at least two target sentences and zero
+documents *could* have registered one. The 0.000 is structural; Kendall's τ
+is undefined for the same reason.
 
-**XSum is also the least grounded corpus in the set**, with a not-entailed rate
-of **0.812** against 0.266-0.537 for everything else. XSum is well known in the
-summarization literature for reference summaries containing information absent
-from the source article, and M5 flags it independently -- a corroboration the
-module was not tuned for.
+**But the two corpora diverge completely on M5** (0.854 against 0.261), and
+that divergence is larger than any between-class gap on that measure. XSum is
+well known in the summarization literature for reference summaries containing
+information absent from the source, and M5 flags it independently — a
+corroboration the module was not tuned for, and simultaneously the reason M5
+cannot identify simplification on its own.
 
-**And FKGL fails again**, reporting +0.686: a summarization corpus made its text
-harder. Same failure mode as PLOS, and it is the fourth of six corpora on which
-FKGL's sign disagrees with the corpus's task label.
+**And FKGL fails again** on XSum, reporting +0.54: a summarization corpus
+made its text harder. Its Dale–Chall moves the same way (+1.75) while
+CNN/DailyMail's FKGL and Dale–Chall disagree with each other. The surface
+formulas are the least reliable family in the profile.
 
 ## The DS class, with two corpora
 
 SWiPE was added to test whether "document-level simplification" names a
-behaviour or just a provenance. It does not name a behaviour.
+behaviour or just a provenance. It names one on the structural measures and not
+on style — the same split as SUM.
 
 | | SWiPE | D-Wikipedia | CNN/DM (control) |
 |---|---|---|---|
-| compression (corpus-level) | 0.549 | 0.510 | 0.064 |
-| **Grusky density** | **15.87** | 5.29 | 3.14 |
-| **novel content words** | **0.191** | **0.347** | 0.194 |
-| coverage | 0.838 | 0.715 | 0.855 |
-| **not-entailed rate** | **0.266** | **0.537** | 0.298 |
-| **parse depth delta** | **+1.295** | **-1.040** | -0.796 |
-| subordinate clause delta | -0.136 | -0.116 | -0.096 |
-| Zipf delta | **+0.057** | **+0.056** | -0.046 |
-| 1:n splits | **0.299** | **0.269** | 0.064 |
-| Kendall's tau | 0.799 | 0.753 | 0.419 |
+| compression (corpus-level) | 0.5487 | 0.5532 | 0.0742 |
+| **1:n splits (τ=.5)** | **0.299** | **0.250** | 0.087 |
+| **Zipf delta** | **+0.057** | **+0.080** | -0.053 |
+| Kendall's τ (τ=.5) | 0.799 | 0.729 | 0.491 |
+| 0:1 insertions | 0.092 | 0.190 | 0.010 |
+| **Grusky density** | **15.87** | 5.96 | 3.80 |
+| **novel content words** | **0.191** | **0.353** | 0.173 |
+| **M5 not-entailed** | **0.228** | **0.469** | 0.261 |
+| **parse depth delta** | **+1.295** | **-1.042** | -0.662 |
+| M6 top feature | norm_position | norm_position | centroid_sim |
 
-**Where they agree is exactly where the discriminators live.** Zipf delta
-(+0.057 against +0.056) and split rate (0.299 against 0.269) replicate almost
-exactly on a corpus they were not derived from. That is the strongest evidence
-in this document that those two measures track something real.
+**Where they agree is exactly where the discriminators live.** Split rate
+(0.299 against 0.250), Zipf delta (+0.057 against +0.080),
+compression (0.5487 against 0.5532), preserved ordering (0.799 against
+0.729) and M6's top feature (`norm_position`, positive on both and on
+nothing else) all replicate on a corpus they were not derived from. That is the
+strongest evidence in this document that those measures track something real.
 
-**Where they disagree is everything else.** SWiPE copies long verbatim spans:
-density 15.87 is triple D-Wikipedia's and five times the summarization
-control's, the largest outlier of any metric here, and its novel-content rate
-(0.191) sits just *below* the summarization control's (0.194) and at barely half
-D-Wikipedia's (0.347). SWiPE *edits* -- it preserves
-passages and changes them locally. D-Wikipedia *rewrites* (0.347 novel content
-at density 5.29). Their syntax moves in opposite directions: SWiPE deepens parse
-trees (+1.295) where D-Wikipedia flattens them (-1.040).
+**Where they disagree is style and content addition.** SWiPE copies long
+verbatim spans: density 15.87 is 2.7× D-Wikipedia's and the largest
+outlier of any metric here, and its novel-content rate (0.191) is barely
+half D-Wikipedia's (0.353). SWiPE *edits* — it preserves passages and
+changes them locally. D-Wikipedia *rewrites*. Their syntax moves in opposite
+directions: SWiPE deepens parse trees (+1.295) where D-Wikipedia flattens
+them (-1.042).
 
-**SWiPE adds less unsupported content than the summarization control** (0.266
-against 0.298). That looks like an M5 failure and is not one: a corpus copying
-84% of its text at density 15.87 genuinely has little unsupported material. The
-metric is reporting the corpus correctly.
+**SWiPE adds less unsupported content than the summarization control**
+(0.228 against 0.261). That looks like an M5 failure and is not one: a
+corpus copying 84% of its text at density 15.87 genuinely has little
+unsupported material. The metric is reporting the corpus correctly.
 
-**A caution on SWiPE's own numbers.** Its bimodality coefficient is 0.981, the
-highest of the six -- its mean describes no document in it. And the published
-"~1 (content-preserving)" in `profiler/reference.py` is not supported as a
-length figure: measured across all 143,359 released pairs, compression is
-**0.676**. The 1000-document sample profiled here reads 0.549, so this corpus is
-understated on both counts.
+**A caution on SWiPE's own numbers.** Its bimodality coefficient is
+0.980, the highest of the seven — its mean describes no document in
+it. And the published "~1 (content-preserving)" in `profiler/reference.py` is
+not supported as a length figure: measured across all 143,359 released pairs,
+compression is **0.676**. The 1000-document sample profiled here reads
+0.5487, so this corpus is understated in the reference table on both counts.
 
 ## Validation against human labels
 
 Every other check here is indirect: a control corpus that should score low, or a
-published statistic the pipeline should reproduce. SWiPE ships a 3,861-pair
+published statistic the pipeline should reproduce. SWiPE ships a 5,204-pair
 subset with per-document human edit annotations, which is the one place the
 pipeline's estimates can be compared against what annotators actually saw.
+
+### The deletion split, per sentence
+
+The strongest check available. Each source *token* can be labelled
+deleted-by-an-annotator from SWiPE's edit spans, and from that each source
+*sentence* — so M6's deleted/retained split becomes a classification problem
+with ground truth, scored with precision and Cohen's κ rather than a
+correlation. Reproduce with `scripts/validate_deletion_split.py`.
+
+| τ | precision | recall | F1 | accuracy | **Cohen's κ** |
+|---|---|---|---|---|---|
+| 0.5 | 0.972 | 0.448 | 0.613 | 0.691 | **0.410** |
+| **0.7** | 0.941 | 0.825 | 0.879 | 0.876 | **0.754** |
+
+1,140 source sentences from 200 of 200 annotated documents, none unmappable.
+54.6% were annotator-deleted; the pipeline calls 25.2% deleted at τ=0.5 and
+47.9% at τ=0.7.
+
+**This is why the two DS corpora use τ=0.7.** At 0.5 the split is precise but
+misses over half of what annotators deleted (recall 0.448); at 0.7 it recovers
+0.825 of them for a small precision cost, and κ rises from 0.410 to 0.754. The
+threshold does **not** transfer to the summarization corpora — on XSum it labels
+98.3% of source sentences deleted, leaving M6 with almost no contrast — so each
+config sets its own and cross-corpus M4 comparisons are read at a common τ=0.5.
+
+These figures are measured on the documents the pipeline actually profiles. The
+previous revision reported κ 0.462 and 0.767 from a head slice of the first 200
+records of the file, while the corpus itself is a seeded random sample — so the
+threshold had been calibrated on a population largely not in the corpus.
+
+### Rank agreement on the annotated subset
 
 Spearman rank correlation on 250 documents, pipeline per-pair output against
 human annotation counts. Reproduce with `scripts/validate_against_swipe.py`.
 
-| check | raw rho | partial rho | p | verdict |
+| check | raw ρ | partial ρ | p | verdict |
 |---|---|---|---|---|
-| M4 splits vs `syntactic_sentence_splitting` | 0.267 | **0.222** | 0.0004 | agrees |
-| M4 deletions vs `semantic_deletion` (+2) | **0.434** | **0.007** | 0.91 | **length artifact** |
-| M4 merges vs `syntactic_sentence_fusion` | 0.160 | 0.076 | 0.23 | length artifact |
-| M4 Kendall's tau vs `discourse_reordering` | -0.136 | **-0.166** | 0.025 | agrees |
-| M5 not-entailed vs `semantic_elaboration_*` | 0.259 | **0.195** | 0.002 | agrees |
+| M4 splits vs `syntactic_sentence_splitting` | 0.259 | **0.283** | 5.4e-06 | agrees |
+| M4 deletions vs `semantic_deletion` | 0.494 | **0.149** | 0.019 | agrees, weakly |
+| M4 merges vs `syntactic_sentence_fusion` | 0.037 | −0.051 | 0.43 | no agreement |
+| M4 Kendall's τ vs `discourse_reordering` | −0.092 | −0.087 | 0.24 | no agreement |
+| M5 not-entailed vs `semantic_elaboration_*` | 0.428 | **0.420** | 4.0e-12 | agrees |
 
 **Read the partial column.** A longer source has more sentences for the pipeline
 to count and more edits for annotators to mark, so length alone induces
 agreement. `partial` is the same correlation with source length partialled out.
 
-**The strongest-looking result is spurious.** M4's deletion check reads rho=0.434
-at p=6.6e-13 -- by far the most impressive number available -- and collapses to
-**0.007 (p=0.91)** under control. Length correlates 0.737 with the pipeline's
-deletion count and 0.603 with the human count. Merges fail the same way. So
-**M4's deletion and merge counts have no demonstrated agreement with human
-judgment**, which matters because deletion rate carries much of the weight in
-the M4 section above.
+**Two of these conclusions changed with the corrected sample, and one reversed.**
+The previous revision reported M4's deletion check as the headline example of a
+spurious result: raw ρ=0.434 collapsing to 0.007 (p=0.91) under control. On the
+corrected sample it reads 0.494 raw and **0.149 partial at p=0.019** — it
+survives, weakly. The earlier "strongest-looking result is spurious" finding
+does not replicate, and the biased draw is the likely reason: it excluded the
+last sixth of the annotated file. Conversely, Kendall's τ previously agreed
+(−0.166, p=0.025) and now does not (−0.087, p=0.24).
 
-**M5 comes out best-behaved**, which the earlier control-corpus analysis could
-not have shown. Its agreement is genuine (0.195, p=0.002) and its correlation
-with document length is -0.044, essentially zero -- unlike M4's deletion count,
-it is not a proxy for document size. Kendall's tau got *stronger* under control
-(-0.136 to -0.166), so partialling length removed noise rather than signal.
+**M5 is much the best-behaved**, and markedly stronger than before: partial
+ρ=0.420 at p=4e-12, against 0.195 on the old sample. Its raw and partial values
+are nearly identical (0.428 against 0.420), so its agreement is not a length
+proxy at all — unlike M4's deletion count, whose raw value drops by two thirds
+under control.
 
-**These are weak correlations.** rho ~ 0.2 is about 4% of rank variance:
-sanity checks passing, not strong agreement. Consistent with the alignment noise
-documented throughout.
+**M4's merge count and ordering measure have no demonstrated agreement with
+human judgment.** That matters for reading the M4 section above: the split rate
+and M5 are the load-bearing evidence there, not the merge or reordering rows.
+
+**These remain modest correlations.** Even M5's 0.420 is about 18% of rank
+variance. Consistent with the alignment noise documented throughout.
 
 **What this cannot show.** Annotators selected pairs carrying interesting edits,
 so these correlations describe the pipeline on edit-rich documents. The two
-sides also count different objects -- humans count edits, the pipeline counts
+sides also count different objects — humans count edits, the pipeline counts
 sentences, and 4 of the 19 annotated categories (`lexical_generic` chief among
 them, at 4,840 instances) have no pipeline equivalent at all. Only rank
 agreement is testable, not counts.
 
-### A vandalised document, and what it exposed
+### Sentence-weighted rates, and a degenerate document
 
-SWiPE's annotated subset contains a vandalised Wikipedia revision, `swipeg3153`:
-a 12-word source against a 2,488-word target that is almost entirely one
-sentence repeated. Three distinct sentences across 496.
-
-It is now flagged automatically (`degenerate_pairs` in `metrics.json`) and
-nothing is dropped. What it revealed is a design property of M5: **the corpus
-rate pools every target sentence, so it is sentence-weighted**, and one document
-with 496 sentences carries 496 times the weight of a one-sentence document.
+The corrected draw flags one degenerate pair in SWiPE-gold: `swipeg2079`,
+whose target repeats itself — 39 sentences of which only
+4 are distinct. It is reported in `degenerate_pairs` and raises a
+corpus warning; nothing is dropped.
 
 | swipe_gold not-entailed rate | |
 |---|---|
-| sentence-weighted (pooled) | 0.526 |
-| with that single pair removed | 0.301 |
-| document-weighted mean | 0.255 |
-| document-weighted median | 0.167 |
+| sentence-weighted (pooled) | 0.2594 |
+| **document-weighted mean** | **0.2272** |
+| document-weighted median | 0.0370 |
 
-One page nearly doubles the pooled figure. M5 now reports
-`not_entailed_rate_by_document` alongside the pooled rate; both are legitimate
-and answer different questions.
+The gap between the pooled and document-weighted figures (+0.0323) is the
+design property this exposes: **the pooled rate is sentence-weighted**, so a
+document with 39 target sentences carries 39 times the weight of a
+one-sentence document. The previous revision's sample contained a far worse
+case — a vandalised revision with a 12-word source, a 2,488-word target and 496
+sentences, three of them distinct — which on its own moved the pooled rate from
+0.301 to 0.526. **That document is not in the corrected draw**; the sampler
+change replaced it with a milder one, which is a reminder that a single draw
+decides whether a pathological document is present at all.
 
-**The five main corpora are unaffected.** Their largest single document holds
-between 0.7% and 2.1% of any sentence pool, and removing it moves no corpus rate
-by more than 0.009. The vulnerability is real but fires only on pathological
-input.
+M5 now reports `not_entailed_rate_by_document` as its headline, and the manual
+annotation sample is drawn stratified by document so that
+`corrected_not_entailed_rate` is computed on the same unit.
+
+**The seven main corpora are not exposed to this.** Their largest single
+document holds between 0.80% and 5.72% of their M5 sentence pool — PLOS is the
+highest only because its 60-document sample yields just 507 sentences.
 
 ## Caveats and limitations
 
@@ -635,88 +798,95 @@ could change a conclusion.
 
 ### What would most change the conclusions
 
-- **Each task class rests on one or two corpora.** SUM has a single corpus, and
-  both multi-corpus classes turned out incoherent once a second member was
-  added. A third PLS or DS corpus could as easily break the remaining patterns
-  as confirm them. Treat "PLS behaves like X" as a statement about Cochrane and
-  PLOS, not about plain-language summarization.
-- **The corpora are not the ones the papers measured.** Three of five differ
+- **Each task class rests on two or three corpora.** PLS has three members and
+  they do not agree: Cochrane compresses at 0.603 while PLOS and eLife sit at
+  0.030 and 0.040. DS and SUM have two each. A fourth PLS or third DS
+  corpus could as easily break the remaining patterns as confirm them. Treat
+  "PLS behaves like X" as a statement about these three corpora.
+- **Only two measures separate the task families without overlap** — the M4
+  split rate and the Zipf delta. Everything else either overlaps or actively
+  cuts across the labels. A conclusion resting on abstractiveness, FKGL or
+  groundedness is resting on a measure that does not track the label.
+- **The corpora are not the ones the papers measured.** Several differ
   measurably from their published statistics (below). Where this repository and
   a paper disagree, the released artefact is what was measured here.
-- **M6's reported effect sizes pool sentences across documents**, which lets
-  document length into the comparison (textrank correlates with its document's
-  sentence count at rho = -0.92). `stratified_effect` corrects this by
-  estimating within each document and aggregating, but the figures in this
-  document predate it.
-- **M4's deletion split *is* validated, correcting an earlier claim here.** An
-  earlier revision said its agreement with human annotations vanished under
-  length control (rho 0.434 -> 0.007). That was a bad test, not a bad metric:
-  it correlated per-document *counts*, and length drives both sides. Compared
-  per sentence against SWiPE's human deletion labels, precision is **0.959** at
-  tau=0.5 with Cohen's kappa 0.462, rising to 0.767 at tau=0.7. So the split is
-  trustworthy when it fires; at 0.5 it misses about half of what annotators call
-  a deletion, because a sentence that loses half its content still aligns
-  through the surviving half.
-- **M5 ranks corpora; it does not measure elaboration.** The control still reads
-  0.298 for a corpus that adds nothing by construction. That residue is M4
-  alignment error plus off-domain entailment error. Only the manual annotation
-  loop yields an absolute rate.
+- **Two validation conclusions changed when the sampling bias was fixed**, and
+  one reversed: M4's deletion agreement with human annotations previously
+  vanished under length control (ρ 0.434 → 0.007, p=0.91) and now survives it
+  (0.494 → 0.149, p=0.019), while Kendall's τ went the other way. Both were
+  measured on 250 documents. That a one-sixth change in which documents were
+  drawn can flip a significance verdict is the best available evidence for how
+  much weight these correlations can bear — which is not much.
+- **M5 ranks corpora; it does not measure elaboration, and it does not identify
+  simplification.** XSum scores above every plain-language corpus. The control
+  still reads 0.261 for a corpus that adds nothing by construction; that
+  residue is M4 alignment error plus off-domain entailment error. Only the
+  manual annotation loop yields an absolute rate.
 
 ### Statistical
 
 - **Corpus-level compression is a 1000-document estimate, and the error can be
   large.** SWiPE is the one corpus cheap enough to measure exhaustively: the
-  sample gives 0.549 against a true 0.676 over all 143,359 pairs -- an 18% gap.
-  Source means agreed closely (121 vs 123 words), target means did not (67 vs
-  83), because target lengths are heavy-tailed and a thousand draws miss the
-  tail. **The bootstrap CIs do not cover this**: they describe variance within
-  the sample, not the distance from sample to corpus.
-- **M4-M6 rest on n=250**, M1-M3 on n=1000. Every metric carries its own `n`.
+  sample gives 0.549 against a true 0.676 over all 143,359 pairs. Source means
+  agree closely; target means do not, because target lengths are heavy-tailed
+  and a thousand draws miss the tail. **The bootstrap CIs do not cover this**:
+  they describe variance within the sample, not the distance from sample to
+  corpus.
+- **M4–M6 rest on n=250, or n=60 for PLOS and eLife**; M1–M3 on n=1000. Every
+  metric carries its own `n`.
+- **A per-corpus τ makes alignment metrics non-comparable.** The two DS corpora
+  use τ=0.7 for the alignment feeding M5 and M6, because that is what validates
+  against human labels. A stricter threshold mechanically lowers coverage,
+  splits and groundedness together — at τ=0.7 SWiPE's split rate reads 0.070
+  against 0.299 at τ=0.5. Every cross-corpus M4 figure in this document is
+  quoted at τ=0.5 for that reason.
 - **Some M4 metrics are undefined for single-sentence targets.** Every XSum
   summary is one sentence, so its 1:n split rate is structurally 0.000 and its
-  Kendall's tau is undefined -- neither is a measurement. Any corpus with
-  single-sentence targets has the same property.
+  Kendall's τ is undefined — neither is a measurement. Its SMOG is undefined for
+  the same reason and reports n=0.
 - **Ratio metrics are skewed and their means are unsafe.** `compression_ratio`,
   `sentence_ratio` and `share_attributable` are means of per-pair ratios, which
-  explode on short sources. D-Wikipedia's mean compression is 1.266 against a
-  median of 0.645 and a corpus-level 0.510. Use the median or the corpus-level
-  ratio.
+  explode on short sources. D-Wikipedia's mean compression is 1.228 against a
+  median of 0.642 and a corpus-level 0.553. M3c now publishes
+  `share_attributable_corpus`, a ratio of sums, for the same reason.
 - **M6's statistics are over source sentences, not documents**, so its `n` is
-  far larger than the sample size. Those sentences are clustered within
-  documents while the bootstrap resamples them independently, so M6's intervals
-  are tighter than the clustering justifies.
-- **Two corpora are genuinely mixed, not the four this document once claimed.**
-  The `dip_statistic` these figures came from measured distance from *uniform*,
-  not bimodality, and was anti-correlated with its own claim: a unimodal
-  lognormal scores 0.724 against 0.208 for a true two-mode mixture. Compression
-  ratios are ratios of positive quantities and so lognormal-ish, which is why
-  it fired on every corpus. Replaced by Sarle's bimodality coefficient, which
-  flags **SWiPE (0.981) and D-Wikipedia (0.726)** and clears Cochrane (0.489),
-  PLOS (0.430), CNN/DailyMail (0.478) and XSum (0.493) -- matching the two
-  corpora whose expansion rates (23.3% and 28.9%) independently mark them as
-  mixed. The values below are pre-replacement; the runs have not been redone.
+  far larger than the sample size. The effect is now estimated *within* each
+  document, but the bootstrap still resamples sentences independently, so M6's
+  intervals remain tighter than the clustering justifies.
+- **Two corpora are genuinely mixed.** Sarle's bimodality coefficient flags
+  **dwikipedia (0.830) and swipe (0.980)** and clears the other five
+  (cochrane 0.473, plos 0.499, elife 0.474, cnn_dailymail 0.457, xsum 0.484) — matching the two corpora whose expansion rates
+  (23.3% and 27.5%) independently mark them as mixed. The retired
+  `dip_statistic` measured distance from *uniform*, not bimodality, and was
+  anti-correlated with its own claim: a unimodal lognormal scored 0.724 against
+  0.208 for a true two-mode mixture.
 
 ### Pipeline
 
 - **M4 alignment noise propagates into M5 and M6.** Every not-entailed rate and
-  every deleted/retained split inherits it. Check conclusions against the tau
+  every deleted/retained split inherits it. Check conclusions against the τ
   sweep stored in each run's `metrics.json`.
+- **The five M4 category rates are counted over different populations** — links
+  for splits and merges, source sentences for deletions, target sentences for
+  insertions — so they do not sum to 1 and a difference between two of them is
+  not a difference in the same unit. Unresolved, and deliberately left
+  unpatched pending a decision on what the denominator should be.
 - **M5's candidate premises are selected lexically.** The multi-sentence premise
   takes the three source sentences with the highest content-word overlap. On a
   heavily abstractive rewrite the entailing sentence may share little
-  vocabulary, so the joined premise can miss it. This can only fail to *help* --
-  the score is the max over all individual premises too -- but it means the fix
+  vocabulary, so the joined premise can miss it. This can only fail to *help* —
+  the score is the max over all individual premises too — but it means the fix
   is weakest exactly where rewriting is heaviest.
 - **ROUGE recall is oriented against the source** (denominator = source
   n-grams), so it falls mechanically as compression rises. It carries no
-  independent information here and is omitted from the M2 table.
+  independent information here, is omitted from the M2 table, and was removed
+  from M6's feature set for restating M6's own dependent variable.
 - **The surface readability formulas disagree with each other.** On
-  CNN/DailyMail, FKGL falls 2.24 (easier) while Dale-Chall rises 2.17 (harder).
-  They are reported for comparability with prior work; M3b and M3c carry the
-  evidence.
-- **Sentence segmentation is now consistent** across M1, M3a, M3b, M3c and M6 --
-  all use spaCy. This was not true of earlier revisions of this document; see
-  Defects found below.
+  CNN/DailyMail, FKGL falls 2.07 (easier) while Dale–Chall rises
+  2.21 (harder). They are reported for comparability with prior work;
+  M3b and M3c carry the evidence.
+- **Sentence segmentation is consistent** across M1, M3a, M3b, M3c and M6 — all
+  use spaCy.
 
 ### Corpora
 
@@ -724,52 +894,69 @@ could change a conclusion.
   figure. Across all 143,359 released pairs compression is 0.676. The phrase
   likely describes meaning preservation rather than length.
 - **PLOS and eLife are longer than published.** This mirror gives PLOS a
-  5969-word mean source against a published 5367. Seeded stratified sampling
-  across row groups barely moved it, so it is a property of the Hugging Face
-  mirror rather than a sampling artefact. Compression ratios still match.
-- **Cochrane's source is easier than the paper's.** FKGL 14.06 here against a
-  published 14.4 is close, but the pre-fix gap was much larger and the corpus is
-  the GitHub `data-1024` release, which appears to be a processed or truncated
-  variant of what Devaraj et al. measured.
+  5995-token mean source against a published 5367 words, and eLife
+  8940 against 7806. Seeded stratified sampling across row groups
+  barely moved it, so it is a property of the Hugging Face mirror rather than a
+  sampling artefact. Compression ratios still match.
+- **eLife's source scores much easier than the paper's.** FKGL 12.73 here
+  against a published 15.57, while its target matches well (11.26 against
+  10.92). That single discrepancy accounts for most of the gap between the
+  measured delta (-1.47) and the published one (−4.65).
+- **Cochrane matches its paper closely** — FKGL 14.33 → 12.81 against a
+  published 14.4 → 12.9 — despite being the GitHub `data-1024` release, which
+  appears to be a processed variant of what Devaraj et al. measured.
 - **SWiPE ships two datasets that are easy to confuse.** The full 143k corpus
-  uses `{input, output}`; the 3,861-pair annotated subset uses
-  `{r_content, s_content}` and measures 0.504 compression, because annotators
-  selected pairs carrying interesting edits. Profiling the annotated subset as
-  if it were the corpus would silently profile a biased sample.
+  uses `{input, output}`; the 5,204-pair annotated subset uses
+  `{r_content, s_content}` and is a biased sample, because annotators selected
+  pairs carrying interesting edits. Profiling the annotated subset as if it were
+  the corpus would silently profile that bias.
 
 ### Defects found and fixed
 
-All six corpora were run or re-run after each of these. They are recorded because the
-same classes of error are likely in comparable pipelines.
+All seven corpora were re-fetched and re-run after all of these. They are
+recorded because the same classes of error are likely in comparable pipelines.
 
 | defect | effect before the fix |
 |---|---|
-| M3a took sentence counts from `textstat`, not spaCy | inverted Cochrane's FKGL delta: +2.33 measured, -1.5 published |
+| **the corpus sampler sorted its oversampled indices, then truncated** | **no document past 83.3% of any line-aligned file could be drawn; Cochrane's highest sampled index was 2959 of 3568. Parquet strata were starved from the last group inward — CNN/DailyMail 240/240/240/240/40** |
+| `textstat.smog_index` returns 0.0 below three sentences, which is a valid grade | XSum published a SMOG delta of −11.31 over n=1000: a fabricated eleven-grade improvement |
+| `histogram` raised on values equal to within float rounding | aborted the run at M6, discarding M1–M5, with nothing written |
+| M3a took sentence counts from `textstat`, not spaCy | inverted Cochrane's FKGL delta: +2.33 measured against −1.5 published |
 | M5 scored single-sentence premises for a document-level question | control at 0.556, indistinguishable from every other corpus |
+| M6 pooled sentences across documents | textrank correlated with its own document's sentence count at ρ = −0.92 |
+| `rouge_recall_in_target` restated M6's dependent variable | ranked first on every corpus by construction |
+| M3c's headline was a mean of per-pair ratios | one CNN/DailyMail pair scored 6388.9 and supplied 6.39 of a corpus mean of 6.87 |
+| the M5 annotation sample was drawn sentence-wise | 70 of 100 rows came from one vandalised document |
+| the M5 upper-bound caveat was gated on corpus size | dropped from exactly Cochrane and PLOS, the two corpora where an MNLI model is furthest off-domain |
+| duplicate pair ids were accepted | M4 keys by id, so one document was profiled twice and another silently dropped |
 | M6 `fkgl` double-counted sentence length | difficulty family had no length-free feature |
 | M6 rates used word types where M3b used tokens | one metric name, two quantities |
 | `_tree_depth` recursed once per dependency link | crashed on a 2,340-token flattened list in SWiPE |
+| the deletion-split validation used a head slice of the annotated file | κ calibrated on a population largely absent from the profiled corpus |
 
-Four of the five are the same underlying class: **a metric applied at the wrong
-granularity**. That was the most common defect in this codebase, and none of
-them surfaced as an error -- each produced a plausible wrong number.
+Two patterns account for most of these: **a metric applied at the wrong
+granularity** (M3a, M5, M6's fkgl, M6's rates, the annotation sample), and
+**document length leaking into a statistic pooled across documents** (M6's
+effects, M4's deletion correlation, the M5 pooled rate). None surfaced as an
+error — each produced a plausible wrong number.
 
 ## Not covered here
 
-**eLife** is not in this comparison. It is the fifth PRD anchor and its run is
-incomplete: at ~605 source and ~18 target sentences per document, M5 alone needs
-~2.7M `deberta-large` forward passes, and M3's extractive-oracle control costs a
-further ~2.1h. The run was reduced to a 60-pair M4–M6 sample and still requires
-roughly 5 hours of uninterrupted CPU.
+**No corpus from the PRD's anchor list is now missing.** eLife was absent from
+the previous revision because of run cost; it is included here, and it took 6.3
+hours on its own — at roughly 30,000 source sentences across 60 sampled
+documents, M5 and M3's extractive-oracle control dominate that time.
 
-Nothing in this document depends on it. Adding it would strengthen the PLS
-column, since PLOS and Cochrane disagree with each other on several axes.
+What is still missing is a **fourth PLS corpus and a third DS corpus**. PLS is
+the class that does not hold together, and with three members it is not possible
+to say whether Cochrane or the PLOS/eLife pair is the outlier.
 
 ## Reproducing
 
 ```bash
 python scripts/fetch_all.py --limit 1000            # materialise corpora
 python -m profiler run --config configs/<corpus>.yaml
+python scripts/archive_results.py                   # distil to results/
 python scripts/compare_runs.py --runs runs --out comparison.md
 ```
 

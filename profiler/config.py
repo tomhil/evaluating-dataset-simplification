@@ -85,7 +85,7 @@ class RunConfig:
     device: str = "auto"
     # Primary tau used for the alignment that feeds M5/M6 (M4 itself sweeps).
     # Stays 0.5. 0.7 measures better against SWiPE's human deletion labels
-    # (kappa 0.767 vs 0.462; see scripts/validate_deletion_split.py) but that
+    # (kappa 0.754 vs 0.410; see scripts/validate_deletion_split.py) but that
     # calibration is Wikipedia prose with MiniLM and does not transfer: on XSum
     # it raises the deletion rate to 0.983 and leaves only 13 of 60 documents
     # with the deleted/retained contrast M6 needs. The threshold is

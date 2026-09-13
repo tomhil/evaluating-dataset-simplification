@@ -60,7 +60,7 @@ metrics in this pipeline looked meaningful until length was controlled: M6's
 `textrank` correlates with its own document's sentence count at ρ = −0.92 when
 pooled, M6's `fkgl` double-counted sentence length, and a per-document *count*
 correlation hid the fact that M4's deletion split agrees with human labels at
-0.959 precision. Prefer statistics computed within a document (M6's
+0.972 precision. Prefer statistics computed within a document (M6's
 `stratified_effect`) or invariant to length (M3b) over anything pooled.
 
 ## Configuration that changes the numbers

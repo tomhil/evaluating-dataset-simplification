@@ -25,8 +25,8 @@ run:
   nli_threshold: 0.5
   tau_sweep: [0.4, 0.5, 0.6, 0.7, 0.8]
   # 0.7, validated per sentence against SWiPE's human deletion annotations
-  # (scripts/validate_deletion_split.py, 1,073 sentences): Cohen's kappa 0.462
-  # at 0.5 against 0.767 at 0.7, and the pipeline's deletion rate only matches
+  # (scripts/validate_deletion_split.py, 1,140 sentences): Cohen's kappa 0.410
+  # at 0.5 against 0.754 at 0.7, and the pipeline's deletion rate only matches
   # the annotators' from 0.7 up. This corpus is the same genre and embedder the
   # threshold was calibrated on, and 0.7 raises the documents usable by M6 from
   # 22/60 to 37/60 here.

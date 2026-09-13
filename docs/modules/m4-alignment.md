@@ -39,7 +39,7 @@ falls outside the sweep it is computed on demand.
 **τ is genre-dependent, so there is no single right value.** Validated per
 sentence against SWiPE's human deletion annotations
 (`scripts/validate_deletion_split.py`), 0.7 agrees far better than 0.5 —
-Cohen's kappa 0.767 against 0.462, with the pipeline's deletion rate matching
+Cohen's kappa 0.754 against 0.410, with the pipeline's deletion rate matching
 the annotators' only from 0.7 up. But that calibration is Wikipedia prose with
 MiniLM and does not transfer: on XSum, 0.7 raises the deletion rate to 0.983 and
 leaves 13 of 60 documents with any deleted/retained contrast, against 48 at 0.5.
