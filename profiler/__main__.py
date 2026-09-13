@@ -62,15 +62,24 @@ def _cmd_ingest(args: argparse.Namespace) -> int:
         "automatic_not_entailed_rate": auto_rate,
         "automatic_rate_unit": "mean over documents",
     }
-    if auto_rate is not None:
-        # Real content addition excludes alignment errors; hallucination and
-        # grounded elaboration are both genuine "not in source" additions.
-        genuine = proportions["grounded_elaboration"] + proportions["hallucination"]
-        corrected["corrected_not_entailed_rate"] = auto_rate * genuine
-        corrected["estimated_grounded_elaboration_rate"] = auto_rate * proportions["grounded_elaboration"]
-        corrected["estimated_hallucination_rate"] = auto_rate * proportions["hallucination"]
-        corrected["estimated_alignment_error_rate"] = auto_rate * proportions["alignment_error"]
-        m5["corrected_not_entailed_rate"] = corrected["corrected_not_entailed_rate"]
+    # Real content addition excludes alignment errors; hallucination and
+    # grounded elaboration are both genuine "not in source" additions.
+    genuine = proportions["grounded_elaboration"] + proportions["hallucination"]
+    rate = _corrected_rate(m5, genuine)
+    if rate is not None:
+        corrected["corrected_not_entailed_rate"] = rate
+        for key, category in (
+            ("estimated_grounded_elaboration_rate", "grounded_elaboration"),
+            ("estimated_hallucination_rate", "hallucination"),
+            ("estimated_alignment_error_rate", "alignment_error"),
+        ):
+            corrected[key] = _corrected_rate(m5, proportions[category])
+        m5["corrected_not_entailed_rate"] = rate
+    else:
+        print(
+            "  WARNING: no not_entailed_rate_by_document.mean in this run, so "
+            "no corrected rate was computed. Re-run M5 to get it."
+        )
     m5["corrected"] = corrected
 
     metrics_path.write_text(
