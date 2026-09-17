@@ -48,6 +48,10 @@ class Token:
     dep: str = ""
     head_i: int = -1
     i: int = -1
+    # Fine-grained Penn tag (VBD, VBN, NN...). ``pos`` is the coarse universal
+    # tag, which cannot distinguish past tense from past participle -- M7's
+    # verb-form features need that distinction. Empty under SimpleProcessor.
+    tag: str = ""
 
 
 class Processor(Protocol):
@@ -77,6 +81,20 @@ class Processor(Protocol):
     def content_words(self, text: str) -> list[str]: ...
 
     def analyze_sentence(self, sent: str) -> list[Token]: ...
+
+    def noun_chunks(self, text: str) -> list[str]:
+        """Noun-phrase spans. Empty when there is no parser."""
+        ...
+
+    def entities(self, text: str) -> list[tuple[str, int]]:
+        """Named entities as ``(lowercased text, start token index)``.
+
+        Requires NER, which is *not* loaded by default -- see
+        :meth:`SpacyProcessor.entities`. Empty when unavailable, so M7's entity
+        features null out rather than reporting zeros that look like measured
+        absence of entities.
+        """
+        ...
 
     def release(self) -> None:
         """Drop any cached parses. Part of the contract: run.py calls it."""
@@ -113,8 +131,20 @@ class SimpleProcessor:
             )
         return toks
 
+    def noun_chunks(self, text: str) -> list[str]:
+        # No parser, so no noun chunks. has_parser=False tells callers to null
+        # the dependent features rather than read this as "none present".
+        return []
+
+    def entities(self, text: str) -> list[tuple[str, int]]:
+        return []
+
 
 _DOC_CACHE = 64
+
+# Distinguishes "not built yet" from "built and unavailable", so a failed load
+# is not retried on every call.
+_NER_UNSET = object()
 
 
 class SpacyProcessor:
@@ -125,6 +155,9 @@ class SpacyProcessor:
     def __init__(self, model: str = "en_core_web_sm"):
         import spacy
 
+        self._model = model
+        # Built on first use by _ner_pipe(); only M7 needs it.
+        self._ner = _NER_UNSET
         self._nlp = spacy.load(model, disable=["ner"])
         # Each accessor used to run the full pipeline, so M3 parsed the same
         # document about twenty times per pair -- on the full corpus, not the
@@ -159,6 +192,10 @@ class SpacyProcessor:
     def release(self) -> None:
         """Drop cached parses. Safe to call at any point; costs a re-parse."""
         self._doc.cache_clear()
+        # The NER pipeline holds model weights; drop it too so a corpus sweep
+        # does not keep two pipelines resident after M7 has finished.
+        if self._ner is not _NER_UNSET:
+            self._ner = _NER_UNSET
 
     def sentences(self, text: str) -> list[str]:
         doc = self._doc(text)
@@ -183,6 +220,49 @@ class SpacyProcessor:
                 out.append(t.text)
         return out
 
+    def noun_chunks(self, text: str) -> list[str]:
+        """Noun-phrase spans, from the already-cached parse. No NER needed."""
+
+        return [c.text for c in self._doc(text).noun_chunks]
+
+    def entities(self, text: str) -> list[tuple[str, int]]:
+        """Named entities as ``(lowercased text, start token index)``.
+
+        NER is excluded from the main pipeline (``disable=["ner"]``) because
+        M1-M6 never needed it and it is not free. M7's seven entity features do,
+        so a second pipeline with *only* the NER components is built on first
+        use and cached. Building it lazily means enabling M7 costs NER, and not
+        enabling it costs nothing -- M1-M6 runs are byte-identical either way.
+        """
+
+        ner = self._ner_pipe()
+        if ner is None:
+            return []
+        return [(e.text.lower(), e.start) for e in ner(text).ents]
+
+    def _ner_pipe(self):
+        """The NER-only pipeline, built once. ``None`` if the model lacks NER."""
+
+        if self._ner is _NER_UNSET:
+            import spacy
+
+            try:
+                # Keep only what NER needs: the tok2vec it depends on, plus ner.
+                pipe = spacy.load(self._model)
+                keep = [n for n in pipe.pipe_names if n in {"ner", "tok2vec", "transformer"}]
+                # select_pipes, not the deprecated disable_pipes.
+                pipe.select_pipes(enable=keep)
+                self._ner = pipe if "ner" in pipe.pipe_names else None
+            except Exception as exc:  # pragma: no cover - environment dependent
+                warnings.warn(
+                    f"NER unavailable ({type(exc).__name__}); M7 entity features "
+                    f"will be null.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+                self._ner = None
+        return self._ner
+
     def analyze_sentence(self, sent: str) -> list[Token]:
         doc = self._doc(sent)
         toks = []
@@ -201,6 +281,7 @@ class SpacyProcessor:
                     ),
                     dep=t.dep_,
                     head_i=t.head.i,
+                    tag=t.tag_,
                     i=t.i,
                 )
             )

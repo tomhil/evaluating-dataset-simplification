@@ -23,7 +23,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-models = ["spacy>=3.7", "sentence-transformers>=2.2", "transformers>=4.35", "torch>=2.0", "datasets>=2.14"]
+models = ["spacy>=3.7", "sentence-transformers>=2.2", "transformers>=4.35", "torch>=2.0", "datasets>=2.14",
+          # M8 pair_similarity: BLEU and BERTScore.
+          "sacrebleu>=2.4", "bert-score>=0.3.12"]
 dev = ["pytest>=7.4"]
 
 [project.scripts]

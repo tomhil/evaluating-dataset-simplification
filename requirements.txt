@@ -32,3 +32,6 @@ torch>=2.0
 # gracefully when absent (see profiler/modules/m5_elaboration.py):
 #   alignscore
 #   summac
+# M8 pair_similarity: BLEU and BERTScore.
+sacrebleu>=2.4
+bert-score>=0.3.12

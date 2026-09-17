@@ -85,6 +85,10 @@ def build_report(config, results: dict[str, ModuleResult], meta: dict) -> str:
         parts.append(_m5(results["elaboration"]))
     if "deletion_profile" in results:
         parts.append(_m6(results["deletion_profile"]))
+    if "linguistic_features" in results:
+        parts.append(_m7(results["linguistic_features"]))
+    if "pair_similarity" in results:
+        parts.append(_m8(results["pair_similarity"]))
 
     parts.append(_literature())
     parts.append(_interpretation())
@@ -247,6 +251,73 @@ def _m5(r: ModuleResult) -> str:
         f"Corrected not-entailed rate (from annotation): {_fmt(corrected) if corrected is not None else 'not yet ingested'}. "
         "See `annotation_sample.csv` and `profiler ingest-annotations`.\n"
     )
+    return "\n".join(out) + _notes(r)
+
+
+def _m7(r: ModuleResult) -> str:
+    """The 33 adopted linguistic features, grouped as the source groups them.
+
+    Ordered by |paired delta| within each group so the features that actually
+    moved are readable without scanning 33 rows. The overlap warning is not
+    optional: five of these duplicate values published by M1/M3a.
+    """
+
+    from .modules.m7_linguistic import ENTITY_ONLY, FEATURES
+
+    out = [_h(2, "M7 — Adopted linguistic feature set (33 features)")]
+    out.append(
+        "_Deltas are target − source. The source project computes "
+        "complex − simplified, so every Δ here has the **opposite sign** to "
+        "the corresponding column in its tables._\n"
+    )
+    out.append(
+        "_Five fields duplicate values published elsewhere "
+        "(`syllables_ratio`, `sentences_number`, `flesch_reading_ease`, "
+        "`flesch_kincaid_grade`) or are near-neighbours of existing measures "
+        "with different definitions (`lexical_richness`, "
+        "`infrequent_words_ratio`, `syntactic_tree_depth`, "
+        "`passive_voice_ratio`, `words_per_sentence`). Do not read all 33 as "
+        "independent signals._\n"
+    )
+
+    c = r.corpus
+    entity = [f for f in FEATURES if f in ENTITY_ONLY]
+    other = [f for f in FEATURES if f not in ENTITY_ONLY]
+
+    def table(title: str, names: list[str]) -> None:
+        rows = [(f, c[f]) for f in names if f in c]
+        # Largest movers first; undefined deltas sort last.
+        rows.sort(
+            key=lambda kv: abs(kv[1]["delta"].get("mean") or 0.0), reverse=True
+        )
+        out.append("\n" + _h(3, title))
+        out.append("| feature | source | target | paired Δ |\n|---|---|---|---|")
+        for f, d in rows:
+            out.append(
+                f"| {f} | {_summary(d['source'])} | {_summary(d['target'])} "
+                f"| {_summary(d['delta'])} |"
+            )
+
+    table("Entity coherence — the family with no equivalent elsewhere", entity)
+    table("Lexical, syntactic, verb-form and readability", other)
+    return "\n".join(out) + _notes(r)
+
+
+def _m8(r: ModuleResult) -> str:
+    out = [_h(2, "M8 — Pair similarity")]
+    c = r.corpus
+    bleu = c.get("bleu")
+    out.append("| metric | value |\n|---|---|")
+    out.append(f"| BLEU (corpus-level, target vs source) | {'—' if bleu is None else f'{bleu:.2f}'} |")
+    if "bertscore_f1" in c:
+        out.append(f"| BERTScore F1 | {_summary(c['bertscore_f1'])} |")
+
+    na = r.params.get("not_applicable", {})
+    if na:
+        out.append("\n" + _h(3, "Not applicable to this corpus"))
+        out.append("| metric | why |\n|---|---|")
+        for metric, reason in sorted(na.items()):
+            out.append(f"| `{metric}` | {reason} |")
     return "\n".join(out) + _notes(r)
 
 

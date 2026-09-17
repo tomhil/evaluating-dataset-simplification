@@ -155,6 +155,29 @@ def rare_word_rate(content_words: list[str]) -> float | None:
     return outside / len(content_words)
 
 
+def is_unknown_word(word: str) -> bool:
+    """Whether ``wordfreq`` has no recorded frequency for this word.
+
+    M7's ``infrequent_words_ratio`` needs "is this a recognised English word".
+    The paper it comes from tests membership of ``nltk.corpus.words``, a
+    dictionary word list; this tests for zero corpus frequency instead, which
+    needs no extra dependency since ``wordfreq`` is already required by
+    :func:`mean_zipf`. The two do not agree token for token -- a real technical
+    term has usage but no dictionary entry, and an archaic dictionary word has
+    an entry but little usage -- so this is a documented deviation, not a
+    reimplementation.
+
+    Distinct from :func:`rare_word_rate`, which asks whether a word is outside
+    the *top 3000*. This asks whether it is attested at all.
+    """
+
+    try:
+        from wordfreq import zipf_frequency
+    except ImportError:  # pragma: no cover - environment dependent
+        raise ImportError("M7 infrequent_words_ratio requires 'wordfreq'")
+    return zipf_frequency(word.lower(), "en") == 0.0
+
+
 def mtld(tokens: list[str], threshold: float = 0.72) -> float | None:
     """Measure of Textual Lexical Diversity (McCarthy & Jarvis 2010).
 

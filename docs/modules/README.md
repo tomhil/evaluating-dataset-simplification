@@ -11,6 +11,8 @@ metric is computed, and how to read it.
 | M4 | [m4-alignment.md](m4-alignment.md) | sample | sentence alignment, content preservation |
 | M5 | [m5-elaboration.md](m5-elaboration.md) | sample | content addition |
 | M6 | [m6-deletion-profile.md](m6-deletion-profile.md) | sample | what gets deleted, and on what basis |
+| M7 | [m7-linguistic-features.md](m7-linguistic-features.md) | full corpus | 33 adopted lexical/syntactic/entity features |
+| M8 | [m8-pair-similarity.md](m8-pair-similarity.md) | sample | BLEU and BERTScore between the pair |
 
 M1–M3 are cheap and run over every ingested pair. M4–M6 need embeddings and an
 entailment model, so they run over a seeded random sample of `run.sample_size`

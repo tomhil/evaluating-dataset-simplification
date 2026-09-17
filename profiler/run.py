@@ -31,6 +31,8 @@ from .modules import (
     m4_alignment,
     m5_elaboration,
     m6_deletion,
+    m7_linguistic,
+    m8_similarity,
 )
 from .modules.base import Context
 from .nlp import get_processor
@@ -41,14 +43,18 @@ CHEAP = {
     "length": m1_length,
     "abstractiveness": m2_abstractiveness,
     "readability": m3_readability,
+    "linguistic_features": m7_linguistic,
 }
-EXPENSIVE_ORDER = ["alignment", "elaboration", "deletion_profile"]
+EXPENSIVE_ORDER = ["alignment", "elaboration", "deletion_profile", "pair_similarity"]
 EXPENSIVE = {
     "alignment": m4_alignment,
     "elaboration": m5_elaboration,
     "deletion_profile": m6_deletion,
+    "pair_similarity": m8_similarity,
 }
-CHEAP_ORDER = ["length", "abstractiveness", "readability"]
+# M7 after M3: both parse the whole corpus, and M7 reuses M3's helpers, so
+# keeping them adjacent keeps the document cache warm across the pair.
+CHEAP_ORDER = ["length", "abstractiveness", "readability", "linguistic_features"]
 
 
 def _to_jsonable(obj):

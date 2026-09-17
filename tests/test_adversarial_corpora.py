@@ -61,6 +61,19 @@ CORPORA: dict[str, list[dict]] = {
     "numbers_only": [
         {"source": "1.0 2.0 3.0. 4.0 5.0 6.0. 7.0 8.0.", "target": "1.0 2.0."}
     ] * 4,
+    # No named entities at all: the seven entity features must give 0.0, not
+    # raise and not None (NER ran and found nothing).
+    "no_named_entities": [
+        {"source": "the thing sat on the other thing quietly and then it moved",
+         "target": "it sat then moved"}
+    ] * 4,
+    # Entity-dense, with one entity repeated far apart, exercising the distance
+    # features rather than just their zero branch.
+    "entity_dense": [
+        {"source": "Obama met Merkel in Berlin. Later Obama flew to Paris and "
+                   "then Obama returned to Washington to meet Merkel again.",
+         "target": "Obama met Merkel in Berlin, then went to Paris."}
+    ] * 4,
     # Expansion rather than compression, which inverts every ratio's direction.
     "target_longer_than_source": [
         {"source": "Short.",
@@ -111,6 +124,7 @@ def test_pipeline_completes_on_an_awkward_corpus(name, tmp_path):
                     "length",
                     "abstractiveness",
                     "readability",
+                    "linguistic_features",
                     "alignment",
                     "elaboration",
                     "deletion_profile",
@@ -125,7 +139,7 @@ def test_pipeline_completes_on_an_awkward_corpus(name, tmp_path):
     assert metrics["n_full"] == len(rows)
     # Every requested module must have produced a section, not been skipped.
     assert set(metrics["modules"]) == {
-        "length", "abstractiveness", "readability",
+        "length", "abstractiveness", "readability", "linguistic_features",
         "alignment", "elaboration", "deletion_profile",
     }
     assert (out / "report.md").exists()

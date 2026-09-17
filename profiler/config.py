@@ -20,12 +20,14 @@ ALL_MODULES = [
     "alignment",
     "elaboration",
     "deletion_profile",
+    "linguistic_features",
+    "pair_similarity",
 ]
 
 # Modules that require English-language processing (parsing, readability
 # formulas tuned to English, entailment models). On a non-English corpus these
 # must raise rather than emit invalid output (PRD s2).
-ENGLISH_ONLY_MODULES = {"readability", "elaboration"}
+ENGLISH_ONLY_MODULES = {"readability", "elaboration", "linguistic_features"}
 
 KNOWN_ADAPTERS = {"jsonl", "hf", "filedir"}
 

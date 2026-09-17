@@ -48,6 +48,7 @@ def _third_party_imports() -> set[str]:
         "yaml": "pyyaml",
         "sentence_transformers": "sentence-transformers",
         "sklearn": "scikit-learn",
+        "bert_score": "bert-score",
     }
     found: set[str] = set()
     for path in list((ROOT / "profiler").rglob("*.py")) + list(
