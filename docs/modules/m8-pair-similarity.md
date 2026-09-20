@@ -47,6 +47,37 @@ Scores are cached on `content_hash(model, source, target)` — the same mechanis
 `CachedEmbedder` uses for SBERT embeddings — so a rerun of the same config
 recomputes nothing and the run stays deterministic.
 
+## BLEU is structurally uninformative on a compressing corpus
+
+BLEU carries a **brevity penalty**, because it was designed for translation
+where the hypothesis and reference should be about the same length. Here the
+"hypothesis" is the target and the "reference" is the source, and a
+simplification or summarisation target is *deliberately* much shorter. The
+penalty then dominates everything else.
+
+Measured on XSum (n=250): the n-gram precisions are healthy — **63.4 / 15.3 /
+3.7 / 1.2** for 1- to 4-grams — but `BP = 0.000` at a length ratio of 0.052, so
+the reported BLEU is **0.00**. There is plenty of overlap; the metric throws it
+away.
+
+The penalty is `exp(1 − 1/ratio)`, and the ratio is M1's compression, so the
+collapse is entirely predictable from a number the pipeline already publishes:
+
+| corpus | compression | brevity penalty | BLEU usable? |
+|---|---|---|---|
+| SWiPE | 0.999 | 9.99e-01 | yes |
+| Cochrane | 0.603 | 5.18e-01 | yes |
+| D-Wikipedia | 0.553 | 4.46e-01 | yes |
+| CNN/DailyMail | 0.074 | 3.68e-06 | **no — collapses to ~0** |
+| XSum | 0.056 | 4.78e-08 | **no** |
+| eLife | 0.040 | 3.78e-11 | **no** |
+| PLOS | 0.030 | 9.07e-15 | **no** |
+
+**Read `bleu` only for corpora compressing above roughly 0.2.** Below that it
+reports the compression ratio, not the wording overlap. M2's `rouge1_recall`
+and `coverage` measure the same overlap without a length penalty and are the
+right instruments for the heavily-compressing corpora.
+
 ## Not applicable to an English-only corpus
 
 Three of the source project's five metrics are cross-lingual or French-only.

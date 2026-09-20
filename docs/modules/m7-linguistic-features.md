@@ -105,7 +105,7 @@ entity feature against the source's token count:
 | `unique_entities` | **+0.751** | no |
 | `avg_same_entity_distance` | **+0.632** | no |
 | `unique_entities_to_total_entities` | −0.424 | with care |
-| `unique_entities_average` | +0.248 | yes |
+| `unique_entities_average` | +0.248 | yes — **except on single-sentence targets** (see below) |
 | `entity_to_token_ratio` | +0.235 | yes |
 | `consecutive_entity_distance` | −0.088 | yes |
 
@@ -116,6 +116,13 @@ so most of that is compression rather than a change in how referents are
 handled. **Read the three normalised features instead**: `entity_to_token_ratio`,
 `unique_entities_average` and `unique_entities_to_total_entities` are all
 per-token or per-sentence and do not carry the length.
+
+**`unique_entities_average` stops being a rate when targets are one sentence.**
+It divides by the sentence count, and 99.8% of XSum targets have exactly one
+sentence (mean 1.002), so on that corpus it equals `unique_entities` — a raw
+count — to within 0.003 (2.809 against 2.812). For any corpus with
+single-sentence targets, treat it as length-scaling alongside the three flagged
+above, and read `entity_to_token_ratio` instead.
 
 `consecutive_entity_distance` is the interesting one precisely because it is not
 length-correlated (ρ = −0.088) and moves *against* compression: 12.5 → 19.6 on
