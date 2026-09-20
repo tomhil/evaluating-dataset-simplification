@@ -94,6 +94,39 @@ denominators count only `pos == VERB` tokens — which excludes auxiliaries. A
 source containing "had written" and "was praised" scores 1.75. Faithful, and not
 a bug here.
 
+## Three entity features are document-length proxies
+
+Measured on the Cochrane run (n=1000), Spearman correlation of each source-side
+entity feature against the source's token count:
+
+| feature | ρ vs source length | usable as a style measure? |
+|---|---|---|
+| `max_same_entity_distances` | **+0.824** | no — substantially a length measure |
+| `unique_entities` | **+0.751** | no |
+| `avg_same_entity_distance` | **+0.632** | no |
+| `unique_entities_to_total_entities` | −0.424 | with care |
+| `unique_entities_average` | +0.248 | yes |
+| `entity_to_token_ratio` | +0.235 | yes |
+| `consecutive_entity_distance` | −0.088 | yes |
+
+The three flagged features are counts and token distances, so they scale with
+the document. On Cochrane, `unique_entities` falls 26.6 → 8.2 and
+`max_same_entity_distances` falls 264 → 90 — but the target is only 60% as long,
+so most of that is compression rather than a change in how referents are
+handled. **Read the three normalised features instead**: `entity_to_token_ratio`,
+`unique_entities_average` and `unique_entities_to_total_entities` are all
+per-token or per-sentence and do not carry the length.
+
+`consecutive_entity_distance` is the interesting one precisely because it is not
+length-correlated (ρ = −0.088) and moves *against* compression: 12.5 → 19.6 on
+Cochrane, meaning named mentions are further apart in a target that is shorter
+overall. That is a genuine discourse change, not an artifact.
+
+This is the same failure mode the pipeline has hit three times before — M6's
+pooled `textrank` (ρ = −0.92 with its document's sentence count), M6's `fkgl`
+double-counting sentence length, and M4's deletion-count correlation with human
+labels. See [README.md](README.md#document-length-confounds-anything-pooled-across-documents).
+
 ## Cost
 
 M7 roughly triples the cheap-tier cost on long-document corpora. Measured on
