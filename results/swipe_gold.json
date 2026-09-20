@@ -11,7 +11,9 @@
    "readability",
    "alignment",
    "elaboration",
-   "deletion_profile"
+   "deletion_profile",
+   "linguistic_features",
+   "pair_similarity"
   ],
   "nli_backend": "nli",
   "nli_threshold": 0.5,
@@ -1178,6 +1180,1626 @@
     "Compression distribution is more consistent with two or more modes than one (Sarle's bimodality coefficient=0.992, above 0.555); a mixed corpus has no representative mean compression. Inspect the compression histogram."
    ],
    "params": {}
+  },
+  "linguistic_features": {
+   "corpus": {
+    "appositions_ratio": {
+     "delta": {
+      "ci95": [
+       -0.000606,
+       0.003521
+      ],
+      "extra": {},
+      "iqr": [
+       -0.013056,
+       0.014872
+      ],
+      "mean": 0.001494,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.034623
+     },
+     "source": {
+      "ci95": [
+       0.028193,
+       0.032053
+      ],
+      "extra": {},
+      "iqr": [
+       0.008333,
+       0.042308
+      ],
+      "mean": 0.030149,
+      "median": 0.022117,
+      "n": 1000,
+      "std": 0.032443
+     },
+     "target": {
+      "ci95": [
+       0.029384,
+       0.033781
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.04918
+      ],
+      "mean": 0.031644,
+      "median": 0.022945,
+      "n": 1000,
+      "std": 0.035799
+     }
+    },
+    "avg_same_entity_distance": {
+     "delta": {
+      "ci95": [
+       -17.038243,
+       -12.3283
+      ],
+      "extra": {},
+      "iqr": [
+       -30.75,
+       0.0
+      ],
+      "mean": -14.652457,
+      "median": 0.0,
+      "n": 1000,
+      "std": 39.239676
+     },
+     "source": {
+      "ci95": [
+       28.161152,
+       32.969623
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       51.658333
+      ],
+      "mean": 30.474717,
+      "median": 18.0,
+      "n": 1000,
+      "std": 37.947789
+     },
+     "target": {
+      "ci95": [
+       14.324006,
+       17.357689
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       26.0625
+      ],
+      "mean": 15.822261,
+      "median": 0.0,
+      "n": 1000,
+      "std": 25.578152
+     }
+    },
+    "avg_word_length": {
+     "delta": {
+      "ci95": [
+       -0.234219,
+       -0.185284
+      ],
+      "extra": {},
+      "iqr": [
+       -0.414881,
+       0.0
+      ],
+      "mean": -0.208855,
+      "median": -0.180393,
+      "n": 1000,
+      "std": 0.366364
+     },
+     "source": {
+      "ci95": [
+       4.833084,
+       4.881312
+      ],
+      "extra": {},
+      "iqr": [
+       4.613561,
+       5.073156
+      ],
+      "mean": 4.857862,
+      "median": 4.842312,
+      "n": 1000,
+      "std": 0.403174
+     },
+     "target": {
+      "ci95": [
+       4.621293,
+       4.673915
+      ],
+      "extra": {},
+      "iqr": [
+       4.354364,
+       4.917092
+      ],
+      "mean": 4.649006,
+      "median": 4.641429,
+      "n": 1000,
+      "std": 0.431761
+     }
+    },
+    "conditional_clauses_ratio": {
+     "delta": {
+      "ci95": [
+       -4.6e-05,
+       0.000198
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.0
+      ],
+      "mean": 6.9e-05,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.002049
+     },
+     "source": {
+      "ci95": [
+       9e-05,
+       0.000244
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.0
+      ],
+      "mean": 0.000159,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.001273
+     },
+     "target": {
+      "ci95": [
+       9.5e-05,
+       0.000381
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.0
+      ],
+      "mean": 0.000228,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.002322
+     }
+    },
+    "conjunctions_ratio": {
+     "delta": {
+      "ci95": [
+       -0.009961,
+       -0.007133
+      ],
+      "extra": {},
+      "iqr": [
+       -0.021121,
+       0.001662
+      ],
+      "mean": -0.008556,
+      "median": -0.003666,
+      "n": 1000,
+      "std": 0.023367
+     },
+     "source": {
+      "ci95": [
+       0.03623,
+       0.039279
+      ],
+      "extra": {},
+      "iqr": [
+       0.021681,
+       0.052632
+      ],
+      "mean": 0.037723,
+      "median": 0.038772,
+      "n": 1000,
+      "std": 0.024555
+     },
+     "target": {
+      "ci95": [
+       0.02766,
+       0.030715
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.045455
+      ],
+      "mean": 0.029168,
+      "median": 0.028571,
+      "n": 1000,
+      "std": 0.025337
+     }
+    },
+    "consecutive_entity_distance": {
+     "delta": {
+      "ci95": [
+       -1.887184,
+       -0.643794
+      ],
+      "extra": {},
+      "iqr": [
+       -1.67135,
+       0.479529
+      ],
+      "mean": -1.251378,
+      "median": -0.381653,
+      "n": 1000,
+      "std": 10.266388
+     },
+     "source": {
+      "ci95": [
+       7.623718,
+       8.746026
+      ],
+      "extra": {},
+      "iqr": [
+       5.5,
+       8.467262
+      ],
+      "mean": 8.124639,
+      "median": 6.587121,
+      "n": 1000,
+      "std": 9.535313
+     },
+     "target": {
+      "ci95": [
+       6.532921,
+       7.239027
+      ],
+      "extra": {},
+      "iqr": [
+       5.0,
+       7.5
+      ],
+      "mean": 6.873262,
+      "median": 6.0,
+      "n": 1000,
+      "std": 5.735182
+     }
+    },
+    "content_words_ratio": {
+     "delta": {
+      "ci95": [
+       -0.034367,
+       -0.025082
+      ],
+      "extra": {},
+      "iqr": [
+       -0.075394,
+       0.012754
+      ],
+      "mean": -0.029854,
+      "median": -0.01928,
+      "n": 1000,
+      "std": 0.074266
+     },
+     "source": {
+      "ci95": [
+       0.334018,
+       0.347932
+      ],
+      "extra": {},
+      "iqr": [
+       0.261538,
+       0.409367
+      ],
+      "mean": 0.340926,
+      "median": 0.33555,
+      "n": 1000,
+      "std": 0.108754
+     },
+     "target": {
+      "ci95": [
+       0.304489,
+       0.318286
+      ],
+      "extra": {},
+      "iqr": [
+       0.233333,
+       0.37229
+      ],
+      "mean": 0.311072,
+      "median": 0.3,
+      "n": 1000,
+      "std": 0.114535
+     }
+    },
+    "entity_to_token_ratio": {
+     "delta": {
+      "ci95": [
+       0.010545,
+       0.018051
+      ],
+      "extra": {},
+      "iqr": [
+       -0.017921,
+       0.040973
+      ],
+      "mean": 0.01397,
+      "median": 0.008349,
+      "n": 1000,
+      "std": 0.058922
+     },
+     "source": {
+      "ci95": [
+       0.162762,
+       0.170919
+      ],
+      "extra": {},
+      "iqr": [
+       0.128601,
+       0.210195
+      ],
+      "mean": 0.167063,
+      "median": 0.171617,
+      "n": 1000,
+      "std": 0.068599
+     },
+     "target": {
+      "ci95": [
+       0.176331,
+       0.185962
+      ],
+      "extra": {},
+      "iqr": [
+       0.136364,
+       0.234043
+      ],
+      "mean": 0.181033,
+      "median": 0.1875,
+      "n": 1000,
+      "std": 0.080256
+     }
+    },
+    "flesch_kincaid_grade": {
+     "delta": {
+      "ci95": [
+       -10.46576,
+       -0.462675
+      ],
+      "extra": {},
+      "iqr": [
+       -4.9,
+       -0.9
+      ],
+      "mean": -4.6587,
+      "median": -2.8,
+      "n": 1000,
+      "std": 82.520273
+     },
+     "source": {
+      "ci95": [
+       10.57255,
+       18.205897
+      ],
+      "extra": {},
+      "iqr": [
+       8.5,
+       12.3
+      ],
+      "mean": 13.2078,
+      "median": 10.4,
+      "n": 1000,
+      "std": 77.352618
+     },
+     "target": {
+      "ci95": [
+       7.495143,
+       10.436462
+      ],
+      "extra": {},
+      "iqr": [
+       5.4,
+       9.3
+      ],
+      "mean": 8.5491,
+      "median": 7.3,
+      "n": 1000,
+      "std": 28.620879
+     }
+    },
+    "flesch_reading_ease": {
+     "delta": {
+      "ci95": [
+       4.960524,
+       30.764612
+      ],
+      "extra": {},
+      "iqr": [
+       2.33,
+       19.9625
+      ],
+      "mean": 15.7406,
+      "median": 11.2,
+      "n": 1000,
+      "std": 213.887939
+     },
+     "source": {
+      "ci95": [
+       35.885015,
+       55.939297
+      ],
+      "extra": {},
+      "iqr": [
+       47.28,
+       64.91
+      ],
+      "mean": 48.91621,
+      "median": 56.215,
+      "n": 1000,
+      "std": 200.690832
+     },
+     "target": {
+      "ci95": [
+       59.679546,
+       67.6932
+      ],
+      "extra": {},
+      "iqr": [
+       57.73,
+       77.53
+      ],
+      "mean": 64.65681,
+      "median": 68.26,
+      "n": 1000,
+      "std": 74.771957
+     }
+    },
+    "infrequent_words_ratio": {
+     "delta": {
+      "ci95": [
+       -0.002722,
+       0.0025
+      ],
+      "extra": {},
+      "iqr": [
+       -0.007161,
+       0.0
+      ],
+      "mean": -0.000342,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.044207
+     },
+     "source": {
+      "ci95": [
+       0.026119,
+       0.031178
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.04
+      ],
+      "mean": 0.028601,
+      "median": 0.011268,
+      "n": 1000,
+      "std": 0.042747
+     },
+     "target": {
+      "ci95": [
+       0.025195,
+       0.031881
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.04
+      ],
+      "mean": 0.028259,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.053898
+     }
+    },
+    "lexical_richness": {
+     "delta": {
+      "ci95": [
+       0.043454,
+       0.058674
+      ],
+      "extra": {},
+      "iqr": [
+       -0.027903,
+       0.126441
+      ],
+      "mean": 0.051046,
+      "median": 0.031549,
+      "n": 1000,
+      "std": 0.128576
+     },
+     "source": {
+      "ci95": [
+       0.698618,
+       0.713925
+      ],
+      "extra": {},
+      "iqr": [
+       0.617865,
+       0.789474
+      ],
+      "mean": 0.706579,
+      "median": 0.696838,
+      "n": 1000,
+      "std": 0.125383
+     },
+     "target": {
+      "ci95": [
+       0.75061,
+       0.764484
+      ],
+      "extra": {},
+      "iqr": [
+       0.684211,
+       0.830269
+      ],
+      "mean": 0.757625,
+      "median": 0.754386,
+      "n": 1000,
+      "std": 0.117126
+     }
+    },
+    "long_words_ratio": {
+     "delta": {
+      "ci95": [
+       -0.017232,
+       -0.012828
+      ],
+      "extra": {},
+      "iqr": [
+       -0.033141,
+       0.001019
+      ],
+      "mean": -0.015027,
+      "median": -0.012269,
+      "n": 1000,
+      "std": 0.033738
+     },
+     "source": {
+      "ci95": [
+       0.0632,
+       0.068261
+      ],
+      "extra": {},
+      "iqr": [
+       0.038462,
+       0.08575
+      ],
+      "mean": 0.065624,
+      "median": 0.058182,
+      "n": 1000,
+      "std": 0.04043
+     },
+     "target": {
+      "ci95": [
+       0.048021,
+       0.053463
+      ],
+      "extra": {},
+      "iqr": [
+       0.019608,
+       0.072838
+      ],
+      "mean": 0.050597,
+      "median": 0.045115,
+      "n": 1000,
+      "std": 0.042507
+     }
+    },
+    "max_same_entity_distances": {
+     "delta": {
+      "ci95": [
+       -47.61305,
+       51.21715
+      ],
+      "extra": {},
+      "iqr": [
+       -61.0,
+       0.0
+      ],
+      "mean": -12.23,
+      "median": 0.0,
+      "n": 1000,
+      "std": 962.715397
+     },
+     "source": {
+      "ci95": [
+       61.6267,
+       74.78965
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       95.0
+      ],
+      "mean": 67.869,
+      "median": 22.0,
+      "n": 1000,
+      "std": 103.683789
+     },
+     "target": {
+      "ci95": [
+       23.319825,
+       117.7315
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       37.0
+      ],
+      "mean": 55.639,
+      "median": 0.0,
+      "n": 1000,
+      "std": 956.543523
+     }
+    },
+    "modifiers_ratio": {
+     "delta": {
+      "ci95": [
+       -0.020737,
+       -0.015159
+      ],
+      "extra": {},
+      "iqr": [
+       -0.041859,
+       0.005534
+      ],
+      "mean": -0.017909,
+      "median": -0.012666,
+      "n": 1000,
+      "std": 0.042739
+     },
+     "source": {
+      "ci95": [
+       0.088604,
+       0.094293
+      ],
+      "extra": {},
+      "iqr": [
+       0.058824,
+       0.12
+      ],
+      "mean": 0.091603,
+      "median": 0.086373,
+      "n": 1000,
+      "std": 0.048156
+     },
+     "target": {
+      "ci95": [
+       0.070839,
+       0.076829
+      ],
+      "extra": {},
+      "iqr": [
+       0.04,
+       0.102564
+      ],
+      "mean": 0.073694,
+      "median": 0.066667,
+      "n": 1000,
+      "std": 0.048827
+     }
+    },
+    "n": 1000,
+    "negations_ratio": {
+     "delta": {
+      "ci95": [
+       -0.000854,
+       -0.000262
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.0
+      ],
+      "mean": -0.000553,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.004616
+     },
+     "source": {
+      "ci95": [
+       0.00128,
+       0.001942
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.0
+      ],
+      "mean": 0.001592,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.005201
+     },
+     "target": {
+      "ci95": [
+       0.000759,
+       0.001342
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.0
+      ],
+      "mean": 0.001039,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.004652
+     }
+    },
+    "noun_phrases_ratio": {
+     "delta": {
+      "ci95": [
+       0.014012,
+       0.019886
+      ],
+      "extra": {},
+      "iqr": [
+       -0.006696,
+       0.041242
+      ],
+      "mean": 0.016934,
+      "median": 0.014618,
+      "n": 1000,
+      "std": 0.046107
+     },
+     "source": {
+      "ci95": [
+       0.286888,
+       0.29275
+      ],
+      "extra": {},
+      "iqr": [
+       0.261813,
+       0.3125
+      ],
+      "mean": 0.289753,
+      "median": 0.283333,
+      "n": 1000,
+      "std": 0.047352
+     },
+     "target": {
+      "ci95": [
+       0.303151,
+       0.310365
+      ],
+      "extra": {},
+      "iqr": [
+       0.272727,
+       0.333333
+      ],
+      "mean": 0.306687,
+      "median": 0.302479,
+      "n": 1000,
+      "std": 0.055585
+     }
+    },
+    "passive_voice_ratio": {
+     "delta": {
+      "ci95": [
+       0.055741,
+       0.092621
+      ],
+      "extra": {},
+      "iqr": [
+       -0.055952,
+       0.167308
+      ],
+      "mean": 0.074076,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.300977
+     },
+     "source": {
+      "ci95": [
+       0.15442,
+       0.178552
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.25
+      ],
+      "mean": 0.16653,
+      "median": 0.125,
+      "n": 1000,
+      "std": 0.193435
+     },
+     "target": {
+      "ci95": [
+       0.222167,
+       0.258726
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.333333
+      ],
+      "mean": 0.240606,
+      "median": 0.166667,
+      "n": 1000,
+      "std": 0.286593
+     }
+    },
+    "past_perfect_verbs": {
+     "delta": {
+      "ci95": [
+       -0.002753,
+       -0.000454
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.0
+      ],
+      "mean": -0.001612,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.018155
+     },
+     "source": {
+      "ci95": [
+       0.002338,
+       0.004428
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.0
+      ],
+      "mean": 0.00332,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.017211
+     },
+     "target": {
+      "ci95": [
+       0.000861,
+       0.002697
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.0
+      ],
+      "mean": 0.001707,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.014711
+     }
+    },
+    "past_tense_verbs": {
+     "delta": {
+      "ci95": [
+       0.085512,
+       0.161028
+      ],
+      "extra": {},
+      "iqr": [
+       -0.133333,
+       0.394643
+      ],
+      "mean": 0.123858,
+      "median": 0.009532,
+      "n": 1000,
+      "std": 0.604716
+     },
+     "source": {
+      "ci95": [
+       0.790755,
+       0.849452
+      ],
+      "extra": {},
+      "iqr": [
+       0.5,
+       1.0
+      ],
+      "mean": 0.819342,
+      "median": 0.8,
+      "n": 1000,
+      "std": 0.493963
+     },
+     "target": {
+      "ci95": [
+       0.904108,
+       0.980127
+      ],
+      "extra": {},
+      "iqr": [
+       0.5,
+       1.285714
+      ],
+      "mean": 0.9432,
+      "median": 1.0,
+      "n": 1000,
+      "std": 0.657284
+     }
+    },
+    "punctuation_ratio": {
+     "delta": {
+      "ci95": [
+       0.001197,
+       0.007311
+      ],
+      "extra": {},
+      "iqr": [
+       -0.019017,
+       0.026513
+      ],
+      "mean": 0.004298,
+      "median": 0.003078,
+      "n": 1000,
+      "std": 0.049328
+     },
+     "source": {
+      "ci95": [
+       0.143078,
+       0.148662
+      ],
+      "extra": {},
+      "iqr": [
+       0.114286,
+       0.170842
+      ],
+      "mean": 0.145798,
+      "median": 0.137423,
+      "n": 1000,
+      "std": 0.046248
+     },
+     "target": {
+      "ci95": [
+       0.147023,
+       0.153154
+      ],
+      "extra": {},
+      "iqr": [
+       0.115882,
+       0.177778
+      ],
+      "mean": 0.150096,
+      "median": 0.142857,
+      "n": 1000,
+      "std": 0.049954
+     }
+    },
+    "relative_clauses_ratio": {
+     "delta": {
+      "ci95": [
+       -0.003194,
+       -0.001491
+      ],
+      "extra": {},
+      "iqr": [
+       -0.009346,
+       0.0
+      ],
+      "mean": -0.002341,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.013592
+     },
+     "source": {
+      "ci95": [
+       0.00827,
+       0.009584
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.015399
+      ],
+      "mean": 0.008926,
+      "median": 0.006452,
+      "n": 1000,
+      "std": 0.010539
+     },
+     "target": {
+      "ci95": [
+       0.005794,
+       0.007374
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.009615
+      ],
+      "mean": 0.006585,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.013061
+     }
+    },
+    "sentences_number": {
+     "delta": {
+      "ci95": [
+       -10.96,
+       -1.173975
+      ],
+      "extra": {},
+      "iqr": [
+       -3.0,
+       1.0
+      ],
+      "mean": -4.537,
+      "median": 0.0,
+      "n": 1000,
+      "std": 99.486955
+     },
+     "source": {
+      "ci95": [
+       5.310875,
+       15.064225
+      ],
+      "extra": {},
+      "iqr": [
+       2.0,
+       7.0
+      ],
+      "mean": 8.683,
+      "median": 4.0,
+      "n": 1000,
+      "std": 99.537713
+     },
+     "target": {
+      "ci95": [
+       3.978,
+       4.341025
+      ],
+      "extra": {},
+      "iqr": [
+       2.0,
+       5.0
+      ],
+      "mean": 4.146,
+      "median": 3.0,
+      "n": 1000,
+      "std": 3.089373
+     }
+    },
+    "short_sentences_ratio": {
+     "delta": {
+      "ci95": [
+       0.157511,
+       0.192809
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.4
+      ],
+      "mean": 0.175896,
+      "median": 0.133333,
+      "n": 1000,
+      "std": 0.281848
+     },
+     "source": {
+      "ci95": [
+       0.116646,
+       0.142651
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.222222
+      ],
+      "mean": 0.129148,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.191201
+     },
+     "target": {
+      "ci95": [
+       0.286903,
+       0.321403
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.5
+      ],
+      "mean": 0.305044,
+      "median": 0.333333,
+      "n": 1000,
+      "std": 0.268437
+     }
+    },
+    "syllables_ratio": {
+     "delta": {
+      "ci95": [
+       -0.067698,
+       -0.051038
+      ],
+      "extra": {},
+      "iqr": [
+       -0.137538,
+       0.01308
+      ],
+      "mean": -0.059179,
+      "median": -0.055769,
+      "n": 1000,
+      "std": 0.137093
+     },
+     "source": {
+      "ci95": [
+       1.650827,
+       1.671004
+      ],
+      "extra": {},
+      "iqr": [
+       1.557032,
+       1.754469
+      ],
+      "mean": 1.661143,
+      "median": 1.654816,
+      "n": 1000,
+      "std": 0.158126
+     },
+     "target": {
+      "ci95": [
+       1.590676,
+       1.612535
+      ],
+      "extra": {},
+      "iqr": [
+       1.488326,
+       1.710606
+      ],
+      "mean": 1.601964,
+      "median": 1.6,
+      "n": 1000,
+      "std": 0.174317
+     }
+    },
+    "syntactic_tree_depth": {
+     "delta": {
+      "ci95": [
+       -1.901025,
+       -1.597
+      ],
+      "extra": {},
+      "iqr": [
+       -3.0,
+       0.0
+      ],
+      "mean": -1.751,
+      "median": -1.0,
+      "n": 1000,
+      "std": 2.657831
+     },
+     "source": {
+      "ci95": [
+       8.266975,
+       8.60605
+      ],
+      "extra": {},
+      "iqr": [
+       7.0,
+       10.0
+      ],
+      "mean": 8.432,
+      "median": 8.0,
+      "n": 1000,
+      "std": 2.772916
+     },
+     "target": {
+      "ci95": [
+       6.55195,
+       6.812
+      ],
+      "extra": {},
+      "iqr": [
+       5.0,
+       8.0
+      ],
+      "mean": 6.681,
+      "median": 6.0,
+      "n": 1000,
+      "std": 2.245948
+     }
+    },
+    "third_person_pronouns_ratio": {
+     "delta": {
+      "ci95": [
+       0.007171,
+       0.010338
+      ],
+      "extra": {},
+      "iqr": [
+       -0.005781,
+       0.025258
+      ],
+      "mean": 0.008758,
+      "median": 0.004971,
+      "n": 1000,
+      "std": 0.025878
+     },
+     "source": {
+      "ci95": [
+       0.024096,
+       0.026775
+      ],
+      "extra": {},
+      "iqr": [
+       0.009238,
+       0.038462
+      ],
+      "mean": 0.025371,
+      "median": 0.023059,
+      "n": 1000,
+      "std": 0.020944
+     },
+     "target": {
+      "ci95": [
+       0.032619,
+       0.035701
+      ],
+      "extra": {},
+      "iqr": [
+       0.013889,
+       0.051282
+      ],
+      "mean": 0.034129,
+      "median": 0.034483,
+      "n": 1000,
+      "std": 0.025498
+     }
+    },
+    "unique_entities": {
+     "delta": {
+      "ci95": [
+       -6.117075,
+       -4.833975
+      ],
+      "extra": {},
+      "iqr": [
+       -8.0,
+       0.0
+      ],
+      "mean": -5.452,
+      "median": -2.0,
+      "n": 1000,
+      "std": 10.26114
+     },
+     "source": {
+      "ci95": [
+       13.973475,
+       15.414025
+      ],
+      "extra": {},
+      "iqr": [
+       7.0,
+       19.0
+      ],
+      "mean": 14.665,
+      "median": 11.0,
+      "n": 1000,
+      "std": 11.727246
+     },
+     "target": {
+      "ci95": [
+       8.783975,
+       9.6171
+      ],
+      "extra": {},
+      "iqr": [
+       4.0,
+       13.0
+      ],
+      "mean": 9.213,
+      "median": 7.0,
+      "n": 1000,
+      "std": 6.821595
+     }
+    },
+    "unique_entities_average": {
+     "delta": {
+      "ci95": [
+       -0.747283,
+       -0.543202
+      ],
+      "extra": {},
+      "iqr": [
+       -1.183333,
+       0.063542
+      ],
+      "mean": -0.648707,
+      "median": -0.488763,
+      "n": 1000,
+      "std": 1.668592
+     },
+     "source": {
+      "ci95": [
+       3.039609,
+       3.274782
+      ],
+      "extra": {},
+      "iqr": [
+       2.0,
+       4.0
+      ],
+      "mean": 3.156664,
+      "median": 3.0,
+      "n": 1000,
+      "std": 1.862148
+     },
+     "target": {
+      "ci95": [
+       2.415631,
+       2.601224
+      ],
+      "extra": {},
+      "iqr": [
+       1.666667,
+       3.0
+      ],
+      "mean": 2.507958,
+      "median": 2.333333,
+      "n": 1000,
+      "std": 1.411236
+     }
+    },
+    "unique_entities_to_total_entities": {
+     "delta": {
+      "ci95": [
+       0.002286,
+       0.029241
+      ],
+      "extra": {},
+      "iqr": [
+       0.0,
+       0.083333
+      ],
+      "mean": 0.015559,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.209287
+     },
+     "source": {
+      "ci95": [
+       0.879331,
+       0.898796
+      ],
+      "extra": {},
+      "iqr": [
+       0.826087,
+       1.0
+      ],
+      "mean": 0.888597,
+      "median": 0.923077,
+      "n": 1000,
+      "std": 0.154507
+     },
+     "target": {
+      "ci95": [
+       0.892165,
+       0.916022
+      ],
+      "extra": {},
+      "iqr": [
+       0.875,
+       1.0
+      ],
+      "mean": 0.904156,
+      "median": 1.0,
+      "n": 1000,
+      "std": 0.190459
+     }
+    },
+    "words_before_main_verb": {
+     "delta": {
+      "ci95": [
+       -2.370112,
+       -1.689009
+      ],
+      "extra": {},
+      "iqr": [
+       -4.333333,
+       0.574176
+      ],
+      "mean": -2.01861,
+      "median": -1.075,
+      "n": 1000,
+      "std": 5.693722
+     },
+     "source": {
+      "ci95": [
+       6.413453,
+       7.049094
+      ],
+      "extra": {},
+      "iqr": [
+       3.666667,
+       8.6
+      ],
+      "mean": 6.734808,
+      "median": 5.95,
+      "n": 1000,
+      "std": 5.131655
+     },
+     "target": {
+      "ci95": [
+       4.474118,
+       4.971853
+      ],
+      "extra": {},
+      "iqr": [
+       2.0,
+       6.2
+      ],
+      "mean": 4.716198,
+      "median": 3.666667,
+      "n": 1000,
+      "std": 4.101793
+     }
+    },
+    "words_over_8_chars": {
+     "delta": {
+      "ci95": [
+       -0.023364,
+       -0.017943
+      ],
+      "extra": {},
+      "iqr": [
+       -0.045867,
+       0.002193
+      ],
+      "mean": -0.02063,
+      "median": -0.016674,
+      "n": 1000,
+      "std": 0.042023
+     },
+     "source": {
+      "ci95": [
+       0.104317,
+       0.110811
+      ],
+      "extra": {},
+      "iqr": [
+       0.072045,
+       0.135135
+      ],
+      "mean": 0.10753,
+      "median": 0.10284,
+      "n": 1000,
+      "std": 0.052048
+     },
+     "target": {
+      "ci95": [
+       0.08341,
+       0.089994
+      ],
+      "extra": {},
+      "iqr": [
+       0.047226,
+       0.117647
+      ],
+      "mean": 0.086899,
+      "median": 0.081633,
+      "n": 1000,
+      "std": 0.054301
+     }
+    },
+    "words_per_sentence": {
+     "delta": {
+      "ci95": [
+       0.010429,
+       0.046332
+      ],
+      "extra": {},
+      "iqr": [
+       -0.083333,
+       0.166667
+      ],
+      "mean": 0.027731,
+      "median": 0.0,
+      "n": 1000,
+      "std": 0.296363
+     },
+     "source": {
+      "ci95": [
+       0.311198,
+       0.345038
+      ],
+      "extra": {},
+      "iqr": [
+       0.142857,
+       0.5
+      ],
+      "mean": 0.328309,
+      "median": 0.25,
+      "n": 1000,
+      "std": 0.27438
+     },
+     "target": {
+      "ci95": [
+       0.341833,
+       0.371602
+      ],
+      "extra": {},
+      "iqr": [
+       0.2,
+       0.5
+      ],
+      "mean": 0.356041,
+      "median": 0.333333,
+      "n": 1000,
+      "std": 0.229677
+     }
+    }
+   },
+   "notes": [
+    "Deltas are target - source. The paper this feature set comes from computes complex - simplified, so every delta here has the opposite sign to the corresponding column in its tables.",
+    "Self-contained by design: syllables_ratio, sentences_number and the two flesch_* fields duplicate values published by M1/M3a, and lexical_richness, infrequent_words_ratio, syntactic_tree_depth, passive_voice_ratio and words_per_sentence are near-neighbours of existing measures with different definitions. Do not treat all 33 as independent signals."
+   ],
+   "params": {
+    "delta_convention": "target - source (the paper uses complex - simplified)",
+    "deviations_from_paper": [
+     "flesch_* via readability.surface_scores (spaCy segmentation), not textstat's own -- the paper's call reproduces the defect that inverted Cochrane's FKGL delta",
+     "syllables_ratio via vowel-group counting, not pyphen",
+     "infrequent_words_ratio via wordfreq zero-frequency, not nltk.corpus.words membership",
+     "past_tense_verbs/past_perfect_verbs via spaCy tag_, not nltk.pos_tag",
+     "sentences_number/short_sentences_ratio via spaCy segmentation, not nltk.sent_tokenize",
+     "punctuation_ratio uses one tokenizer for both halves of the ratio; the paper mixes spaCy is_punct with an NLTK total"
+    ],
+    "n_features": 33,
+    "source": "linguistic_features.py from NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification",
+    "unbounded_ratios": "past_tense_verbs and passive_voice_ratio can exceed 1.0. Both are reproduced as written: the numerators count VBD/VBN tags and passive *sentences* respectively, while both denominators count only pos==VERB tokens, which excludes auxiliaries. A source with 'had written' and 'was praised' scores 1.75.",
+    "words_per_sentence_caveat": "reproduced as written -- mean(tokens per sentence) / clean tokens, which is ~1/n_sentences and not mean sentence length. M1's mean_src_sent_len is the uncorrupted quantity."
+   }
+  },
+  "pair_similarity": {
+   "corpus": {
+    "bertscore_f1": {
+     "ci95": [
+      0.493282,
+      0.555707
+     ],
+     "extra": {},
+     "iqr": [
+      0.34496,
+      0.734883
+     ],
+     "mean": 0.523337,
+     "median": 0.497987,
+     "n": 250,
+     "std": 0.252631
+    },
+    "bertscore_n_source_truncated": 2,
+    "bleu": 20.6165,
+    "n": 250
+   },
+   "notes": [
+    "Neither metric is independent evidence of meaning preservation: BLEU is in the same n-gram-overlap family as M2's ROUGE recall, and BERTScore is in the same embedding-similarity family as M4's target groundedness. Read them alongside those, not as a second opinion.",
+    "BLEU is corpus-level and has no confidence interval; averaging sentence BLEU would be a different and noisier quantity.",
+    "3 of the paper's 5 metrics are cross-lingual or French-only and are structurally undefined here; see params.",
+    "BERTScore truncation: 2 of 250 sources exceed 512 tokens, so for those pairs the score compares the target against the *opening* of the source, not the whole document. On a corpus of 6,000-token articles this makes bertscore_f1 a measure of the abstract, not the article; read it with n and this count, or not at all."
+   ],
+   "params": {
+    "bertscore_max_tokens": 512,
+    "bertscore_model": "roberta-large",
+    "bertscore_rescale_with_baseline": true,
+    "bleu_direction": "target against source (no external reference)",
+    "bleu_implementation": "sacrebleu",
+    "bleu_tokenizer": "13a",
+    "deviations_from_paper": [
+     "BLEU via sacrebleu with an explicit 13a tokenizer; the paper uses easse.bleu, which is unmaintained and does not expose its tokenisation"
+    ],
+    "not_applicable": {
+     "camembert_score_french": "French monolingual similarity; this pipeline is English-only (get_processor refuses other languages).",
+     "simplification_mbert_en": "cross-lingual mBERT F1 between an English target and a French source; no French side exists in any corpus here.",
+     "simplification_mbert_fr": "cross-lingual mBERT F1 between a French target and an English source; no French side exists in any corpus here."
+    },
+    "source": "automatic_metrics.py from NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification"
+   }
   },
   "readability": {
    "corpus": {
@@ -2558,8 +4180,8 @@
  "n_full": 1000,
  "n_sample": 250,
  "provenance": {
-  "git_commit": "356954b",
-  "run_dir": "swipe_gold_20260913T100414Z",
-  "source_file": "runs/swipe_gold_20260913T100414Z/metrics.json"
+  "git_commit": "d074d73",
+  "run_dir": "swipe_gold_20260920T091916Z",
+  "source_file": "runs/swipe_gold_20260920T091916Z/metrics.json"
  }
 }

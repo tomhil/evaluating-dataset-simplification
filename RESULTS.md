@@ -11,8 +11,11 @@ This document adds comparison and interpretation; it introduces no new
 measurement, and it assigns no task label to any corpus — the pipeline emits no
 verdict and neither does this page.
 
-**Provenance.** These numbers come from a complete re-run on 2026-09-13, after
-two rounds of correction. The corpus sampler had been drawing only the first
+**Provenance.** M1–M6 come from a complete re-run on 2026-09-13; M7 and M8 were
+added afterwards and all seven corpora were re-profiled with all eight modules on
+2026-09-20. The M1–M6 figures are unchanged by that second run — verified
+byte-identical — because M7's NER pipeline is built only when M7 is active. Both
+runs followed two rounds of correction. The corpus sampler had been drawing only the first
 83.3% of every line-aligned file and starving the trailing row groups of every
 parquet file, so the corpora were re-fetched before the run; and six review
 passes over the pipeline fixed, among other things, a fabricated SMOG score, a
@@ -33,7 +36,11 @@ in full. See [Defects found and fixed](#defects-found-and-fixed).
 | **XSum** (Narayan et al. 2018) | SUM | HF `EdinburghNLP/xsum` | 1000 | 250 |
 | *SWiPE-gold* (validation only) | DS | paper's GitHub, annotated subset | 1000 | 250 |
 
-Backends: SBERT `all-MiniLM-L6-v2` + `microsoft/deberta-large-mnli`, seed 13,
+All eight modules ran on every corpus: M1–M6, plus M7 (33 adopted linguistic
+features, full corpus) and M8 (BLEU and BERTScore, on the M4–M6 sample).
+
+Backends: SBERT `all-MiniLM-L6-v2` + `microsoft/deberta-large-mnli`,
+`roberta-large` for BERTScore, seed 13,
 1000 bootstrap resamples, τ swept over {0.4, 0.5, 0.6, 0.7, 0.8}. The τ feeding
 M5/M6 is 0.5 except on the two document-simplification corpora, where 0.7 is
 used — it measures far better against human deletion labels (κ 0.754 against
@@ -64,13 +71,18 @@ it was overturned by this re-run.
    Cochrane is paragraph-level plain-language rewriting and compresses like a
    document-simplification corpus; PLOS and eLife are whole-article lay
    summarisation and compress twenty times harder. The shared "PLS" label spans
-   both.
+   both — **on length**. On entity density the same three corpora agree to within
+   0.032 and sit clear of every other corpus, so the label does name a shared
+   behaviour; compression is simply the wrong axis on which to look for it.
 1. **Two measures track the task labels; most do not.** Ratio of mean
    within-class gap to mean between-class gap, all at τ=0.5 so the columns are
    comparable — below 1 means the label predicts the measure:
 
    | measure | ratio | |
    |---|---|---|
+   | **M7 `entity_to_token_ratio`** | **0.23** | **tracks the label best** |
+   | M7 `conjunctions_ratio` | 0.26 | tracks the label |
+   | M7 `relative_clauses_ratio` | 0.34 | tracks the label |
    | M4 1:n split rate | 0.57 | tracks the label |
    | compression (median) | 0.60 | tracks the label |
    | M4 1:0 deletions | 0.64 | mixed |
@@ -81,12 +93,19 @@ it was overturned by this re-run.
    | FKGL delta | 1.16 | does **not** track |
    | novel 1-gram / coverage | 1.40 | does **not** track |
 
-   Only two measures separate the two task families with **no overlap at all**:
-   the split rate (simplification 0.210–0.400 against summarization 0.000–0.087,
-   gap +0.122) and the Zipf delta (simplification +0.057 to +0.547 against
-   summarization −0.053 and −0.008, gap +0.065). Abstractiveness is the worst
-   predictor in the set — XSum and CNN/DailyMail are both SUM and sit at
-   opposite extremes.
+   Among M1–M6, only two measures separate the two task families with **no
+   overlap at all**: the split rate (simplification 0.210–0.400 against
+   summarization 0.000–0.087, gap +0.122) and the Zipf delta (simplification
+   +0.057 to +0.547 against summarization −0.053 and −0.008, gap +0.065).
+   Abstractiveness is the worst predictor in the set — XSum and CNN/DailyMail are
+   both SUM and sit at opposite extremes.
+
+   **M7 changed this picture.** Eleven of its 33 features separate PLS from the
+   other four corpora with no overlap, and `entity_to_token_ratio` separates all
+   three classes in order with a clear gap (PLS −0.088…−0.056, DS +0.012…+0.015,
+   SUM +0.022…+0.036). No M7 feature survives correction for 33 comparisons —
+   none can, at this sample size — so these are descriptive rankings. See
+   [M7](#m7--adopted-linguistic-feature-set-33-features).
 2. **Compression reproduces the literature — once you use the right
    statistic.** The corpus-level ratio (total target tokens over total source
    tokens) lands within 0.006 of the published figure for five of seven corpora
@@ -582,6 +601,163 @@ One caveat remains: these statistics are over source *sentences* clustered
 within documents, and while the effect is now estimated within document, the
 bootstrap still resamples sentences independently, so the CIs are tighter than
 the clustering warrants.
+
+---
+
+## M7 — Adopted linguistic feature set (33 features)
+
+Added after the seven corpora had already been profiled with M1–M6, because
+`RESULTS.md` showed only two measures tracked the task labels. The set comes
+from `linguistic_features.py` in
+[NLU-BGU/Simplicity-is-Not-Simple](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification)
+and is reproduced in full — all 33 keys its `perform_analysis()` returns for
+English. Full definitions, the six deviations from that implementation, and the
+per-feature glossary are in
+[m7-linguistic-features.md](docs/modules/m7-linguistic-features.md).
+
+**Deltas are target − source**, matching M1–M6. The source project computes
+complex − simplified, so every sign here is the opposite of its tables.
+
+### Entity coherence — the one genuinely new family
+
+The reason for adopting the set. Nothing in M1–M6 measures how referents are
+introduced, repeated, or spaced.
+
+| entity feature (Δ) | cochrane (PLS) | plos (PLS) | elife (PLS) | dwikipedia (DS) | swipe (DS) | cnn_dailymail (SUM) | xsum (SUM) |
+|---|---|---|---|---|---|---|---|
+| **entity_to_token_ratio** | **-0.0562** | **-0.0595** | **-0.0882** | **+0.0148** | **+0.0122** | **+0.0361** | **+0.0222** |
+| **unique_entities_average** | **-1.1226** | **-0.2391** | **-0.4334** | **-0.3648** | **-0.5326** | **+0.4539** | **+0.9952** |
+| **unique_entities_to_total_entities** | **+0.0630** | **+0.2821** | **+0.2753** | **+0.0093** | **+0.0044** | **+0.2875** | **+0.1534** |
+| **consecutive_entity_distance** | **+7.1169** | **+9.6818** | **+24.6927** | **-2.3591** | **-2.1163** | **-3.8412** | **-6.6326** |
+| *unique_entities* ¹ | *-18.5* | *-236.9* | *-368.5* | *-3.7* | *-5.7* | *-37.5* | *-25.9* |
+| *max_same_entity_distances* ¹ | *-174.2* | *-6854.4* | *-10641.4* | *-35.2* | *-47.6* | *-649.7* | *-341.2* |
+| *avg_same_entity_distance* ¹ | *-41.5* | *-1114.5* | *-1535.8* | *-13.6* | *-17.9* | *-174.4* | *-121.2* |
+
+¹ *Length proxies — do not read as style.* These three are counts and token
+distances, so they scale with the document: measured on Cochrane,
+`max_same_entity_distances` correlates with source length at ρ = +0.824,
+`unique_entities` at +0.751, `avg_same_entity_distance` at +0.632. eLife's
+−10,641 on the second is compression, not discourse.
+
+**`entity_to_token_ratio` is the strongest class-tracking measure in this
+document.** Its within-class to between-class gap ratio is **0.23**, against
+0.57 for the M4 split rate, which was the best M1–M6 could manage. The three
+classes separate with no overlap and in order:
+
+| class | range |
+|---|---|
+| **PLS** | −0.0882 … −0.0562 |
+| **DS** | +0.0122 … +0.0148 |
+| **SUM** | +0.0222 … +0.0361 |
+
+Plain-language rewriting **strips named entities out** — Cochrane 0.103 → 0.046,
+PLOS 0.096 → 0.037, eLife 0.118 → 0.030 — while document simplification and
+summarization both *raise* entity density, because they shorten around the
+entities rather than removing them. Every CI excludes zero.
+
+This matters because **PLS is the class that failed to cohere on compression**
+(spread 0.552, Cochrane at 0.603 against PLOS at 0.030). On entity density the
+same three corpora agree to within 0.032 and sit clear of everything else. The
+shared PLS label does name a behaviour — just not one M1–M6 could see.
+
+`consecutive_entity_distance` separates the same way (PLS +7.1 … +24.7, non-PLS
+−6.6 … −2.1) and is not length-correlated (ρ = −0.088). Plain-language targets
+spread their remaining named mentions *further apart* in a document that is
+shorter overall.
+
+### The other 26 features
+
+| feature (Δ) | cochrane (PLS) | plos (PLS) | elife (PLS) | dwikipedia (DS) | swipe (DS) | cnn_dailymail (SUM) | xsum (SUM) |
+|---|---|---|---|---|---|---|---|
+| lexical_richness | +0.090 | +0.389 | +0.294 | +0.044 | +0.046 | +0.381 | +0.353 |
+| infrequent_words_ratio | -0.008 | -0.021 | -0.038 | -0.002 | -0.002 | +0.002 | -0.001 |
+| avg_word_length | +0.067 | +0.446 | -0.003 | -0.219 | -0.190 | +0.208 | +0.127 |
+| content_words_ratio | +0.012 | +0.065 | +0.048 | -0.032 | -0.027 | +0.030 | +0.008 |
+| modifiers_ratio | +0.003 | +0.029 | +0.014 | -0.016 | -0.013 | -0.009 | -0.011 |
+| negations_ratio | +0.001 | -0.001 | +0.000 | +0.001 | -0.000 | -0.002 | -0.003 |
+| third_person_pronouns_ratio | +0.004 | +0.003 | +0.013 | +0.011 | +0.008 | -0.008 | -0.013 |
+| noun_phrases_ratio | -0.006 | +0.012 | +0.001 | +0.021 | +0.014 | +0.015 | -0.016 |
+| words_before_main_verb | -1.154 | -1.723 | -2.215 | -2.496 | -1.750 | -3.187 | +1.242 |
+| punctuation_ratio | -0.037 | -0.044 | -0.080 | -0.004 | +0.000 | -0.007 | -0.033 |
+| relative_clauses_ratio | +0.009 | +0.008 | +0.018 | -0.001 | -0.002 | -0.011 | -0.007 |
+| short_sentences_ratio | +0.014 | -0.174 | -0.222 | +0.160 | +0.157 | +0.001 | -0.099 |
+| syntactic_tree_depth | -0.776 | -5.016 | -4.905 | -1.566 | +0.561 | -5.151 | -3.742 |
+| past_tense_verbs | -0.076 | -0.270 | -0.299 | +0.035 | +0.084 | -0.011 | +0.021 |
+| past_perfect_verbs | +0.003 | -0.001 | +0.005 | -0.002 | -0.002 | -0.004 | -0.021 |
+| conditional_clauses_ratio | +0.002 | -0.001 | +0.001 | +0.000 | +0.000 | -0.001 | -0.001 |
+| conjunctions_ratio | +0.009 | +0.000 | +0.008 | -0.008 | -0.008 | -0.016 | -0.022 |
+| passive_voice_ratio | -0.010 | -0.064 | -0.074 | +0.040 | +0.058 | +0.023 | +0.037 |
+| appositions_ratio | -0.046 | -0.015 | -0.039 | +0.001 | +0.001 | -0.001 | -0.004 |
+
+**Eleven of the 33 features separate PLS from the other four corpora with no
+overlap**, and twelve separate all three classes pairwise. The most consistent
+picture across them: plain-language targets use *more* connective and
+subordinating machinery (`conjunctions_ratio`, `relative_clauses_ratio` positive
+for all three PLS corpora, negative for all four others) and *less* passive voice
+(`passive_voice_ratio` negative for all three PLS, positive for all four
+others), while dropping named entities and appositions.
+
+**Read `words_per_sentence`'s three-way separation as structural, not
+stylistic.** The feature is reproduced as written from the source, where it is
+`mean(tokens per sentence) / len(clean_tokens)` — which cancels the length and
+leaves approximately 1/(number of sentences), despite its name. Its ordering
+(DS 0.021–0.040 < PLS 0.055–0.127 < SUM 0.257–0.902) is a statement about how
+many sentences each target has, not about sentence length. M1's
+`mean_src_sent_len` is the real quantity.
+
+### These are rankings, not significance claims
+
+The same design ceiling that applies to the 30 M1–M6 metrics applies here, and
+harder. With 7 corpora the exact permutation test has 210 labelings, so the
+smallest attainable p is 0.0048; with 33 features the best possible BH-corrected
+q at rank 1 is 0.157. The best observed is q = 0.104. **No M7 feature survives
+correction for multiple comparisons, and none can.**
+
+`entity_to_token_ratio` reaches p = 0.0095 — only one of 210 labelings separates
+these corpora better than the real task labels do — and the entity family was
+named as the reason for adopting this feature set *before* the data was seen.
+But *which* entity feature won was chosen after. Treat 0.23 as the best
+descriptive ranking available, not as a demonstrated effect.
+
+---
+
+## M8 — Pair similarity
+
+BLEU and BERTScore from the same project's `automatic_metrics.py`. Its other
+three metrics are cross-lingual or French-only and are recorded as inapplicable.
+See [m8-pair-similarity.md](docs/modules/m8-pair-similarity.md).
+
+| M8 | cochrane (PLS) | plos (PLS) | elife (PLS) | dwikipedia (DS) | swipe (DS) | cnn_dailymail (SUM) | xsum (SUM) |
+|---|---|---|---|---|---|---|---|
+| BLEU (corpus) | 11.89 | 0.00 | 0.00 | 15.40 | 23.58 | 0.00 | 0.00 |
+| BERTScore F1 | 0.1683 | 0.1809 | -0.0029 | 0.3526 | 0.5219 | 0.0850 | 0.0601 |
+| sources truncated | 33/250 | 60/60 | 60/60 | 8/250 | 3/250 | 150/250 | 66/250 |
+
+**Neither metric is independent evidence.** BLEU is in the same n-gram-overlap
+family as M2's ROUGE recall; BERTScore is in the same embedding-similarity family
+as M4's target groundedness. They were adopted with the feature set, not because
+the pipeline lacked a measure of either.
+
+**BLEU is structurally uninformative on a compressing corpus, and its zeros are
+not what they look like.** On XSum the n-gram precisions are healthy — 63.4 /
+15.3 / 3.7 / 1.2 for 1- to 4-grams — but the brevity penalty is 0.000 at a length
+ratio of 0.052, so the reported score is 0.00. BLEU penalises a hypothesis
+shorter than its reference, and a summarization target is *deliberately* shorter.
+The penalty is `exp(1 − 1/ratio)` and the ratio is M1's compression, so the
+collapse was predicted from a published number before the runs finished and then
+confirmed on all seven: non-zero for the three corpora compressing above 0.5
+(SWiPE 23.58, D-Wikipedia 15.40, Cochrane 11.89), exactly 0.00 for the four below
+0.08. **Read `bleu` only above roughly 0.2 compression**; M2's `rouge1_recall`
+measures the same overlap without a length penalty.
+
+**BERTScore on the long-document corpora describes the opening of the article,
+not the article.** `roberta-large` caps at 512 tokens and bert-score truncates,
+so on PLOS and eLife **every** sampled source is cut (60/60 and
+60/60), as is 150/250 of CNN/DailyMail. eLife's −0.003 says the
+target is unrelated to the first 512 tokens of its article, which is what a lay
+summary of a 9,000-token paper should look like — it is not a statement about the
+whole document. The count is published as `bertscore_n_source_truncated` so this
+is visible rather than inferred.
 
 ---
 
