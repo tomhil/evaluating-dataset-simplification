@@ -42,9 +42,18 @@ Texts](https://aclanthology.org/2021.naacl-main.395/), NAACL 2021.
 | source → target | technical abstract → plain-language summary |
 | obtained from | [`AshOlogn/Paragraph-level-Simplification-of-Medical-Texts`](https://github.com/AshOlogn/Paragraph-level-Simplification-of-Medical-Texts), `data/data-1024/` |
 
-The released `data-1024` files appear to be a processed or truncated variant:
-measured source FKGL is 14.06 against the paper's 14.4, close, but the corpus is
-not identical to what the paper describes.
+The `data-1024` name does **not** indicate truncation. Verified against
+[`GEM/cochrane-simplification`](https://huggingface.co/datasets/GEM/cochrane-simplification),
+which redistributes the same release on HuggingFace with two extra fields
+(`gem_id`, `doi`) and states it is "not filtered" and "not modified": all 3,568
+train rows are identical row-for-row, in the same order, on both the source and
+target sides — 0 differences, identical means (350.9 / 212.3 words) and identical
+maxima (772 words). Since no source reaches 1024 words, the directory name
+refers to the model context the paper used, not to any processing of the text.
+
+Measured source FKGL is 14.33 against the paper's 14.4, and the delta is −1.52
+against a published −1.50 — the closest agreement with a published figure
+anywhere in this repository.
 
 ## PLOS
 
