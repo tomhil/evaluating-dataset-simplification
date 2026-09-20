@@ -100,3 +100,26 @@ def test_bertscore_is_cached_so_a_rerun_recomputes_nothing(tmp_path, ctx):
     assert n_first == 2, "first pass must compute both pairs"
     assert n_second == 0, "second pass must be served entirely from cache"
     assert first == second, "cached scores must equal freshly computed ones"
+
+
+def test_source_truncation_is_counted_and_reported(ctx):
+    """BERTScore's model caps at 512 tokens, so on a long-document corpus the
+    score describes the opening of the source, not the document. That has to be
+    visible in the output rather than discovered later."""
+    long_src = "word " * 900
+    pairs = [
+        Pair(id="short", source="A brief source sentence.", target="Brief."),
+        Pair(id="long", source=long_src, target="A short summary."),
+    ]
+    assert m8._n_truncated(pairs) == 1
+
+    result = m8.compute(pairs, ctx)
+    assert result.corpus["bertscore_n_source_truncated"] == 1
+    assert any("truncation" in n.lower() for n in result.notes)
+    assert result.params["bertscore_max_tokens"] == 512
+
+
+def test_no_truncation_note_when_everything_fits(ctx):
+    result = m8.compute(_pairs(), ctx)
+    assert result.corpus["bertscore_n_source_truncated"] == 0
+    assert not any("truncation" in n.lower() for n in result.notes)

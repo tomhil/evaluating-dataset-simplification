@@ -48,6 +48,12 @@ BLEU_TOKENIZER = "13a"
 # Batch size for BERTScore. Large enough to keep a GPU busy, small enough that a
 # long-document corpus does not exhaust memory on a 6000-token pair.
 BERTSCORE_BATCH = 16
+# roberta-large's positional limit. bert-score truncates to this, so on a
+# long-document corpus the score compares the target against only the opening
+# of the source -- verified on a 14,351-word PLOS source, where scoring against
+# the full text and against its first 400 words differ by 0.017, i.e. both were
+# truncated to the same ~512 tokens. Counted per run and reported.
+BERTSCORE_MAX_TOKENS = 512
 
 NOT_APPLICABLE = {
     "camembert_score_french": (
@@ -130,6 +136,16 @@ def _bertscore(pairs: Sequence[Pair], ctx: Context) -> tuple[list[float], int]:
     return [s for s in scores if s is not None], len(todo)
 
 
+def _n_truncated(pairs: Sequence[Pair]) -> int:
+    """Pairs whose source exceeds BERTScore's positional limit.
+
+    A word count is a deliberate under-estimate of the token count, so this
+    never over-reports truncation.
+    """
+
+    return sum(1 for p in pairs if len(p.source.split()) > BERTSCORE_MAX_TOKENS)
+
+
 def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     sources = [p.source for p in pairs]
     targets = [p.target for p in pairs]
@@ -145,8 +161,13 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         for p, s in zip(pairs, f1_scores)
     ]
 
+    n_trunc = _n_truncated(pairs)
     corpus = {
         "n": len(pairs),
+        # How much of bertscore_f1 is actually comparable. On a long-document
+        # corpus this approaches n, and the score then describes the opening of
+        # the source rather than the document.
+        "bertscore_n_source_truncated": n_trunc,
         # Corpus-level scalar, so no Summary and no CI -- see _bleu.
         "bleu": bleu,
         "bertscore_f1": summarize(
@@ -164,6 +185,15 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         f"{len(NOT_APPLICABLE)} of the paper's 5 metrics are cross-lingual or "
         f"French-only and are structurally undefined here; see params.",
     ]
+    if n_trunc:
+        notes.append(
+            f"BERTScore truncation: {n_trunc} of {len(pairs)} sources exceed "
+            f"{BERTSCORE_MAX_TOKENS} tokens, so for those pairs the score "
+            f"compares the target against the *opening* of the source, not the "
+            f"whole document. On a corpus of 6,000-token articles this makes "
+            f"bertscore_f1 a measure of the abstract, not the article; read it "
+            f"with n and this count, or not at all."
+        )
     if n_computed < len(pairs):
         notes.append(
             f"BERTScore: {len(pairs) - n_computed} of {len(pairs)} pairs served "
@@ -180,6 +210,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             "bleu_direction": "target against source (no external reference)",
             "bertscore_model": BERTSCORE_MODEL,
             "bertscore_rescale_with_baseline": True,
+            "bertscore_max_tokens": BERTSCORE_MAX_TOKENS,
             "source": (
                 "automatic_metrics.py from NLU-BGU/Simplicity-is-Not-Simple-"
                 "Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification"
