@@ -1,0 +1,35 @@
+# Example config for a Hugging Face corpus using real models.
+dataset:
+  adapter: hf
+  name: <dataset id>
+  split: train
+  source_field: reference
+  target_field: summary
+run:
+  sample_size: 1000        # null = full corpus; seeded random
+  seed: 13
+  language: en
+  cache_dir: .cache/
+  # Model backends (real models; download on first use):
+  embedder: sbert
+  embed_model: sentence-transformers/all-MiniLM-L6-v2
+  nli_backend: nli
+  nli_model: microsoft/deberta-large-mnli
+  nli_threshold: 0.5
+  tau_sweep: [0.4, 0.5, 0.6, 0.7, 0.8]
+  # 0.5, NOT the 0.7 validated on SWiPE. That calibration is Wikipedia prose
+  # with MiniLM and does not transfer: measured on 60 pairs, 0.7 drives this
+  # corpus's deletion rate up and strips the deleted/retained contrast M6
+  # needs -- XSum goes from 48/60 usable documents to 13/60, CNN/DailyMail
+  # 60/60 to 52/60. Staying at 0.5 until validated on this genre. The sweep
+  # below reports 0.7 so the effect is visible.
+  #
+  # The threshold is genre-dependent, so a single global value is wrong; see
+  # docs/modules/m4-alignment.md.
+  m6_tau: 0.5
+  # Optional M5 scorers (skipped gracefully if not installed):
+  alignscore: false
+  summac: false
+  # Supply a domain jargon term list to activate M3b/M6 jargon_rate:
+  jargon_terms: []
+modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile]

@@ -1,0 +1,32 @@
+# Fully offline smoke config: deterministic stand-in backends, no model
+# downloads. Runs every module end-to-end on data/smoke.jsonl.
+dataset:
+  adapter: jsonl
+  path: data/smoke.jsonl
+  source_field: reference
+  target_field: summary
+run:
+  sample_size: null
+  seed: 13
+  language: en
+  cache_dir: .cache/
+  bootstrap_resamples: 200
+  embedder: hashing        # offline hashed bag-of-words embeddings
+  nli_backend: lexical     # offline content-word grounding
+  nli_threshold: 0.5
+  tau_sweep: [0.4, 0.5, 0.6, 0.7, 0.8]
+  # 0.5, NOT the 0.7 validated on SWiPE. That calibration is Wikipedia prose
+  # with MiniLM and does not transfer: measured on 60 pairs, 0.7 drives this
+  # corpus's deletion rate up and strips the deleted/retained contrast M6
+  # needs -- XSum goes from 48/60 usable documents to 13/60, CNN/DailyMail
+  # 60/60 to 52/60. Staying at 0.5 until validated on this genre. The sweep
+  # below reports 0.7 so the effect is visible.
+  #
+  # The threshold is genre-dependent, so a single global value is wrong; see
+  # docs/modules/m4-alignment.md.
+  # The hashing stand-in embedder has its own cosine scale, unrelated to
+  # SBERT's, so an SBERT-calibrated threshold does not apply. At 0.7 this
+  # config labels 49 of 50 sentences deleted and every M6 feature falls back to
+  # a single usable document.
+  m6_tau: 0.5
+modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile]

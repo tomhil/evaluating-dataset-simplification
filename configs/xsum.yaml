@@ -1,0 +1,96 @@
+# XSum (Narayan et al. 2018) -- labelled SUM in the PRD s5 literature table.
+# BBC article -> its single-sentence summary.
+#
+# Published reference values: 0.054 (431 -> 23.3 w). Measured here: 0.057
+# (370.5 -> 21.0 w), the closest agreement of any corpus in the set.
+#
+# Paired with CNN/DailyMail to test whether SUM is a coherent class. The two sit
+# at opposite ends of summarization style: CNN/DailyMail's highlights are
+# largely copied (coverage 0.855, novel unigrams 0.145) while XSum is
+# deliberately abstractive, so agreement between them is evidence a metric
+# tracks the task rather than the style.
+#
+# Corpus materialised by `python scripts/fetch_all.py --only xsum` (seeded
+# stratified draw across row groups, n=1000).
+#
+# Run parameters match the other anchors so the profiles stay comparable.
+dataset:
+  adapter: jsonl
+  path: data/xsum/train_1000.jsonl
+  source_field: source
+  target_field: target
+run:
+  dataset_label: xsum
+  sample_size: 250         # M4-M6 sample; M1-M3 run on all 1000
+  seed: 13
+  language: en
+  cache_dir: .cache/
+  bootstrap_resamples: 1000
+  embedder: sbert
+  embed_model: sentence-transformers/all-MiniLM-L6-v2
+  nli_backend: nli
+  nli_model: microsoft/deberta-large-mnli
+  device: auto             # mps here; deberta-large is ~4x cpu
+  nli_threshold: 0.5
+  tau_sweep: [0.4, 0.5, 0.6, 0.7, 0.8]
+  # 0.5, NOT the 0.7 validated on SWiPE. That calibration is Wikipedia prose
+  # with MiniLM and does not transfer: measured on 60 pairs, 0.7 drives this
+  # corpus's deletion rate up and strips the deleted/retained contrast M6
+  # needs -- XSum goes from 48/60 usable documents to 13/60, CNN/DailyMail
+  # 60/60 to 52/60. Staying at 0.5 until validated on this genre. The sweep
+  # below reports 0.7 so the effect is visible.
+  #
+  # The threshold is genre-dependent, so a single global value is wrong; see
+  # docs/modules/m4-alignment.md.
+  m6_tau: 0.5
+  # One shared technical-term list across all five corpora, so M3b/M6
+  # jargon_rate is comparable between them rather than domain-tuned per corpus.
+  jargon_terms:
+    - randomised
+    - randomized
+    - placebo
+    - trial
+    - trials
+    - meta-analysis
+    - systematic
+    - efficacy
+    - intervention
+    - interventions
+    - outcome
+    - outcomes
+    - clinical
+    - dose
+    - dosage
+    - adverse
+    - mortality
+    - morbidity
+    - prognosis
+    - incidence
+    - prevalence
+    - cohort
+    - baseline
+    - statistically
+    - significance
+    - hypothesis
+    - methodology
+    - empirical
+    - correlation
+    - regression
+    - coefficient
+    - parameter
+    - mechanism
+    - molecular
+    - cellular
+    - protein
+    - gene
+    - genome
+    - enzyme
+    - receptor
+    - pathway
+    - inhibitor
+    - expression
+    - phenotype
+    - in-vitro
+    - in-vivo
+modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile,
+          linguistic_features, pair_similarity]

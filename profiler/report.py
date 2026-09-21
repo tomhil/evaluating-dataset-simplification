@@ -1,0 +1,460 @@
+"""Human-readable report (report.md).
+
+Renders the metric tables, the literature reference table (PRD s5), the
+interpretation guide (PRD s6), and a run-specific Caveats section (PRD s10).
+
+The report states what was measured. It never states what the dataset is: no
+classification, no task label for the input corpus, no recommendation
+(acceptance criterion 5).
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from . import reference
+from .modules.base import ModuleResult
+
+
+def _fmt(x: Any, nd: int = 3) -> str:
+    if x is None:
+        return "—"
+    if isinstance(x, float):
+        return f"{x:.{nd}f}"
+    return str(x)
+
+
+def _summary(s: dict | None) -> str:
+    """Format a Summary dict as 'mean (med M) [lo, hi] n=N'."""
+
+    if not s or s.get("n", 0) == 0:
+        return "— (n=0)"
+    ci = s.get("ci95", [None, None])
+    return (
+        f"{_fmt(s.get('mean'))} (med {_fmt(s.get('median'))}) "
+        f"[{_fmt(ci[0])}, {_fmt(ci[1])}] n={s.get('n')}"
+    )
+
+
+def _h(level: int, text: str) -> str:
+    return f"{'#' * level} {text}\n"
+
+
+def build_report(config, results: dict[str, ModuleResult], meta: dict) -> str:
+    parts: list[str] = []
+    parts.append(_h(1, "Dataset Task-Profile Metrics — Report"))
+    parts.append(
+        f"**Corpus:** {config.run.dataset_label}  \n"
+        f"**Run:** {meta.get('timestamp', '')}  \n"
+        f"**Language:** {config.run.language}  \n"
+        f"**Modules:** {', '.join(config.active_modules())}\n"
+    )
+    parts.append(
+        "> This report states what was measured. It does not state what the "
+        "dataset is — there is no classification, task label, or recommendation "
+        "here. All interpretation is the researcher's.\n"
+    )
+
+    parts.append(_h(2, "Run parameters"))
+    parts.append(
+        f"- Full-corpus size: {meta.get('n_full', '—')}\n"
+        f"- Sample size (M4–M6): {meta.get('n_sample', '—')} "
+        f"(config sample_size={config.run.sample_size})\n"
+        f"- Seed: {config.run.seed}; bootstrap resamples: {config.run.bootstrap_resamples}\n"
+        f"- τ sweep: {config.run.tau_sweep}; primary τ (M5/M6): {config.run.m6_tau}\n"
+        # run() always inserts the "embedder" key, setting it to None when M4
+        # did not run, so a `.get` default never fired and the report read
+        # "Embedder: None". Fall back on the value, not on the key.
+        f"- Embedder: {meta.get('embedder') or (config.run.embed_model if config.run.embedder == 'sbert' else config.run.embedder)}\n"
+        f"- NLI backend: {config.run.nli_backend}"
+        + (f" ({config.run.nli_model})" if config.run.nli_backend == "nli" else "")
+        + "\n"
+    )
+
+    # Length-invariant / decomposition evidence is presented before the surface
+    # formulas, per the PRD (readability formulas are weak instruments).
+    if "length" in results:
+        parts.append(_m1(results["length"]))
+    if "abstractiveness" in results:
+        parts.append(_m2(results["abstractiveness"]))
+    if "readability" in results:
+        parts.append(_m3(results["readability"]))
+    if "alignment" in results:
+        parts.append(_m4(results["alignment"]))
+    if "elaboration" in results:
+        parts.append(_m5(results["elaboration"]))
+    if "deletion_profile" in results:
+        parts.append(_m6(results["deletion_profile"]))
+    if "linguistic_features" in results:
+        parts.append(_m7(results["linguistic_features"]))
+    if "pair_similarity" in results:
+        parts.append(_m8(results["pair_similarity"]))
+
+    parts.append(_literature())
+    parts.append(_interpretation())
+    parts.append(_caveats(config, results, meta))
+
+    if meta.get("plots"):
+        parts.append(_h(2, "Plots"))
+        parts.append("\n".join(f"- `{p}`" for p in meta["plots"]) + "\n")
+
+    parts.append(
+        "\n---\n*The report states what was measured. It does not state what the "
+        "dataset is.*\n"
+    )
+    return "\n".join(parts)
+
+
+def _m1(r: ModuleResult) -> str:
+    c = r.corpus
+    out = [_h(2, "M1 — Length and compression")]
+    rows = [
+        ("src_tokens", c.get("src_tokens")),
+        ("tgt_tokens", c.get("tgt_tokens")),
+        ("compression_ratio", c.get("compression_ratio")),
+        ("sentence_ratio", c.get("sentence_ratio")),
+        ("mean_src_sent_len", c.get("mean_src_sent_len")),
+        ("mean_tgt_sent_len", c.get("mean_tgt_sent_len")),
+    ]
+    out.append("| metric | mean (median) [95% CI] n |\n|---|---|")
+    for name, s in rows:
+        out.append(f"| {name} | {_summary(s)} |")
+    exp = c.get("expansion_rate", {})
+    out.append(
+        f"\nExpansion rate (tgt>src tokens): {_fmt(exp.get('rate'))} "
+        f"(n={exp.get('n')}). Compression dip statistic: "
+        f"{_fmt(c.get('compression_bimodality'))} (Sarle's bimodality "
+        f"coefficient; >0.555 suggests more than one mode).\n"
+    )
+    return "\n".join(out) + _notes(r)
+
+
+def _m2(r: ModuleResult) -> str:
+    c = r.corpus
+    out = [_h(2, "M2 — Abstractiveness")]
+    names = [
+        "novel_1gram", "novel_2gram", "novel_3gram", "novel_4gram",
+        "novel_content_1gram", "coverage", "density",
+        "rouge1_recall", "rouge2_recall", "rougeL_recall", "content_type_overlap",
+    ]
+    out.append("| metric | mean (median) [95% CI] n |\n|---|---|")
+    for name in names:
+        out.append(f"| {name} | {_summary(c.get(name))} |")
+    out.append(
+        f"\nROUGE orientation: {r.params.get('rouge_orientation', '')}\n"
+    )
+    return "\n".join(out) + _notes(r)
+
+
+def _m3(r: ModuleResult) -> str:
+    c = r.corpus
+    out = [_h(2, "M3 — Readability, decomposed against length")]
+    out.append(
+        "_Length-invariant (M3b) and length-matched (M3c) evidence carry the "
+        "weight; the surface formulas (M3a) are reported for comparability only._\n"
+    )
+
+    # The headline is the corpus-level ratio of sums, matching what
+    # m3_readability declares in params. The per-pair mean is kept in the last
+    # column but must not lead: its denominator is a difference of readability
+    # scores and goes to zero whenever a pair changed little, so one
+    # CNN/DailyMail pair scoring 6388.9 supplied 6.39 of a reported mean of
+    # 6.87. The report used to print only that mean, under a heading naming it
+    # the headline, while metrics.json already carried the stable figure.
+    out.append(
+        _h(3, "M3c — Length-matched decomposition (headline: share (corpus))")
+    )
+    decomp = c.get("m3c_decomposition", {})
+    out.append(
+        "| measure | total Δ | attributable to rewriting | length artifact "
+        "| **share (corpus)** | share per-pair (median; mean unstable) |"
+        "\n|---|---|---|---|---|---|"
+    )
+    for m, d in decomp.items():
+        corpus_share = d.get("share_attributable_corpus")
+        cs = "—" if corpus_share is None else f"**{corpus_share:.3f}**"
+        out.append(
+            f"| {m} | {_summary(d['total'])} | {_summary(d['attributable_to_rewriting'])} "
+            f"| {_summary(d['length_artifact'])} | {cs} | {_summary(d['share_attributable'])} |"
+        )
+    out.append(
+        "\n_`share (corpus)` is Σattributable / Σtotal over the corpus, so no "
+        "single near-zero denominator can dominate it; `—` means the totals "
+        "cancel and the share is undefined. Read the per-pair column's median, "
+        "never its mean._\n"
+    )
+
+    out.append("\n" + _h(3, "M3b — Length-invariant measures (source → target)"))
+    m3b = c.get("m3b_length_invariant", {})
+    out.append("| measure | source | target | paired Δ |\n|---|---|---|---|")
+    for m, d in m3b.items():
+        out.append(f"| {m} | {_summary(d['source'])} | {_summary(d['target'])} | {_summary(d['delta'])} |")
+
+    out.append("\n" + _h(3, "M3a — Surface formulas (source → target)"))
+    m3a = c.get("m3a_surface", {})
+    out.append("| formula | source | target | paired Δ |\n|---|---|---|---|")
+    for m, d in m3a.items():
+        out.append(f"| {m} | {_summary(d['source'])} | {_summary(d['target'])} | {_summary(d['delta'])} |")
+    return "\n".join(out) + _notes(r)
+
+
+def _m4(r: ModuleResult) -> str:
+    c = r.corpus
+    out = [_h(2, "M4 — Alignment and content preservation")]
+    out.append(f"Embedder: {r.params.get('embedder')}. Every number reported at each τ.\n")
+    for tau, d in c.get("by_tau", {}).items():
+        out.append(_h(3, f"τ = {tau}"))
+        out.append(f"- source_coverage: {_summary(d['source_coverage'])}")
+        out.append(f"- target_groundedness: {_summary(d['target_groundedness'])}")
+        out.append(f"- Kendall's τ (reordering): {_summary(d['kendall_tau'])}")
+        dist = d.get("alignment_type_distribution", {})
+        out.append(
+            "- alignment types (share): "
+            + ", ".join(f"{k.replace('n_','')}: {_fmt(v)}" for k, v in dist.items())
+            + "\n"
+        )
+    return "\n".join(out) + _notes(r)
+
+
+def _m5(r: ModuleResult) -> str:
+    c = r.corpus
+    out = [_h(2, "M5 — Content addition (elaboration)")]
+    if c.get("n_target_sentences", 0) == 0:
+        return "\n".join(out) + "\nNo target sentences.\n"
+    out.append(
+        f"Scorers run: {', '.join(c.get('scorers_run', []))}"
+        + (" (heuristic_only)" if c.get("heuristic_only") else "")
+        + f". Threshold: {c.get('threshold')}.\n"
+    )
+    out.append("| scorer | score mean (median) [CI] n | not-entailed rate |\n|---|---|---|")
+    for name, d in c.get("per_scorer", {}).items():
+        ne = d["not_entailed_rate"]
+        out.append(f"| {name} | {_summary(d['score'])} | {_fmt(ne['rate'])} (n={ne['n']}) |")
+
+    agr = c.get("pairwise_agreement", {})
+    if agr:
+        out.append("\n**Scorer agreement** (disagreement is itself information):\n")
+        out.append("| pair | label agreement | Pearson |\n|---|---|---|")
+        for k, v in agr.items():
+            out.append(f"| {k} | {_fmt(v.get('label_agreement'))} | {_fmt(v.get('pearson'))} |")
+
+    pb = c.get("not_entailed_pattern_breakdown", {})
+    if pb:
+        out.append(
+            f"\n**Not-entailed surface patterns** (n={pb.get('n_not_entailed')}, counts only): "
+            f"definitional={pb.get('definitional')}, example_marker={pb.get('example_marker')}, "
+            f"candidate_gloss={pb.get('candidate_gloss')}, "
+            f"candidate_new_background={pb.get('candidate_new_background')}.\n"
+        )
+    corrected = c.get("corrected_not_entailed_rate")
+    out.append(
+        f"Corrected not-entailed rate (from annotation): {_fmt(corrected) if corrected is not None else 'not yet ingested'}. "
+        "See `annotation_sample.csv` and `profiler ingest-annotations`.\n"
+    )
+    return "\n".join(out) + _notes(r)
+
+
+def _m7(r: ModuleResult) -> str:
+    """The 33 adopted linguistic features, grouped as the source groups them.
+
+    Ordered by |paired delta| within each group so the features that actually
+    moved are readable without scanning 33 rows. The overlap warning is not
+    optional: five of these duplicate values published by M1/M3a.
+    """
+
+    from .modules.m7_linguistic import ENTITY_ONLY, FEATURES
+
+    out = [_h(2, "M7 — Adopted linguistic feature set (33 features)")]
+    out.append(
+        "_Deltas are target − source. The source project computes "
+        "complex − simplified, so every Δ here has the **opposite sign** to "
+        "the corresponding column in its tables._\n"
+    )
+    out.append(
+        "_Five fields duplicate values published elsewhere "
+        "(`syllables_ratio`, `sentences_number`, `flesch_reading_ease`, "
+        "`flesch_kincaid_grade`) or are near-neighbours of existing measures "
+        "with different definitions (`lexical_richness`, "
+        "`infrequent_words_ratio`, `syntactic_tree_depth`, "
+        "`passive_voice_ratio`, `words_per_sentence`). Do not read all 33 as "
+        "independent signals._\n"
+    )
+
+    c = r.corpus
+    entity = [f for f in FEATURES if f in ENTITY_ONLY]
+    other = [f for f in FEATURES if f not in ENTITY_ONLY]
+
+    def table(title: str, names: list[str]) -> None:
+        rows = [(f, c[f]) for f in names if f in c]
+        # Largest movers first; undefined deltas sort last.
+        rows.sort(
+            key=lambda kv: abs(kv[1]["delta"].get("mean") or 0.0), reverse=True
+        )
+        out.append("\n" + _h(3, title))
+        out.append("| feature | source | target | paired Δ |\n|---|---|---|---|")
+        for f, d in rows:
+            out.append(
+                f"| {f} | {_summary(d['source'])} | {_summary(d['target'])} "
+                f"| {_summary(d['delta'])} |"
+            )
+
+    table("Entity coherence — the family with no equivalent elsewhere", entity)
+    table("Lexical, syntactic, verb-form and readability", other)
+    return "\n".join(out) + _notes(r)
+
+
+def _m8(r: ModuleResult) -> str:
+    out = [_h(2, "M8 — Pair similarity")]
+    c = r.corpus
+    bleu = c.get("bleu")
+    out.append("| metric | value |\n|---|---|")
+    out.append(f"| BLEU (corpus-level, target vs source) | {'—' if bleu is None else f'{bleu:.2f}'} |")
+    if "bertscore_f1" in c:
+        out.append(f"| BERTScore F1 | {_summary(c['bertscore_f1'])} |")
+
+    na = r.params.get("not_applicable", {})
+    if na:
+        out.append("\n" + _h(3, "Not applicable to this corpus"))
+        out.append("| metric | why |\n|---|---|")
+        for metric, reason in sorted(na.items()):
+            out.append(f"| `{metric}` | {reason} |")
+    return "\n".join(out) + _notes(r)
+
+
+def _m6(r: ModuleResult) -> str:
+    c = r.corpus
+    out = [_h(2, "M6 — Deletion profile")]
+    out.append(
+        f"Deleted vs retained source sentences at primary τ={c.get('primary_tau')}. "
+        f"{c.get('n_deleted')} deleted of {c.get('n_source_sentences')} source sentences. "
+        "No fitted model — the effect sizes are the answer.\n"
+    )
+    out.append(
+        "**Read the stratified column.** It compares deleted against retained "
+        "sentences inside each document and averages those effects, so document "
+        "length cannot leak in. The pooled column compares sentences across "
+        "documents: textrank is a per-document stationary distribution and "
+        "correlates with its own document's sentence count at rho = -0.92.\n"
+    )
+    out.append(
+        "`n docs` is how many documents could support the comparison for that "
+        "feature -- a feature null on most sentences of a document cannot be "
+        "compared there. The means and their `n` describe every source sentence "
+        "in raw units, so they do not reconstruct the stratified effect.\n"
+    )
+    out.append(
+        "| feature | deleted mean [CI] | retained mean [CI] | stratified effect "
+        "| n docs | Cohen's d (pooled) |"
+        "\n|---|---|---|---|---|---|"
+    )
+    for feat, d in c.get("features", {}).items():
+        st = d.get("stratified_effect") or {}
+        out.append(
+            f"| {feat} | {_summary(d['deleted'])} | {_summary(d['retained'])} "
+            f"| {_fmt(st.get('effect'))} "
+            f"| {st.get('n_documents', '--')} "
+            f"| {_fmt(d['cohens_d_deleted_vs_retained'])} |"
+        )
+    return "\n".join(out) + _notes(r)
+
+
+def _notes(r: ModuleResult) -> str:
+    if not r.notes:
+        return "\n"
+    return "\n" + "\n".join(f"> _Note:_ {n}" for n in r.notes) + "\n"
+
+
+def _literature() -> str:
+    out = [_h(2, "Literature reference values (reported, not pipeline output)")]
+    out.append("| Corpus | Task as labelled | Compression (tgt/src tokens) | Readability Δ |\n|---|---|---|---|")
+    for corpus, task, comp, read in reference.LITERATURE_TABLE:
+        out.append(f"| {corpus} | {task} | {comp} | {read} |")
+    out.append(f"\n{reference.LITERATURE_ANCHORS}\n")
+    return "\n".join(out)
+
+
+def _interpretation() -> str:
+    out = [_h(2, "Interpretation guide (guidance only — no verdict)")]
+    out.append("| Axis | Metric to read | High value tends to indicate | Low value tends to indicate |\n|---|---|---|---|")
+    for axis, metric, hi, lo in reference.INTERPRETATION_GUIDE:
+        out.append(f"| {axis} | {metric} | {hi} | {lo} |")
+    out.append(f"\n{reference.INTERPRETATION_NOTE}\n")
+    return "\n".join(out)
+
+
+def _caveats(config, results: dict[str, ModuleResult], meta: dict) -> str:
+    out = [_h(2, "Caveats (confounds that apply to this run)")]
+    items: list[str] = []
+
+    # Stand-in backends are not real semantics — flag loudly and first.
+    stand_in = []
+    if config.run.embedder != "sbert" and any(
+        m in results for m in ("alignment", "deletion_profile")
+    ):
+        stand_in.append(f"embedder='{config.run.embedder}' (not SBERT)")
+    if config.run.nli_backend != "nli" and "elaboration" in results and not config.run.heuristic_only:
+        stand_in.append(f"nli_backend='{config.run.nli_backend}' (not an entailment model)")
+    if stand_in:
+        items.append(
+            "**Stand-in backends — M4/M5/M6 semantics are NOT real.** This run used "
+            + " and ".join(stand_in)
+            + ". These are deterministic lexical/hashing placeholders, not semantic "
+            "models: alignment, content-preservation, elaboration and deletion-basis "
+            "numbers derived from them are structurally valid but semantically "
+            "unreliable. Re-run with embedder=sbert and nli_backend=nli for real values. "
+            "M1, M2 and M3 do not depend on these backends and are real."
+        )
+
+    n_sample = meta.get("n_sample")
+    if isinstance(n_sample, int) and n_sample < 1000:
+        items.append(
+            f"**Small sample.** M4–M6 ran on n={n_sample} (<1000); CIs may be too "
+            "wide to distinguish this corpus from the reference values above."
+        )
+    if "alignment" in results:
+        items.append(
+            "**τ sensitivity.** Alignment threshold τ is swept "
+            f"{config.run.tau_sweep}; compare the per-τ numbers before trusting any "
+            "coverage/groundedness figure. Alignment noise propagates into M5 and M6."
+        )
+    if "elaboration" in results:
+        c = results["elaboration"].corpus
+        agr = c.get("pairwise_agreement", {})
+        # `or 1.0` turned an agreement of 0.0 into 1.0, so total disagreement --
+        # the case this caveat exists for -- was the one value that produced no
+        # caveat, while 0.5 produced one. Missing values still skip.
+        low = [
+            k
+            for k, v in agr.items()
+            if v.get("label_agreement") is not None and v["label_agreement"] < 0.8
+        ]
+        if low:
+            items.append(
+                f"**NLI/scorer disagreement.** Low label agreement between {', '.join(low)}; "
+                "treat the elaboration rate as unreliable on this domain until annotated."
+            )
+        if c.get("corrected_not_entailed_rate") is None and not c.get("heuristic_only"):
+            items.append(
+                "**Missing annotation sample.** The automatic not-entailed rate is an "
+                "upper bound; annotate `annotation_sample.csv` and re-ingest for a corrected rate."
+            )
+        if c.get("heuristic_only"):
+            items.append("**Heuristic-only elaboration.** M5 used content-word grounding, not NLI.")
+    if not config.language.lower().startswith("en"):
+        items.append(
+            f"**Non-English corpus** (language={config.language}): M3 and M5 were "
+            "skipped; readability and entailment measures are English-only."
+        )
+
+    # Fixed known confounds (PRD s10) always surfaced.
+    items.append(
+        "**Readability formulas are weak instruments** — reported for comparability "
+        "with prior work only; M3b and M3c carry the actual evidence."
+    )
+    items.append(
+        "**Entailment models degrade off-domain**, particularly on legal and "
+        "biomedical text; the automatic elaboration rate is an upper bound."
+    )
+
+    out.append("\n".join(f"- {it}" for it in items) + "\n")
+    return "\n".join(out)
