@@ -667,27 +667,39 @@ shorter overall.
 
 ### The other 26 features
 
-| feature (Δ) | cochrane (PLS) | plos (PLS) | elife (PLS) | dwikipedia (DS) | swipe (DS) | cnn_dailymail (SUM) | xsum (SUM) |
-|---|---|---|---|---|---|---|---|
-| lexical_richness | +0.090 | +0.389 | +0.294 | +0.044 | +0.046 | +0.381 | +0.353 |
-| infrequent_words_ratio | -0.008 | -0.021 | -0.038 | -0.002 | -0.002 | +0.002 | -0.001 |
-| avg_word_length | +0.067 | +0.446 | -0.003 | -0.219 | -0.190 | +0.208 | +0.127 |
-| content_words_ratio | +0.012 | +0.065 | +0.048 | -0.032 | -0.027 | +0.030 | +0.008 |
-| modifiers_ratio | +0.003 | +0.029 | +0.014 | -0.016 | -0.013 | -0.009 | -0.011 |
-| negations_ratio | +0.001 | -0.001 | +0.000 | +0.001 | -0.000 | -0.002 | -0.003 |
-| third_person_pronouns_ratio | +0.004 | +0.003 | +0.013 | +0.011 | +0.008 | -0.008 | -0.013 |
-| noun_phrases_ratio | -0.006 | +0.012 | +0.001 | +0.021 | +0.014 | +0.015 | -0.016 |
-| words_before_main_verb | -1.154 | -1.723 | -2.215 | -2.496 | -1.750 | -3.187 | +1.242 |
-| punctuation_ratio | -0.037 | -0.044 | -0.080 | -0.004 | +0.000 | -0.007 | -0.033 |
-| relative_clauses_ratio | +0.009 | +0.008 | +0.018 | -0.001 | -0.002 | -0.011 | -0.007 |
-| short_sentences_ratio | +0.014 | -0.174 | -0.222 | +0.160 | +0.157 | +0.001 | -0.099 |
-| syntactic_tree_depth | -0.776 | -5.016 | -4.905 | -1.566 | +0.561 | -5.151 | -3.742 |
-| past_tense_verbs | -0.076 | -0.270 | -0.299 | +0.035 | +0.084 | -0.011 | +0.021 |
-| past_perfect_verbs | +0.003 | -0.001 | +0.005 | -0.002 | -0.002 | -0.004 | -0.021 |
-| conditional_clauses_ratio | +0.002 | -0.001 | +0.001 | +0.000 | +0.000 | -0.001 | -0.001 |
-| conjunctions_ratio | +0.009 | +0.000 | +0.008 | -0.008 | -0.008 | -0.016 | -0.022 |
-| passive_voice_ratio | -0.010 | -0.064 | -0.074 | +0.040 | +0.058 | +0.023 | +0.037 |
-| appositions_ratio | -0.046 | -0.015 | -0.039 | +0.001 | +0.001 | -0.001 | -0.004 |
+All of them, including the four that duplicate a value published elsewhere (‡)
+and the five that are near-neighbours of an existing measure with a different
+definition (†). They are listed so the adopted set can be read whole against its
+source — **not** so they can be counted as independent evidence.
+
+| feature (Δ) | cochrane (PLS) | plos (PLS) | elife (PLS) | dwikipedia (DS) | swipe (DS) | cnn_dailymail (SUM) | xsum (SUM) | note |
+|---|---|---|---|---|---|---|---|---|
+| `lexical_richness` † | +0.090 | +0.389 | +0.294 | +0.044 | +0.046 | +0.381 | +0.353 | † M3b `mtld` (TTR vs MTLD) |
+| `words_before_main_verb` | -1.154 | -1.723 | -2.215 | -2.496 | -1.750 | -3.187 | +1.242 |  |
+| `content_words_ratio` | +0.012 | +0.065 | +0.048 | -0.032 | -0.027 | +0.030 | +0.008 |  |
+| `infrequent_words_ratio` † | -0.008 | -0.021 | -0.038 | -0.002 | -0.002 | +0.002 | -0.001 | † M3b `rare_word_rate` (unattested vs top-3000) |
+| `long_words_ratio` | -0.013 | +0.024 | -0.027 | -0.018 | -0.013 | +0.002 | +0.001 |  |
+| `modifiers_ratio` | +0.003 | +0.029 | +0.014 | -0.016 | -0.013 | -0.009 | -0.011 |  |
+| `negations_ratio` | +0.001 | -0.001 | +0.000 | +0.001 | -0.000 | -0.002 | -0.003 |  |
+| `noun_phrases_ratio` | -0.006 | +0.012 | +0.001 | +0.021 | +0.014 | +0.015 | -0.016 |  |
+| `past_perfect_verbs` | +0.003 | -0.001 | +0.005 | -0.002 | -0.002 | -0.004 | -0.021 |  |
+| `past_tense_verbs` | -0.076 | -0.270 | -0.299 | +0.035 | +0.084 | -0.011 | +0.021 |  |
+| `punctuation_ratio` | -0.037 | -0.044 | -0.080 | -0.004 | +0.000 | -0.007 | -0.033 |  |
+| `relative_clauses_ratio` | +0.009 | +0.008 | +0.018 | -0.001 | -0.002 | -0.011 | -0.007 |  |
+| `sentences_number` ‡ | -4.165 | -302.311 | -504.982 | -0.859 | -1.751 | -33.980 | -18.099 | ‡ = M1 `src_sents` |
+| `third_person_pronouns_ratio` | +0.004 | +0.003 | +0.013 | +0.011 | +0.008 | -0.008 | -0.013 |  |
+| `words_over_8_chars` | -0.011 | +0.037 | -0.030 | -0.022 | -0.019 | +0.004 | +0.003 |  |
+| `words_per_sentence` † | +0.055 | +0.127 | +0.057 | +0.021 | +0.040 | +0.257 | +0.902 | † M1 `mean_src_sent_len` (this is ~1/n_sentences) |
+| `flesch_reading_ease` ‡ | +5.430 | -11.398 | +8.474 | +14.113 | +7.308 | +3.579 | -3.005 | ‡ = M3a `fre` |
+| `flesch_kincaid_grade` ‡ | -1.517 | +1.875 | -1.475 | -3.594 | -1.401 | -2.070 | +0.542 | ‡ = M3a `fkgl` |
+| `appositions_ratio` | -0.046 | -0.015 | -0.039 | +0.001 | +0.001 | -0.001 | -0.004 |  |
+| `conditional_clauses_ratio` | +0.002 | -0.001 | +0.001 | +0.000 | +0.000 | -0.001 | -0.001 |  |
+| `conjunctions_ratio` | +0.009 | +0.000 | +0.008 | -0.008 | -0.008 | -0.016 | -0.022 |  |
+| `passive_voice_ratio` † | -0.010 | -0.064 | -0.074 | +0.040 | +0.058 | +0.023 | +0.037 | † M3b `passive_rate` (verb-token vs sentence denominator) |
+| `short_sentences_ratio` | +0.014 | -0.174 | -0.222 | +0.160 | +0.157 | +0.001 | -0.099 |  |
+| `syntactic_tree_depth` † | -0.776 | -5.016 | -4.905 | -1.566 | +0.561 | -5.151 | -3.742 | † M3b `mean_parse_depth` (max vs mean) |
+| `syllables_ratio` ‡ | -0.011 | +0.144 | -0.052 | -0.074 | -0.057 | +0.054 | +0.050 | ‡ = M3b `syllables_per_word` |
+| `avg_word_length` | +0.067 | +0.446 | -0.003 | -0.219 | -0.190 | +0.208 | +0.127 |  |
 
 **Eleven of the 33 features separate PLS from the other four corpora with no
 overlap**, and twelve separate all three classes pairwise. The most consistent
