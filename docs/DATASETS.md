@@ -24,7 +24,7 @@ expected title.
 | [XSum](#xsum) | SUM | 226,711 | 1,000 | train | news (BBC) |
 | [BillSum](#billsum) | SUM | 23,455 | 1,000 | train | legal (US bills) |
 | [Contracts](#contracts) | PLS† | 446 | **446** (all) | whole corpus | legal (contracts/ToS) |
-| [UK-Abs](#uk-abs) | candidate‡ | 793 | 589 | train | legal (UK Supreme Court) |
+| [UK-Abs](#uk-abs) | unlabelled‡ | 793 | 589 | train | legal (UK Supreme Court) |
 
 \* SWiPE-gold is a validation subset, not a corpus profile — see below.
 
@@ -33,9 +33,10 @@ Contracts is section-level. Their M1 compression is not comparable with the
 full-document corpora in this table — see their sections for what that does to
 M4–M6.
 
-‡ UK-Abs is a **candidate, not a labelled corpus**. It is profiled M1–M3 and
-deliberately left out of `compare_runs.py`'s `TASK` map until its press
-summaries are shown to be lay register — see its section.
+‡ UK-Abs is **unlabelled, and now deliberately so**. M3 has been run and its
+press summaries are *not* lay register — vocabulary is unchanged
+(`rare_word_rate` −0.001, `mean_zipf` −0.011) while only syntax simplifies. It
+stays out of `compare_runs.py`'s `TASK` map. See its section for the evidence.
 
 Every corpus is capped at 1,000 documents by `scripts/fetch_all.py --limit`, so
 M1–M3 run on a comparable base across corpora. M4–M6 then run on a seeded
