@@ -10,7 +10,9 @@ from __future__ import annotations
 LITERATURE_TABLE = [
     ("XSum (Narayan et al. 2018)", "SUM", "0.054 (431 → 23.3 w)", "n/a"),
     ("CNN/DailyMail", "SUM", "≈0.08 (~700 → ~53 w)", "n/a"),
-    ("PubMed (Cohan et al. 2018)", "SUM", "heavy", "none (technical target)"),
+    # Cohan et al. report lengths, not a ratio; 0.067 is 203/3016 from their
+    # Table 1, derived the same way as the CNN/DailyMail row above.
+    ("PubMed (Cohan et al. 2018)", "SUM", "0.067 (3016 → 203 w)", "none (technical target)"),
     ("D-Wikipedia (Sun et al. 2021)", "DS", "0.55 (141.8 → 78.6 w)", "—"),
     ("SWiPE (Laban et al. 2023)", "DS", "≈1 (content-preserving)", "—"),
     (
@@ -26,6 +28,9 @@ LITERATURE_TABLE = [
         "FKGL 15.57→10.92; DCRS 11.78→8.83; CLI 17.68→12.51",
     ),
     ("Cochrane (Devaraj et al. 2021)", "PLS", "0.53 (501 → 264 tok)", "FKGL 14.4→12.9"),
+    # Basu et al. report the pair count (1,979) but no corpus-level compression
+    # or readability delta, so both stay unfilled rather than invented.
+    ("Med-EASi (Basu et al. 2023)", "DS", "—", "—"),
     ("PLABA (Attal et al. 2023)", "PLS / adaptation", "≥1 (expands)", "FKGL significantly lower"),
 ]
 

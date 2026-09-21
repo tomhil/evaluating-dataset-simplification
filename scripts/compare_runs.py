@@ -27,14 +27,24 @@ import argparse
 import json
 from pathlib import Path
 
-# Display order: PLS anchors, then DS, then the SUM control.
-ORDER = ["cochrane", "plos", "elife", "dwikipedia", "swipe", "cnn_dailymail", "xsum"]
+# Display order: PLS anchors, then DS, then the SUM corpora.
+#
+# A label missing from ORDER is dropped by the results loader below, so every
+# committed corpus has to be registered here or it silently disappears from
+# every comparison table.
+ORDER = ["cochrane", "plos", "elife", "dwikipedia", "swipe", "med_easi",
+         "cnn_dailymail", "xsum", "arxiv_pubmed"]
 TASK = {"cochrane": "PLS", "plos": "PLS", "elife": "PLS", "dwikipedia": "DS",
-        "swipe": "DS", "cnn_dailymail": "SUM", "xsum": "SUM"}
+        "swipe": "DS", "med_easi": "DS", "cnn_dailymail": "SUM", "xsum": "SUM",
+        "arxiv_pubmed": "SUM"}
 PUBLISHED_COMPRESSION = {
     "cochrane": "0.53", "plos": "0.033", "elife": "0.045",
     "dwikipedia": "0.55", "swipe": "~1 (see note)", "cnn_dailymail": "~0.08",
     "xsum": "0.054",
+    # Basu et al. report no corpus-level compression figure.
+    "med_easi": "--",
+    # 203/3016 w from Cohan et al.'s Table 1; they report lengths, not a ratio.
+    "arxiv_pubmed": "0.067",
 }
 
 

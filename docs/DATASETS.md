@@ -15,6 +15,8 @@ expected title.
 | [Cochrane](#cochrane) | PLS | 4,459 | 1,000 | train | medicine |
 | [PLOS](#plos) | PLS | 27,525 | 1,000 | train (shard 0 of 2) | biomedical science |
 | [eLife](#elife) | PLS | 4,828 | 1,000 | train | biomedical science |
+| [arXiv/PubMed](#arxivpubmed) | SUM | 133,215 | 1,000 | train (all 5 shards) | biomedical science |
+| [Med-EASi](#med-easi) | DS† | 1,893 | 1,000 | train | medicine |
 | [D-Wikipedia](#d-wikipedia) | DS | 143,546 | 1,000 | **test** | encyclopedia |
 | [SWiPE](#swipe) | DS | 143,359 | 1,000 | full corpus | encyclopedia |
 | [SWiPE-gold](#swipe-gold) | DS* | 5,204 | 1,000 | train (annotated) | encyclopedia |
@@ -22,6 +24,10 @@ expected title.
 | [XSum](#xsum) | SUM | 226,711 | 1,000 | train | news (BBC) |
 
 \* SWiPE-gold is a validation subset, not a corpus profile — see below.
+
+† Med-EASi is **sentence-level**, not document-level. Its M1 compression is not
+comparable with the full-document corpora above it in this table — see its
+section for what that does to M4–M6.
 
 Every corpus is capped at 1,000 documents by `scripts/fetch_all.py --limit`, so
 M1–M3 run on a comparable base across corpora. M4–M6 then run on a seeded
@@ -100,6 +106,85 @@ against a published 0.045. The M4–M6 sample is 60 documents rather than 250
 because M5 costs roughly (target sentences × source sentences) model passes per
 document, and M7's NER pass over 8,900-token sources is about half of M7's
 cost.
+
+## arXiv/PubMed
+
+**Cohan et al. 2018** — [A Discourse-Aware Attention Model for Abstractive
+Summarization of Long Documents](https://aclanthology.org/N18-2097/), NAACL 2018.
+
+| | |
+|---|---|
+| full corpus | **133,215** (train 119,924 · val 6,633 · test 6,658) |
+| used | 1,000 from **train**, drawn across all 5 shards |
+| domain | biomedical science — PubMed Central articles |
+| source → target | research article → its own author-written abstract |
+| obtained from | HF [`ccdv/pubmed-summarization`](https://huggingface.co/datasets/ccdv/pubmed-summarization), `document` config, parquet branch |
+
+The **PubMed half only**; the paper's arXiv half is a separate corpus and is not
+profiled here, so the label is a slight misnomer kept for continuity with the
+PRD. The `document` config pairs the whole article with its abstract; the
+`section` config splits articles into labelled sections and is a different
+ingestion unit, not interchangeable.
+
+This is the corpus that makes the biomedical domain a real three-way grid.
+Cochrane, PLOS and eLife all pair a technical source with a target written *for a
+lay reader*, so nothing in the domain isolated compression from simplification.
+PubMed's target is an abstract — shorter than the source and just as technical —
+which supplies that control without changing domain.
+
+Measured lengths track the paper unusually closely: **3,121 source and 204
+target** whitespace words against a published 3,016 and 203, a compression of
+**0.066** against the 0.067 implied by the paper's Table 1. That is much better
+agreement than the PLOS mirror manages, so this mirror appears faithful.
+
+Sampled across **all five** training shards, not one: the single-shard draw used
+for PLOS and CNN/DailyMail would have covered 23,985 of 119,924 documents.
+
+## Med-EASi
+
+**Basu et al. 2023** — [Med-EASi: Finely Annotated Dataset and Models for
+Controllable Simplification of Medical Texts](https://arxiv.org/abs/2302.09155),
+AAAI 2023.
+
+| | |
+|---|---|
+| full corpus | **1,893** (train 1,397 · val 196 · test 300) |
+| used | 1,000 from **train** |
+| domain | medicine — MSD Manuals and SimpWiki |
+| source → target | expert medical text → crowdsourced layman rewrite |
+| obtained from | HF [`cbasu/Med-EASi`](https://huggingface.co/datasets/cbasu/Med-EASi), parquet branch |
+
+**The released corpus is 1,893 pairs, not the 1,979 the paper states** — 86
+fewer, measured by counting all three splits of the HF release. The paper gives
+no per-split breakdown, so which pairs were dropped cannot be recovered from the
+artifact.
+
+**Obtained from HuggingFace, not GitHub.** The paper links
+[`Chandrayee/CTRL-SIMP`](https://github.com/Chandrayee/CTRL-SIMP), but that
+repository holds only model code and points on to the HF dataset. This removes
+the "new reading pattern" risk the PRD anticipated for it: it is ordinary
+parquet, read by the same `_parquet_rows` helper as PLOS and eLife. Its columns
+are `Expert`/`Simple`, capitalised, unlike every other HF corpus here. A third
+column, `Annotation`, carries inline `<del>`/`<rep>`/`<ins>` edit markup and is
+deliberately not ingested — it is not natural text.
+
+**Granularity: this is a sentence-level corpus.** Sources average **23.6 words
+and 1.1 sentences**; every other corpus here is a paragraph or a document. Two
+consequences:
+
+- Its M1 compression (**0.877** corpus-level, 0.989 as the pipeline's per-pair
+  mean) cannot be set beside D-Wikipedia's 0.55 or Cochrane's 0.61 as though
+  they measured the same thing.
+- M4 and M6 reason over a document's sentences. At 1.1 source sentences per pair
+  there is essentially no deleted/retained contrast for M6 to estimate, so its
+  M4–M6 output is **structurally thin, not a finding about the task**.
+
+**Partly Wikipedia-derived.** The paper builds Med-EASi from the MSD Manuals
+*and* from roughly 1,500 pairs of SimpWiki, which is Simple English
+Wikipedia — the same underlying resource as D-Wikipedia and SWiPE. So the
+"domain held constant" claim for the biomedical DS cell is weaker than it looks:
+a substantial share of the corpus shares a genre with the encyclopedia anchors.
+Worth carrying into any reading of the within-domain comparison.
 
 ## D-Wikipedia
 
@@ -208,7 +293,7 @@ representative the 1,000 documents are:
 | method | corpora | note |
 |---|---|---|
 | seeded draw over whole file | Cochrane, D-Wikipedia | both sides download in full |
-| stratified across parquet row groups | PLOS, eLife, CNN/DailyMail, XSum | shards are ordered, so a head-take would skew |
+| stratified across parquet row groups | PLOS, eLife, CNN/DailyMail, XSum, arXiv/PubMed, Med-EASi | shards are ordered, so a head-take would skew |
 | streaming reservoir sample | SWiPE | 190MB single JSON array, ordered by page title |
 
 **Two corpora are sampled from one shard, not the whole split.** The parquet
@@ -222,3 +307,63 @@ cheap enough to measure exhaustively: its sample gives a corpus-level
 compression of 0.549 against a true 0.676, an 18% gap, because target lengths
 are heavy-tailed. Bootstrap CIs describe variance *within* the sample and do not
 cover this.
+
+---
+
+## Candidates checked but not profiled
+
+Datasets the cross-domain PRD named for the SUM/DS/PLS grid that are **not** in
+the table above, with what was actually checked on 2026-09-21. None of these
+displaces a corpus already profiled.
+
+### PlainMedScale — biomedical DS candidate — **access-restricted**
+
+**Ohta & Brocai 2026** — [PlainMedScale: A Corpus of Multi-Level Simplified
+Medical Texts in German and English](https://arxiv.org/abs/2608.01158),
+Heidelberg University.
+
+The paper is real and the corpus is what the PRD described: topic-aligned, whole
+documents, MSD Professional → MSD Consumer → NHS on the English side, no
+Cochrane source. It is **not currently obtainable**:
+
+- The GitHub repository the paper cites, `GS-Uni-Heidelberg/PlainMedScale`,
+  returns **404** (the organisation exists; the repository does not).
+- The Zenodo record ([10.5281/zenodo.21728290](https://doi.org/10.5281/zenodo.21728290),
+  latest version `21747023`, v1.1, MIT, published 2026-08-01) is publicly
+  listed but its **files are restricted** behind a manual "Request access" form
+  conditioned on non-commercial research use. The API returns an empty file
+  list.
+
+Per the PRD's guardrails no access request was sent and nothing was scraped.
+**A human must request access** for this corpus to be profiled. Size and license
+of the English side therefore remain unconfirmed, so no figures are recorded.
+
+### SIMPLE-LAW — legal DS candidate — **excluded: machine-generated targets**
+
+**Rabbani et al. 2026** — ["Decode the Law": Towards Legal Text Simplification
+with Large Language Models](https://aclanthology.org/2026.lrec-1.45/), LREC 2026.
+
+The PRD listed this as *access unconfirmed* and treated access as the blocker.
+Access is **not** the blocker — the paper's footnote gives a public repository,
+[`mohammeddanishrabbani/Legal-Simplification-mrabbani`](https://github.com/mohammeddanishrabbani/Legal-Simplification-mrabbani),
+which is reachable and carries a `data/` directory.
+
+The corpus itself is the blocker. Section 3.2 ("Data Generation") states the
+simplified side was produced by **GPT-3.5-Turbo via the OpenAI API**, using 1-,
+2-shot and chain-of-thought prompting; the paper calls the result a
+"semi-synthetic" dataset and frames it as answering "can industry-grade LLMs be
+used to curate domain-specific datasets?". Only 50 pairs are human-written, and
+those serve as prompt exemplars, not as the corpus.
+
+This profiler measures **human** source→target transformations. The PRD already
+excludes LegalEase on exactly this ground ("its lay summaries are LLM-generated,
+and this profiler measures human transformations"), and that rule applies here
+unchanged. Profiling SIMPLE-LAW would measure what GPT-3.5 does when prompted to
+simplify, not what the legal DS task looks like.
+
+**The Legal DS cell is therefore DEFERRED**, and for a different reason than the
+PRD anticipated: not "waiting on access" but "no human-authored English legal
+simplification corpus was found". The PRD's own second search reported the same
+scarcity — the other candidates it turned up (LengClaro2023, LegalSim-PT) are
+Spanish and Portuguese, and the one English lead (a Korean-legislation corpus
+translated into English, Muralidharan, TUM) has no confirmed public release.
