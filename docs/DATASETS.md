@@ -22,12 +22,20 @@ expected title.
 | [SWiPE-gold](#swipe-gold) | DS* | 5,204 | 1,000 | train (annotated) | encyclopedia |
 | [CNN/DailyMail](#cnndailymail) | SUM | 311,971 | 1,000 | train (shard 0 of 3) | news |
 | [XSum](#xsum) | SUM | 226,711 | 1,000 | train | news (BBC) |
+| [BillSum](#billsum) | SUM | 23,455 | 1,000 | train | legal (US bills) |
+| [Contracts](#contracts) | PLS† | 446 | **446** (all) | whole corpus | legal (contracts/ToS) |
+| [UK-Abs](#uk-abs) | candidate‡ | 793 | 589 | train | legal (UK Supreme Court) |
 
 \* SWiPE-gold is a validation subset, not a corpus profile — see below.
 
-† Med-EASi is **sentence-level**, not document-level. Its M1 compression is not
-comparable with the full-document corpora above it in this table — see its
-section for what that does to M4–M6.
+† Med-EASi and Contracts are **sub-document**: Med-EASi is sentence-level,
+Contracts is section-level. Their M1 compression is not comparable with the
+full-document corpora in this table — see their sections for what that does to
+M4–M6.
+
+‡ UK-Abs is a **candidate, not a labelled corpus**. It is profiled M1–M3 and
+deliberately left out of `compare_runs.py`'s `TASK` map until its press
+summaries are shown to be lay register — see its section.
 
 Every corpus is capped at 1,000 documents by `scripts/fetch_all.py --limit`, so
 M1–M3 run on a comparable base across corpora. M4–M6 then run on a seeded
@@ -282,6 +290,112 @@ Summarization](https://aclanthology.org/D18-1206/), EMNLP 2018.
 
 Every summary is exactly one sentence, which makes some M4 metrics structurally
 undefined for this corpus — see the caveats in `RESULTS.md`.
+
+## BillSum
+
+**Kornilova & Eidelman 2019** — [BillSum: A Corpus for Automatic Summarization of
+US Legislation](https://arxiv.org/abs/1910.00523), EMNLP 2019 New Frontiers in
+Summarization workshop.
+
+| | |
+|---|---|
+| full corpus | **23,455** (US train 18,949 · US test 3,269 · CA test 1,237) |
+| used | 1,000 from **US train** |
+| domain | legal — US Congressional bills |
+| source → target | bill text → Congressional Research Service summary |
+| obtained from | HF [`FiscalNote/billsum`](https://huggingface.co/datasets/FiscalNote/billsum), `data/` on main |
+| license | CC0 |
+
+The `ca_test` split is 1,237 **California state** bills, an out-of-domain test
+set with no training counterpart; it is counted in the total above but not drawn
+from.
+
+The summaries are written by Congressional Research Service analysts. That
+matters beyond provenance: it is the property that disqualified the only other
+legal candidate for this grid, SIMPLE-LAW, whose targets are GPT-3.5 output (see
+below).
+
+Measured: **1,288 source and 174 target** whitespace words, compression
+**0.135** — between the news SUM corpora (~0.05–0.08) and the simplification
+corpora, which is worth watching in the M1 comparison rather than assuming SUM
+is one compression band.
+
+Parquet ships on the dataset's own `main` branch, so unlike the other HF corpora
+here it needs no auto-converted branch. Note it has a third column, `title`,
+which is *not* the summary.
+
+## Contracts
+
+**Manor & Li 2019** — [Plain English Summarization of
+Contracts](https://aclanthology.org/W19-2201/), NAACL 2019 Legal NLP workshop.
+
+| | |
+|---|---|
+| full corpus | **446** |
+| used | **all 446** |
+| domain | legal — consumer contracts and terms of service |
+| source → target | contract/ToS section → plain-English summary for a non-lawyer |
+| obtained from | [`lauramanor/legal_summarization`](https://github.com/lauramanor/legal_summarization), `all_v1.json` |
+
+**The smallest corpus here by an order of magnitude**, and the only one used in
+full rather than sampled. M1–M3 therefore run on 446 rather than 1,000, and its
+confidence intervals are correspondingly wider than every other corpus's. Each
+metric carries its own n, so this stays visible in the report.
+
+Ships in a **fourth file shape** — a JSON *object* keyed by document id,
+`{"legalsum01": {...}, ...}` — unlike the line-aligned text, parquet and single
+large JSON array the other fetchers handle. `_json_dict_rows` reads it. The keys
+carry provenance and are used as pair ids.
+
+**Two differently-built halves:** 85 `legalsum*` rows from TL;DRLegal and 361
+`tosdr*` rows from ToS;DR. The pipeline detects this without being told — M1's
+Sarle bimodality coefficient is **0.619**, above the 0.555 threshold, and the
+report prints its "a mixed corpus has no representative mean compression"
+warning. Read its compression as two populations, not one.
+
+**Granularity: section-level.** Sources average 101.9 words / 3.6 sentences and
+targets 16.0 words / 1.2 sentences. Some targets are extremely short — the
+shortest is a single word, and `hi.` is a genuine `reference_summary` in the
+released file for the Pokémon GO terms of service. These are corpus content, not
+a fetch error; the pipeline's degenerate-pair handling flags them rather than
+averaging them away.
+
+## UK-Abs
+
+**Shukla et al. 2022** — [Legal Case Document Summarization: Extractive and
+Abstractive Methods and their Evaluation](https://aclanthology.org/2022.aacl-main.77/),
+AACL 2022.
+
+| | |
+|---|---|
+| full corpus | **793** (train 589 · val 104 · test 100) |
+| used | 589 from **train** |
+| domain | legal — UK Supreme Court judgments |
+| source → target | judgment → the court's official press summary |
+| obtained from | HF [`rusheeliyer/uk-abs`](https://huggingface.co/datasets/rusheeliyer/uk-abs), parquet branch |
+
+**A candidate, not a labelled corpus.** Press summaries are written for the
+public and the media, but nothing guarantees they are plain-language, and PLS in
+this repo means a lay-audience rewrite. It is deliberately absent from
+`compare_runs.py`'s `ORDER` and `TASK`: registering it would make it a PLS data
+point by default, which is precisely the assumption M3 is being run to test. A
+human decides the label once M3's readability numbers are in.
+
+**M1–M3 only, and not for lack of ambition.** These are the longest documents in
+the repository: **14,211 source words across 451 sentences**, against eLife's
+10,306 and 612, with targets that are themselves long (1,092 words, 40.4
+sentences). M5 scores every target sentence against every source sentence, so
+that is ~19,600 passes per document — at 250 documents roughly **4.9M, about 7×
+what eLife's 60-document sample cost in 6.3 hours**. Even 60 documents would be
+~1.2M. The config records this so the modules can be enabled deliberately rather
+than by accident.
+
+Note the British spelling of the source column: `judgement`.
+
+Measured compression is **0.077**, in the same band as the long-document lay
+summarization corpora (PLOS 0.033, eLife 0.045) rather than the news SUM ones —
+which is suggestive but is a length fact, not a register fact, and is exactly
+why M3 is the deciding measurement.
 
 ---
 

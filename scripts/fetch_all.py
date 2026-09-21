@@ -194,6 +194,32 @@ def _interleave(strata: list[list]) -> Iterator:
         depth += 1
 
 
+def _json_dict_rows(
+    url: str, src_field: str, tgt_field: str, prefix: str, limit: int
+) -> Iterator[Pair]:
+    """Seeded draw from a JSON *object* keyed by document id.
+
+    A fourth shipping shape, alongside line-aligned text, parquet and the single
+    large JSON array ``_stream_json_array`` handles: the whole corpus is one
+    small object, ``{"legalsum01": {...}, ...}``.
+
+    The keys carry the corpus's own provenance -- ``legalsum*`` rows come from
+    TL;DRLegal and ``tosdr*`` rows from ToS;DR, two differently-built halves --
+    so they are used as the pair id rather than a positional index, and the draw
+    is shuffled so a corpus smaller than ``limit`` is still read whole while a
+    larger one is not taken from whichever half sorts first.
+    """
+    with urllib.request.urlopen(url, timeout=600) as resp:
+        docs = json.load(resp)
+    if not isinstance(docs, dict):
+        raise ValueError(f"expected a JSON object at {url}, got {type(docs).__name__}")
+    keys = list(docs)
+    random.Random(SEED).shuffle(keys)
+    for k in keys:
+        rec = docs[k] or {}
+        yield f"{prefix}{k}", str(rec.get(src_field) or ""), str(rec.get(tgt_field) or "")
+
+
 def _lines(url: str) -> list[str]:
     with urllib.request.urlopen(url, timeout=300) as resp:
         return resp.read().decode("utf-8", errors="replace").splitlines()
@@ -248,6 +274,11 @@ PUBMED = "https://huggingface.co/datasets/ccdv/pubmed-summarization/resolve/refs
 # Med-EASi ships from HuggingFace, not from the CTRL-SIMP GitHub repo the paper
 # is linked to -- that repo holds only model code. See fetch_med_easi.
 MED_EASI = "https://huggingface.co/datasets/cbasu/Med-EASi/resolve/refs%2Fconvert%2Fparquet/default"
+# BillSum's own repo ships parquet on main, so there is no need for the
+# auto-converted branch the other HF corpora here read.
+BILLSUM = "https://huggingface.co/datasets/FiscalNote/billsum/resolve/main/data"
+LEGALSUM = "https://raw.githubusercontent.com/lauramanor/legal_summarization/master"
+UKABS = "https://huggingface.co/datasets/rusheeliyer/uk-abs/resolve/refs%2Fconvert%2Fparquet/default"
 
 
 def fetch_cochrane(limit: int) -> Path:
@@ -450,6 +481,58 @@ def fetch_med_easi(limit: int) -> Path:
                   _parquet_rows(urls, "Expert", "Simple", "medeasi", limit))
 
 
+def fetch_billsum(limit: int) -> Path:
+    """BillSum (Kornilova & Eidelman 2019), SUM -- the legal summarization cell.
+
+    US Congressional bill text -> the Congressional Research Service's
+    human-written summary. CC0, and the summaries are written by CRS analysts
+    rather than generated, which is what qualifies it here.
+
+    One shard on the dataset's own main branch, already parquet.
+    """
+    urls = [f"{BILLSUM}/train-00000-of-00001.parquet"]
+    return _write("billsum", "train", limit,
+                  _parquet_rows(urls, "text", "summary", "billsum", limit))
+
+
+def fetch_contracts(limit: int) -> Path:
+    """Plain English Summarization of Contracts (Manor & Li 2019), PLS.
+
+    The legal lay-summarization cell: contract and terms-of-service text paired
+    with a plain-English summary written for a non-lawyer.
+
+    446 pairs, so the whole corpus is read regardless of ``limit`` and the
+    [SHORT] note _write prints is expected rather than a fault. Two halves:
+    85 ``legalsum*`` rows from TL;DRLegal and 361 ``tosdr*`` rows from ToS;DR.
+
+    Section-level, not whole documents -- see docs/DATASETS.md. Some targets are
+    extremely short ("hi." is a real one), which the pipeline's degenerate-pair
+    handling flags rather than silently averaging away.
+    """
+    rows = _json_dict_rows(
+        f"{LEGALSUM}/all_v1.json", "original_text", "reference_summary", "legal", limit
+    )
+    return _write("contracts", "all", limit, rows)
+
+
+def fetch_ukabs(limit: int) -> Path:
+    """UK-Abs (Shukla et al. 2022) -- a *candidate* for the legal PLS cell.
+
+    UK Supreme Court judgment -> the court's official press summary. Press
+    summaries are written for the public and the media, but nothing guarantees
+    they are plain-language, so this is fetched to be measured, not to be
+    labelled: it is profiled M1-M3 and left out of compare_runs' TASK map until
+    its readability is checked. See docs/DATASETS.md.
+
+    Documents are very long (~151k characters for the first judgment), so this
+    is not a candidate for the full M4-M6 treatment at any sample size the
+    other corpora use.
+    """
+    urls = [f"{UKABS}/train/0000.parquet"]
+    return _write("ukabs", "train", limit,
+                  _parquet_rows(urls, "judgement", "summary", "ukabs", limit))
+
+
 FETCHERS = {
     "cochrane": fetch_cochrane,
     "plos": fetch_plos,
@@ -461,6 +544,9 @@ FETCHERS = {
     "swipe_gold": fetch_swipe_gold,
     "arxiv_pubmed": fetch_arxiv_pubmed,
     "med_easi": fetch_med_easi,
+    "billsum": fetch_billsum,
+    "contracts": fetch_contracts,
+    "ukabs": fetch_ukabs,
 }
 
 

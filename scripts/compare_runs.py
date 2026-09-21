@@ -32,11 +32,17 @@ from pathlib import Path
 # A label missing from ORDER is dropped by the results loader below, so every
 # committed corpus has to be registered here or it silently disappears from
 # every comparison table.
-ORDER = ["cochrane", "plos", "elife", "dwikipedia", "swipe", "med_easi",
-         "cnn_dailymail", "xsum", "arxiv_pubmed"]
-TASK = {"cochrane": "PLS", "plos": "PLS", "elife": "PLS", "dwikipedia": "DS",
-        "swipe": "DS", "med_easi": "DS", "cnn_dailymail": "SUM", "xsum": "SUM",
-        "arxiv_pubmed": "SUM"}
+ORDER = ["cochrane", "plos", "elife", "contracts", "dwikipedia", "swipe",
+         "med_easi", "cnn_dailymail", "xsum", "arxiv_pubmed", "billsum"]
+TASK = {"cochrane": "PLS", "plos": "PLS", "elife": "PLS", "contracts": "PLS",
+        "dwikipedia": "DS", "swipe": "DS", "med_easi": "DS",
+        "cnn_dailymail": "SUM", "xsum": "SUM", "arxiv_pubmed": "SUM",
+        "billsum": "SUM"}
+# ukabs is deliberately absent from ORDER and TASK. It is a legal-PLS candidate
+# whose press-summary targets are not confirmed to be lay register; M3 is being
+# run to decide that. Registering it would make it a PLS data point by default,
+# which is the assumption the measurement is supposed to test. See
+# docs/DATASETS.md.
 PUBLISHED_COMPRESSION = {
     "cochrane": "0.53", "plos": "0.033", "elife": "0.045",
     "dwikipedia": "0.55", "swipe": "~1 (see note)", "cnn_dailymail": "~0.08",
@@ -45,6 +51,9 @@ PUBLISHED_COMPRESSION = {
     "med_easi": "--",
     # 203/3016 w from Cohan et al.'s Table 1; they report lengths, not a ratio.
     "arxiv_pubmed": "0.067",
+    # Neither legal paper reports a compression ratio.
+    "billsum": "--",
+    "contracts": "--",
 }
 
 
