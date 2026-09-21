@@ -424,6 +424,31 @@ cover this.
 
 ---
 
+## Access requests a human needs to make
+
+**One dataset is blocked purely on permission.** Nothing in this repository can
+unblock it — the pipeline's guardrails forbid scraping and forbid contacting
+authors automatically, so a person has to ask.
+
+| dataset | would fill | what to do | expected |
+|---|---|---|---|
+| **PlainMedScale** (English side) | Biomedical DS — a **full-document**, non-Cochrane alternative to the sentence-level Med-EASi | Open the Zenodo record [10.5281/zenodo.21728290](https://doi.org/10.5281/zenodo.21728290) → **"Request access"**. The condition is non-commercial research use, and the form asks what you intend to do with it — say corpus profiling / metric validation, no redistribution. | MIT-licensed; maintainers are Ohta & Brocai at Heidelberg |
+
+Once the files arrive, PlainMedScale needs a `fetch_plainmedscale` in
+`scripts/fetch_all.py` and a config; pair **MSD Professional → MSD Consumer**
+(same publisher, adjacent tiers) per the PRD, profile M1–M3 only at first, and
+list it as a candidate rather than adding it to `TASK`.
+
+**No other dataset here is permission-blocked.** SIMPLE-LAW is publicly
+downloadable and is excluded on content grounds instead (see below) — asking for
+access would not change anything. The one remaining lead for a *human-authored*
+English legal simplification corpus, a Korean-legislation corpus translated into
+English (Muralidharan, TUM, 2021–22), has no confirmed public release at all, so
+pursuing it means contacting the author speculatively rather than filing an
+access request.
+
+---
+
 ## Candidates checked but not profiled
 
 Datasets the cross-domain PRD named for the SUM/DS/PLS grid that are **not** in
