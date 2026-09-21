@@ -1,9 +1,19 @@
 # Results — cross-corpus task profile
 
-Seven published corpora profiled end to end with the pipeline in this repo,
-under **identical run parameters**, so their numbers are directly comparable.
-An eighth, SWiPE's annotated subset, is profiled separately and used only to
+Eleven published corpora profiled end to end with the pipeline in this repo,
+under **identical run parameters**, so their numbers are directly comparable. A
+twelfth, UK-Abs, is profiled M1-M3 only and carries no task label. A
+thirteenth, SWiPE's annotated subset, is profiled separately and used only to
 validate the pipeline against human labels.
+
+**The four corpora added on 2026-09-21 change the headline conclusion.** Until
+then every biomedical corpus here was labelled PLS, every encyclopedia corpus
+DS, and every news corpus SUM, so task and domain were perfectly confounded and
+no measure could be shown to track one rather than the other. Adding a
+biomedical SUM corpus (arXiv/PubMed), a legal SUM corpus (BillSum) and a legal
+PLS corpus (Contracts) breaks that confound, and the measure previously reported
+as the best label-tracker does not survive it. See
+[the domain-controlled comparison](#the-domain-controlled-comparison).
 
 Every figure below is copied from that corpus's `results/<corpus>.json`, which
 is distilled from `runs/<dir>/metrics.json` by `scripts/archive_results.py`.
@@ -34,10 +44,25 @@ in full. See [Defects found and fixed](#defects-found-and-fixed).
 | **SWiPE** (Laban et al. 2023) | DS | paper's GitHub, full 143k corpus | 1000 | 250 |
 | **CNN/DailyMail** | SUM | HF `abisee/cnn_dailymail` | 1000 | 250 |
 | **XSum** (Narayan et al. 2018) | SUM | HF `EdinburghNLP/xsum` | 1000 | 250 |
+| **arXiv/PubMed** (Cohan et al. 2018) | SUM | HF `ccdv/pubmed-summarization` | 1000 | 250 |
+| **Med-EASi** (Basu et al. 2023) | DS | HF `cbasu/Med-EASi` | 1000 | 250 |
+| **BillSum** (Kornilova & Eidelman 2019) | SUM | HF `FiscalNote/billsum` | 1000 | 250 |
+| **Contracts** (Manor & Li 2019) | PLS | paper's GitHub `all_v1.json` | **446** | 250 |
+| *UK-Abs* (Shukla et al. 2022) | *unlabelled candidate* | HF `rusheeliyer/uk-abs` | 589 | — |
 | *SWiPE-gold* (validation only) | DS | paper's GitHub, annotated subset | 1000 | 250 |
 
-All eight modules ran on every corpus: M1–M6, plus M7 (33 adopted linguistic
-features, full corpus) and M8 (BLEU and BERTScore, on the M4–M6 sample).
+All eight modules ran on every labelled corpus: M1–M6, plus M7 (33 adopted
+linguistic features, full corpus) and M8 (BLEU and BERTScore, on the M4–M6
+sample). UK-Abs is the exception: it runs M1–M3 only, because its label is
+unresolved and because its documents are the longest here (14,211 source words
+across 451 sentences), which puts a 250-document M5 sample at roughly 7× what
+eLife's 60-document sample cost.
+
+**Provenance of the four new corpora.** arXiv/PubMed, Med-EASi, BillSum,
+Contracts and UK-Abs were fetched and profiled on 2026-09-21 under the same
+parameters as the original seven, in a single sequential run totalling 6h10m.
+The seven earlier corpora were not re-run; their figures are unchanged from
+2026-09-20 and are reproduced here byte-identically from `results/`.
 
 Backends: SBERT `all-MiniLM-L6-v2` + `microsoft/deberta-large-mnli`,
 `roberta-large` for BERTScore, seed 13,
@@ -50,6 +75,16 @@ jargon list across all corpora.
 
 PLOS and eLife use a 60-pair M4–M6 sample rather than 250: their articles
 average 6,000 and 8,900 tokens, and eLife alone took 6.3 hours at that size.
+arXiv/PubMed keeps 250 despite averaging 2,679 tokens, because M5's cost is the
+*product* of source and target sentences and its abstracts are short (104.6 ×
+7.8 sentences against eLife's 611.8 × 18.1); it completed in 3h07m.
+
+Contracts is 446 pairs used **whole** rather than sampled, so its M1–M3 base is
+446 rather than 1,000 and its confidence intervals are wider than every other
+corpus's. Med-EASi and Contracts are also sub-document — sentence-level and
+section-level respectively — so their M1 compression is not comparable with the
+full-document corpora, and M4/M6 have little structure to work with. Both are
+flagged in `docs/DATASETS.md`.
 
 CNN/DailyMail is the control: a generic-summarization corpus that should *not*
 look like simplification on any axis. It earns its place by failing in the
@@ -74,38 +109,67 @@ it was overturned by this re-run.
    both — **on length**. On entity density the same three corpora agree to within
    0.032 and sit clear of every other corpus, so the label does name a shared
    behaviour; compression is simply the wrong axis on which to look for it.
-1. **Two measures track the task labels; most do not.** Ratio of mean
-   within-class gap to mean between-class gap, all at τ=0.5 so the columns are
-   comparable — below 1 means the label predicts the measure:
+1. **Two measures track the task labels, and they are both vocabulary
+   measures — the previously reported best tracker does not survive a domain
+   control.** Ratio of mean within-family gap to mean between-family gap over
+   all **11 labelled corpora**, simplification (PLS+DS) against summarization.
+   Below 1 means the label predicts the measure:
 
-   | measure | ratio | |
-   |---|---|---|
-   | **M7 `entity_to_token_ratio`** | **0.23** | **tracks the label best** |
-   | M7 `conjunctions_ratio` | 0.26 | tracks the label |
-   | M7 `relative_clauses_ratio` | 0.34 | tracks the label |
-   | M4 1:n split rate | 0.57 | tracks the label |
-   | compression (median) | 0.60 | tracks the label |
-   | M4 1:0 deletions | 0.64 | mixed |
-   | Zipf delta | 0.65 | mixed |
-   | M4 source coverage | 0.66 | mixed |
-   | M5 not-entailed | 0.95 | mixed |
-   | M4 groundedness | 1.08 | does **not** track |
-   | FKGL delta | 1.16 | does **not** track |
-   | novel 1-gram / coverage | 1.40 | does **not** track |
+   | measure | ratio (11 corpora) | ratio (old 7) | |
+   |---|---|---|---|
+   | **M3b `rare_word_rate` delta** | **0.45** | — | **no overlap** |
+   | **M3b `mean_zipf` delta** | **0.63** | 0.65 | **no overlap** |
+   | M3b `syllables_per_word` delta | 0.60 | — | overlaps |
+   | M3b `mtld` delta | 0.75 | — | overlaps |
+   | compression (median) | 0.85 | 0.60 | overlaps |
+   | M3a FKGL delta | 0.94 | 1.16 | overlaps |
+   | M7 `relative_clauses_ratio` | 0.98 | 0.34 | overlaps |
+   | **M7 `entity_to_token_ratio`** | **1.01** | **0.23** | **overlaps** |
+   | M2 novel 1-gram | 1.02 | 1.40 | overlaps |
+   | M7 `conjunctions_ratio` | 1.13 | 0.26 | overlaps |
 
-   Among M1–M6, only two measures separate the two task families with **no
-   overlap at all**: the split rate (simplification 0.210–0.400 against
-   summarization 0.000–0.087, gap +0.122) and the Zipf delta (simplification
-   +0.057 to +0.547 against summarization −0.053 and −0.008, gap +0.065).
-   Abstractiveness is the worst predictor in the set — XSum and CNN/DailyMail are
-   both SUM and sit at opposite extremes.
+   **`entity_to_token_ratio` went from 0.23 to 1.01 — from the best tracker in
+   the set to no better than chance.** The previous revision of this page
+   reported it separating all three classes in order with a clear gap
+   (PLS −0.088…−0.056, DS +0.012…+0.015, SUM +0.022…+0.036). Those figures are
+   reproduced exactly here; nothing about the old measurement was wrong. What
+   was wrong was the inference. In those seven corpora *every* biomedical corpus
+   was PLS, *every* encyclopedia corpus was DS and *every* news corpus was SUM,
+   so a measure that tracked genre was indistinguishable from one that tracked
+   task. The four corpora added on 2026-09-21 separate the two, and
+   `entity_to_token_ratio` follows the genre:
 
-   **M7 changed this picture.** Eleven of its 33 features separate PLS from the
-   other four corpora with no overlap, and `entity_to_token_ratio` separates all
-   three classes in order with a clear gap (PLS −0.088…−0.056, DS +0.012…+0.015,
-   SUM +0.022…+0.036). No M7 feature survives correction for 33 comparisons —
-   none can, at this sample size — so these are descriptive rankings. See
-   [M7](#m7--adopted-linguistic-feature-set-33-features).
+   | corpus | domain | task | entity_to_token delta |
+   |---|---|---|---|
+   | arXiv/PubMed | biomedical | **SUM** | **−0.014** |
+   | BillSum | legal | **SUM** | **−0.002** |
+   | Contracts | legal | **PLS** | **+0.008** |
+   | Med-EASi | biomedical | DS | −0.001 |
+
+   The two new SUM corpora sit on the *negative* side, where all three PLS
+   corpora sat, and the new PLS corpus sits on the *positive* side, where the
+   news SUM corpora sat. The ordering is not merely weakened; it is inverted for
+   the corpora that break the confound.
+
+   **The two vocabulary measures do survive**, and they separate the two
+   families with no overlap across all 11 corpora:
+
+   - `rare_word_rate` delta: simplification −0.131…−0.026, summarization
+     +0.008…+0.024. Gap **+0.034**.
+   - `mean_zipf` delta: simplification +0.057…+0.547, summarization
+     −0.061…−0.008. Gap **+0.065**.
+
+   Both say the same thing in opposite directions: **simplification corpora move
+   their vocabulary toward commoner words, summarization corpora move it toward
+   rarer ones.** That is a property of the transformation, not of the subject
+   matter, which is why it survives the domain control — see
+   [the domain-controlled comparison](#the-domain-controlled-comparison).
+
+   Note that neither is a *surface* readability formula. FKGL's delta ratio is
+   0.94 and it overlaps; the length-invariant vocabulary measures are where the
+   signal is, consistent with
+   [M3](#m3--readability).
+
 2. **Compression reproduces the literature — once you use the right
    statistic.** The corpus-level ratio (total target tokens over total source
    tokens) lands within 0.006 of the published figure for five of seven corpora
@@ -137,6 +201,87 @@ it was overturned by this re-run.
    three slots on six of seven corpora, and all three on SWiPE. The pooled
    version of this statistic was a document-length proxy (ρ = −0.92) and is
    retained only as a secondary column.
+
+---
+
+## The domain-controlled comparison
+
+This is the comparison the corpus set was extended to make, and it is the one
+that decides between the two readings of every other section on this page.
+
+**The problem.** Until 2026-09-21 the labelled corpora were:
+
+| domain | PLS | DS | SUM |
+|---|---|---|---|
+| biomedical | Cochrane, PLOS, eLife | — | — |
+| encyclopedia | — | D-Wikipedia, SWiPE | — |
+| news | — | — | CNN/DailyMail, XSum |
+
+Every cell on the diagonal, every other cell empty. Any measure separating the
+three task labels was equally well separating three genres, and no amount of
+care with the statistics could tell the two apart. The grid is now:
+
+| domain | PLS | DS | SUM |
+|---|---|---|---|
+| biomedical | Cochrane, PLOS, eLife | **Med-EASi** | **arXiv/PubMed** |
+| legal | **Contracts** | *(none found)* | **BillSum** |
+| encyclopedia | out of scope | D-Wikipedia, SWiPE | — |
+| news | out of scope | — | CNN/DailyMail, XSum |
+
+Biomedical is complete. Legal has two of three — no human-authored English legal
+simplification corpus was found (see `docs/DATASETS.md`), so the DS cell is
+deferred rather than filled.
+
+### Within biomedical, holding domain constant
+
+| corpus | task | rare_word Δ | zipf Δ | compression | FKGL Δ |
+|---|---|---|---|---|---|
+| Cochrane | PLS | −0.077 | +0.180 | 0.616 | −1.52 |
+| PLOS | PLS | −0.034 | +0.214 | 0.034 | +1.88 |
+| eLife | PLS | −0.131 | +0.547 | 0.045 | −1.47 |
+| Med-EASi | DS | −0.038 | +0.108 | 0.989 | −2.40 |
+| **arXiv/PubMed** | **SUM** | **+0.008** | **−0.029** | 0.114 | +0.80 |
+
+### Within legal, holding domain constant
+
+| corpus | task | rare_word Δ | zipf Δ | compression | FKGL Δ |
+|---|---|---|---|---|---|
+| Contracts | PLS | −0.061 | +0.126 | 0.302 | −7.32 |
+| **BillSum** | **SUM** | **+0.011** | **−0.061** | 0.141 | +0.92 |
+
+### What this establishes
+
+**The vocabulary direction separates task within domain, twice, independently.**
+In both domains the SUM corpus is the only one whose `rare_word_rate` rises and
+whose `mean_zipf` falls. Neither result can be a genre effect: the contrast is
+drawn between corpora of the *same* genre.
+
+**Compression does not separate task within domain.** In biomedical it ranges
+0.034–0.989 with SUM (0.114) sitting *between* two PLS corpora (0.045 and
+0.616). A reader given only the compression figure could not recover the label.
+This sharpens finding 0: compression is not merely incoherent *within* PLS, it
+fails to separate PLS from SUM once genre is held fixed.
+
+**Surface FKGL does not separate task either**, though it comes closer: the two
+SUM corpora are the only positives in their domains (+0.80, +0.92), but PLOS is
+also positive (+1.88) while labelled PLS, so the rule has a counterexample
+inside the biomedical column.
+
+### What this does not establish
+
+The legal column rests on **one corpus per cell**, and Contracts is a 446-pair,
+section-level corpus whose targets average 16 words — its −7.32 FKGL delta is
+inflated by that brevity, since surface formulas are unreliable on very short
+texts. Its M3b figures carry the argument, not its FKGL.
+
+Med-EASi weakens the biomedical column in a different way: roughly 1,500 of its
+pairs derive from SimpWiki, i.e. Simple English Wikipedia, so the biomedical DS
+cell partly shares a genre with the encyclopedia DS corpora it is supposed to be
+independent of.
+
+Two domains is not many. The claim supported here is that the vocabulary
+measures survive a domain control that `entity_to_token_ratio` fails — not that
+they would survive every possible one.
 
 ---
 
