@@ -392,10 +392,42 @@ than by accident.
 
 Note the British spelling of the source column: `judgement`.
 
-Measured compression is **0.077**, in the same band as the long-document lay
-summarization corpora (PLOS 0.033, eLife 0.045) rather than the news SUM ones —
-which is suggestive but is a length fact, not a register fact, and is exactly
-why M3 is the deciding measurement.
+### Verdict: not lay register — do **not** label it PLS
+
+M3 has now been run (full 589-pair train split, 2026-09-21) and the answer is
+clear. **Its vocabulary does not change at all.**
+
+| length-invariant measure | UK-Abs Δ | Contracts (legal PLS) Δ | eLife (PLS) Δ |
+|---|---|---|---|
+| `rare_word_rate` | **−0.001** | −0.061 | −0.131 |
+| `mean_zipf` | **−0.011** | +0.126 | +0.547 |
+| `syllables_per_word` | +0.022 | −0.025 | −0.052 |
+| `jargon_rate` | 0.000 | +0.000 | +0.004 |
+| `mean_parse_depth` | −0.853 | −3.180 | +1.144 |
+
+Surface formulas disagree with each other on this corpus — FKGL −1.14 and ARI
+−1.30 fall, but CLI +0.35 and DCRS **+1.46** rise — which is the fragility
+`RESULTS.md` already documents, so they do not decide it. The length-invariant
+measures do, and they are unambiguous: rare-word rate and Zipf frequency are
+flat to three decimals. Target FKGL stays at **13.18**, college level.
+
+What UK-Abs does do is simplify *syntax* — parse depth −0.853, subordinate
+clauses −0.090, passives −0.056. That is the signature of a press summary
+written by court staff for journalists: shorter sentences, same legal
+vocabulary. It is not a lay-audience rewrite.
+
+Every corpus in this repository that *is* a genuine lay rewrite moves
+`rare_word_rate` and `mean_zipf` substantially. UK-Abs moves neither, so it
+stays out of `compare_runs.py`'s `TASK` map and out of the label-tracking
+analysis. Its results are archived at `results/ukabs.json` for reference.
+
+The legal PLS cell is filled by Contracts, which shows the genuine signature on
+every measure.
+
+Measured compression is **0.112** (pipeline per-pair mean; 0.077 on whitespace
+words), in the same band as the long-document lay summarization corpora — but
+that is a length fact, not a register fact, and the register question is now
+answered independently of it.
 
 ---
 
