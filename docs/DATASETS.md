@@ -14,7 +14,7 @@ expected title.
 |---|---|---|---|---|---|
 | [Cochrane](#cochrane) | PLS | 4,459 | 1,000 | train | medicine |
 | [PLOS](#plos) | PLS | 27,525 | 1,000 | train (shard 0 of 2) | biomedical science |
-| [eLife](#elife) | PLS | 4,828 | — *(not completed)* | train | biomedical science |
+| [eLife](#elife) | PLS | 4,828 | 1,000 | train | biomedical science |
 | [D-Wikipedia](#d-wikipedia) | DS | 143,546 | 1,000 | **test** | encyclopedia |
 | [SWiPE](#swipe) | DS | 143,359 | 1,000 | full corpus | encyclopedia |
 | [SWiPE-gold](#swipe-gold) | DS* | 5,204 | 1,000 | train (annotated) | encyclopedia |
@@ -85,14 +85,21 @@ Same paper as PLOS (Goldsack et al. 2022).
 | | |
 |---|---|
 | full corpus (this mirror) | **4,828** (train 4,346 · val 241 · test 241) |
-| used | fetched, **never profiled** |
+| used | 1,000 from **train** (M4–M8 on a seeded 60-document sample) |
 | domain | biomedical science — eLife journal |
 | obtained from | HF [`tomasg25/scientific_lay_summarisation`](https://huggingface.co/datasets/tomasg25/scientific_lay_summarisation), parquet branch |
 
-Fetched and configured but never completed. At ~10,178 source words per document
-it is the largest corpus here by a wide margin, and M5 costs roughly
-(target sentences x source sentences) model passes per document. Two attempts
-were abandoned.
+**Profiled.** Two early attempts were abandoned on cost; it completed on
+2026-09-13 with M1–M6 (6.3 hours) and again on 2026-09-20 with all eight modules
+(2h23m — faster because the M4/M5 caches from the first run were still valid, so
+only M7 and M8 were new work).
+
+It remains the largest corpus here by a wide margin: **8,940 source tokens** per
+document against 356 in the target, a corpus-level compression of **0.0398**
+against a published 0.045. The M4–M6 sample is 60 documents rather than 250
+because M5 costs roughly (target sentences × source sentences) model passes per
+document, and M7's NER pass over 8,900-token sources is about half of M7's
+cost.
 
 ## D-Wikipedia
 
