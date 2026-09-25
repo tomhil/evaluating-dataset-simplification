@@ -1,0 +1,107 @@
+# UK-Abs (Shukla et al. 2022) -- a CANDIDATE for the legal PLS cell, profiled
+# to be measured rather than labelled.
+#
+# UK Supreme Court judgment -> the court's official press summary. Press
+# summaries are written for the public and the media, but nothing guarantees
+# they are plain-language, and this profiler's PLS label means a lay-audience
+# rewrite. So this corpus is deliberately NOT in compare_runs' TASK map: the
+# question "is its target actually lay register?" is what M3 is being run to
+# answer, and pre-labelling it PLS would assume the answer.
+#
+# M1-M3 ONLY, for two reasons.
+#
+# 1. The gate above: the label is unresolved, so the expensive modules would be
+#    measuring a corpus that may not belong in the comparison at all.
+# 2. Cost. These are the longest documents in the repository -- 14,211 source
+#    words and 451 source sentences per judgment, against eLife's 10,306 and
+#    612 -- and the targets are long too, at 40.4 sentences. M5 scores every
+#    target sentence against every source sentence, so that is ~19,600 passes
+#    per document: at 250 documents ~4.9M, roughly 7x what eLife's 60-document
+#    sample cost at 6.3 hours. Even at 60 documents it would be ~1.2M.
+#
+# If a human approves it as PLS (see docs/DATASETS.md), the M4-M6 modules and a
+# sample_size chosen on eLife's precedent can be added then.
+#
+# Corpus materialised by `python scripts/fetch_all.py --only ukabs`
+# (589 train pairs; the [SHORT] note the fetcher prints is expected here).
+dataset:
+  adapter: jsonl
+  path: data/ukabs/train_1000.jsonl
+  source_field: source
+  target_field: target
+run:
+  dataset_label: ukabs
+  # Unused while only M1-M3 are enabled; kept at the shared value so enabling
+  # M4-M6 later does not silently change the sample as well as the modules.
+  sample_size: 250
+  seed: 13
+  language: en
+  cache_dir: .cache/
+  bootstrap_resamples: 1000
+  embedder: sbert
+  embed_model: sentence-transformers/all-MiniLM-L6-v2
+  nli_backend: nli
+  nli_model: microsoft/deberta-large-mnli
+  device: auto             # mps here; deberta-large is ~4x cpu
+  nli_threshold: 0.5
+  tau_sweep: [0.4, 0.5, 0.6, 0.7, 0.8]
+  # 0.5, the non-Wikipedia default, and UNVALIDATED for legal prose. The 0.7
+  # that scripts/validate_deletion_split.py validated against SWiPE's human
+  # deletion labels is Wikipedia prose with MiniLM and does not transfer; every
+  # existing anchor carries the same caveat. No human-annotated legal subset
+  # exists, so nothing here can be validated the way SWiPE was -- the sweep
+  # below reports the alternatives so the sensitivity stays visible.
+  #
+  # The threshold is genre-dependent, so a single global value is wrong; see
+  # docs/modules/m4-alignment.md.
+  m6_tau: 0.5
+  # One shared technical-term list across all five corpora, so M3b/M6
+  # jargon_rate is comparable between them rather than domain-tuned per corpus.
+  jargon_terms:
+    - randomised
+    - randomized
+    - placebo
+    - trial
+    - trials
+    - meta-analysis
+    - systematic
+    - efficacy
+    - intervention
+    - interventions
+    - outcome
+    - outcomes
+    - clinical
+    - dose
+    - dosage
+    - adverse
+    - mortality
+    - morbidity
+    - prognosis
+    - incidence
+    - prevalence
+    - cohort
+    - baseline
+    - statistically
+    - significance
+    - hypothesis
+    - methodology
+    - empirical
+    - correlation
+    - regression
+    - coefficient
+    - parameter
+    - mechanism
+    - molecular
+    - cellular
+    - protein
+    - gene
+    - genome
+    - enzyme
+    - receptor
+    - pathway
+    - inhibitor
+    - expression
+    - phenotype
+    - in-vitro
+    - in-vivo
+modules: [length, abstractiveness, readability]

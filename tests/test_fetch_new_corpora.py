@@ -148,3 +148,166 @@ def test_new_fetchers_are_registered():
     """An unregistered fetcher cannot be reached by `fetch_all.py --only`."""
     for name in ("arxiv_pubmed", "med_easi"):
         assert name in fa.FETCHERS, f"{name} missing from FETCHERS"
+
+
+# --------------------------------------------------------------------------
+# BillSum (Kornilova & Eidelman 2019) -- legal SUM
+
+
+def test_billsum_reads_text_and_summary_not_title(fake_parquet):
+    """BillSum ships three columns and only two of them are the pair.
+
+    ``title`` is a one-line bill title. It is the same *kind* of thing as a
+    summary and roughly the length of one, so pairing it by mistake produces a
+    plausible-looking corpus at a wildly wrong compression.
+    """
+    fake_parquet(pa.table({
+        "text": [f"SECTION 1. LIABILITY OF BUSINESS ENTITIES {i}" for i in range(8)],
+        "summary": [f"Shields a business entity from civil liability {i}" for i in range(8)],
+        "title": [f"A bill to limit civil liability {i}" for i in range(8)],
+    }))
+
+    rows = list(fa._parquet_rows(["u"], "text", "summary", "billsum", 8))
+
+    assert rows
+    for pid, src, tgt in rows:
+        assert pid.startswith("billsum")
+        assert src.startswith("SECTION 1.")
+        assert tgt.startswith("Shields a business entity")
+        assert "A bill to limit" not in tgt, "title leaked into the target"
+
+
+# --------------------------------------------------------------------------
+# Plain English Summarization of Contracts (Manor & Li 2019) -- legal PLS
+
+
+def _contracts_fixture():
+    """Both halves of the corpus, in the shape all_v1.json ships."""
+    docs = {
+        f"legalsum{i:02d}": {
+            "doc": "Pokemon GO Terms of Service",
+            "original_text": f"welcome to the pokemon go video game services {i}",
+            "reference_summary": f"plain english summary {i}",
+            "uid": f"legalsum{i:02d}",
+        }
+        for i in range(1, 5)
+    }
+    docs.update({
+        f"tosdr{i:03d}": {
+            "doc": "Privacy Policy",
+            "original_text": f"search encrypt does not track search history {i}",
+            "reference_summary": f"this service does not track you {i}",
+            "uid": f"tosdr{i:03d}",
+        }
+        for i in range(1, 7)
+    })
+    return docs
+
+
+def test_contracts_reads_a_json_object_keyed_by_id(monkeypatch):
+    import io
+    import json as _json
+
+    payload = _json.dumps(_contracts_fixture()).encode()
+    monkeypatch.setattr(
+        fa.urllib.request, "urlopen",
+        lambda *a, **k: _ctx(io.BytesIO(payload)),
+    )
+
+    rows = list(fa._json_dict_rows("u", "original_text", "reference_summary", "legal", 100))
+
+    assert len(rows) == 10
+    for pid, src, tgt in rows:
+        assert pid.startswith("legal")
+        assert src and tgt
+        assert "welcome to the pokemon" in src or "search encrypt" in src
+
+
+def test_contracts_draw_covers_both_halves_of_the_corpus(monkeypatch):
+    """TL;DRLegal and ToS;DR rows are built differently and sort apart.
+
+    The keys are ``legalsum*`` and ``tosdr*``, so an unshuffled read that
+    stopped early would take one half only. The corpus is smaller than any
+    limit used here, but the shuffle is what makes that safe rather than
+    incidental.
+    """
+    import io
+    import json as _json
+
+    payload = _json.dumps(_contracts_fixture()).encode()
+    monkeypatch.setattr(
+        fa.urllib.request, "urlopen",
+        lambda *a, **k: _ctx(io.BytesIO(payload)),
+    )
+
+    ids = [p for p, _, _ in fa._json_dict_rows("u", "original_text", "reference_summary", "", 100)]
+
+    assert any(i.startswith("legalsum") for i in ids)
+    assert any(i.startswith("tosdr") for i in ids)
+    # Ids come from the corpus's own keys, which carry that provenance; a
+    # positional index would throw it away.
+    assert len(set(ids)) == len(ids)
+
+
+def test_contracts_rejects_a_json_array(monkeypatch):
+    """SWiPE's shape is a list; reading it here would yield nothing at all."""
+    import io
+    import json as _json
+
+    monkeypatch.setattr(
+        fa.urllib.request, "urlopen",
+        lambda *a, **k: _ctx(io.BytesIO(_json.dumps([{"a": 1}]).encode())),
+    )
+
+    with pytest.raises(ValueError, match="expected a JSON object"):
+        list(fa._json_dict_rows("u", "original_text", "reference_summary", "legal", 10))
+
+
+class _ctx:
+    """Minimal stand-in for the context manager urlopen returns."""
+
+    def __init__(self, fh):
+        self.fh = fh
+
+    def __enter__(self):
+        return self.fh
+
+    def __exit__(self, *a):
+        return False
+
+
+# --------------------------------------------------------------------------
+# UK-Abs (Shukla et al. 2022) -- legal PLS *candidate*
+
+
+def test_ukabs_reads_judgement_into_source(fake_parquet):
+    """Note the British spelling of the column: ``judgement``, not ``judgment``."""
+    fake_parquet(pa.table({
+        "judgement": [f"The appellant (NML) is a Cayman Island Company. {i}" for i in range(6)],
+        "summary": [f"This appeal relates to bonds issued by {i}" for i in range(6)],
+    }))
+
+    rows = list(fa._parquet_rows(["u"], "judgement", "summary", "ukabs", 6))
+
+    assert rows
+    for pid, src, tgt in rows:
+        assert pid.startswith("ukabs")
+        assert src.startswith("The appellant")
+        assert tgt.startswith("This appeal relates")
+
+
+def test_legal_fetchers_are_registered():
+    for name in ("billsum", "contracts", "ukabs"):
+        assert name in fa.FETCHERS, f"{name} missing from FETCHERS"
+
+
+def test_ukabs_is_not_registered_as_a_task_bearing_corpus():
+    """UK-Abs is fetched to be measured, not labelled.
+
+    Its press summaries target the public but are not guaranteed plain-language,
+    so it must stay out of compare_runs' TASK map until M3 readability says
+    otherwise -- otherwise a candidate silently becomes a PLS data point.
+    """
+    from scripts import compare_runs as cr
+
+    assert "ukabs" not in cr.TASK
