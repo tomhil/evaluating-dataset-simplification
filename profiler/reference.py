@@ -32,6 +32,9 @@ LITERATURE_TABLE = [
     # or readability delta, so both stay unfilled rather than invented.
     ("Med-EASi (Basu et al. 2023)", "DS", "—", "—"),
     ("PLABA (Attal et al. 2023)", "PLS / adaptation", "≥1 (expands)", "FKGL significantly lower"),
+    # Neither legal paper reports a compression ratio or a readability delta.
+    ("BillSum (Kornilova & Eidelman 2019)", "SUM", "—", "—"),
+    ("Contracts (Manor & Li 2019)", "PLS", "—", "—"),
 ]
 
 LITERATURE_ANCHORS = (
