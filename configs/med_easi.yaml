@@ -1,0 +1,107 @@
+# Med-EASi (Basu et al. 2023) -- the biomedical DS cell.
+# Expert medical text -> crowdsourced layman rewrite.
+#
+# No published compression figure; measured here: 0.877 (23.6 -> 20.7
+# whitespace words), i.e. a rewrite at near-equal length, which is what
+# document simplification is supposed to look like against Cochrane's 0.61 and
+# PubMed's 0.066.
+#
+# GRANULARITY WARNING. These pairs are single sentences (1.1 sentences,
+# ~24 words per source), not documents. Every other corpus in this repo is a
+# paragraph or a full document. Its M1 compression is therefore NOT comparable
+# with D-Wikipedia's or Cochrane's full-document figures, and M4/M6 -- which
+# reason over a document's sentences -- have almost nothing to work with: at
+# 1.1 source sentences per pair there is no deleted/retained contrast for M6 to
+# measure. Read this corpus for M1-M3, M7 and M8; treat its M4-M6 output as
+# structurally thin rather than as a finding. Flagged in docs/DATASETS.md.
+#
+# Source-independent of Cochrane, which is what lets it serve as the DS cell in
+# a domain whose PLS cell Cochrane already fills.
+#
+# Corpus materialised by `python scripts/fetch_all.py --only med_easi`
+# (seeded stratified draw, n=1000 of the 1,397 train pairs).
+dataset:
+  adapter: jsonl
+  path: data/med_easi/train_1000.jsonl
+  source_field: source
+  target_field: target
+run:
+  dataset_label: med_easi
+  # 250 to match the anchors. Cost is a non-issue here -- at ~1.1 x 1.1
+  # sentences per pair the whole M4-M6 sample is a few hundred model passes --
+  # but the sample size is held at the shared value so the CIs are read the
+  # same way as every other corpus's.
+  sample_size: 250         # M4-M6 sample; M1-M3 run on all 1000
+  seed: 13
+  language: en
+  cache_dir: .cache/
+  bootstrap_resamples: 1000
+  embedder: sbert
+  embed_model: sentence-transformers/all-MiniLM-L6-v2
+  nli_backend: nli
+  nli_model: microsoft/deberta-large-mnli
+  device: auto             # mps here; deberta-large is ~4x cpu
+  nli_threshold: 0.5
+  tau_sweep: [0.4, 0.5, 0.6, 0.7, 0.8]
+  # 0.5, the non-Wikipedia default, and UNVALIDATED for this genre. The 0.7
+  # that scripts/validate_deletion_split.py validated against SWiPE's human
+  # deletion labels is Wikipedia prose with MiniLM and does not transfer; the
+  # existing anchors all carry the same caveat. No human-annotated subset
+  # exists for this corpus, so nothing here can be validated the way SWiPE
+  # was. The sweep below reports the alternatives so the sensitivity is
+  # visible rather than hidden behind one number.
+  #
+  # The threshold is genre-dependent, so a single global value is wrong; see
+  # docs/modules/m4-alignment.md.
+  m6_tau: 0.5
+  # One shared technical-term list across all five corpora, so M3b/M6
+  # jargon_rate is comparable between them rather than domain-tuned per corpus.
+  jargon_terms:
+    - randomised
+    - randomized
+    - placebo
+    - trial
+    - trials
+    - meta-analysis
+    - systematic
+    - efficacy
+    - intervention
+    - interventions
+    - outcome
+    - outcomes
+    - clinical
+    - dose
+    - dosage
+    - adverse
+    - mortality
+    - morbidity
+    - prognosis
+    - incidence
+    - prevalence
+    - cohort
+    - baseline
+    - statistically
+    - significance
+    - hypothesis
+    - methodology
+    - empirical
+    - correlation
+    - regression
+    - coefficient
+    - parameter
+    - mechanism
+    - molecular
+    - cellular
+    - protein
+    - gene
+    - genome
+    - enzyme
+    - receptor
+    - pathway
+    - inhibitor
+    - expression
+    - phenotype
+    - in-vitro
+    - in-vivo
+modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile,
+          linguistic_features, pair_similarity]

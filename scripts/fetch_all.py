@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Materialize the five PRD s5 anchor corpora as capped JSONL for the profiler.
+"""Materialize every profiled corpus as capped JSONL for the profiler.
 
     python scripts/fetch_all.py [--limit 1000] [--only cochrane,plos]
 
@@ -241,6 +241,13 @@ CNNDM = "https://huggingface.co/datasets/abisee/cnn_dailymail/resolve/main/3.0.0
 XSUM = "https://huggingface.co/datasets/EdinburghNLP/xsum/resolve/refs%2Fconvert%2Fparquet/default"
 SWIPE_LFS = "https://media.githubusercontent.com/media/salesforce/simplification/master/data"
 SWIPE_RAW = "https://raw.githubusercontent.com/salesforce/simplification/master/data"
+# Cohan et al. 2018's PubMed half. The `document` config is the whole article
+# paired with its abstract; `section` splits the article into labelled sections
+# and is a different ingestion unit, so it is not interchangeable here.
+PUBMED = "https://huggingface.co/datasets/ccdv/pubmed-summarization/resolve/refs%2Fconvert%2Fparquet/document"
+# Med-EASi ships from HuggingFace, not from the CTRL-SIMP GitHub repo the paper
+# is linked to -- that repo holds only model code. See fetch_med_easi.
+MED_EASI = "https://huggingface.co/datasets/cbasu/Med-EASi/resolve/refs%2Fconvert%2Fparquet/default"
 
 
 def fetch_cochrane(limit: int) -> Path:
@@ -407,6 +414,42 @@ def fetch_cnn_dailymail(limit: int) -> Path:
     return _write("cnn_dailymail", "train", limit, _parquet_rows(urls, "article", "highlights", "cnndm", limit))
 
 
+def fetch_arxiv_pubmed(limit: int) -> Path:
+    """PubMed (Cohan et al. 2018), SUM -- the biomedical summarization cell.
+
+    Article -> its own author-written abstract, so the target is as technical as
+    the source. That is the point: it isolates compression from simplification
+    inside the domain Cochrane/PLOS/eLife already anchor for PLS, where every
+    existing biomedical target is written for a lay reader.
+
+    Five shards; all are sampled so the draw spans the whole training split.
+    """
+    urls = [f"{PUBMED}/train/{i:04d}.parquet" for i in range(5)]
+    return _write("arxiv_pubmed", "train", limit,
+                  _parquet_rows(urls, "article", "abstract", "pubmed", limit))
+
+
+def fetch_med_easi(limit: int) -> Path:
+    """Med-EASi (Basu et al. 2023), DS -- the biomedical simplification cell.
+
+    Expert -> layman rewrite of short medical texts, crowdsourced from experts
+    and laypeople. Source-independent of Cochrane, which is what makes it usable
+    as the DS cell in a domain whose PLS cell Cochrane already fills.
+
+    The paper points at the CTRL-SIMP GitHub repo, but that repo carries only
+    the model code and points on to HuggingFace for the data, so this reads the
+    auto-converted parquet branch like the other HF corpora.
+
+    Granularity warning: the pairs are sentence- to short-paragraph-level, not
+    documents -- around 12 source tokens on average against Cochrane's 350
+    words. Its M1 compression is therefore not comparable with a full-document
+    corpus's; see docs/DATASETS.md.
+    """
+    urls = [f"{MED_EASI}/train/0000.parquet"]  # single shard, 1,397 rows
+    return _write("med_easi", "train", limit,
+                  _parquet_rows(urls, "Expert", "Simple", "medeasi", limit))
+
+
 FETCHERS = {
     "cochrane": fetch_cochrane,
     "plos": fetch_plos,
@@ -416,6 +459,8 @@ FETCHERS = {
     "xsum": fetch_xsum,
     "swipe": fetch_swipe,
     "swipe_gold": fetch_swipe_gold,
+    "arxiv_pubmed": fetch_arxiv_pubmed,
+    "med_easi": fetch_med_easi,
 }
 
 
