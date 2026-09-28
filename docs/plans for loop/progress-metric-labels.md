@@ -329,3 +329,14 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - [x] **Suite**: `pytest` passes fully offline, including `test_declared_dependencies`; `python -m profiler run --config configs/smoke.yaml` completes.
 
 **Stop condition met.** Every Section 7 box is checked or has its exceptions DEFERRED with reasons.
+
+
+## 2026-09-28 — Review fixes (after the stop condition)
+
+A `/code-review` pass over `main...feature/metric-labels-f` returned 10 findings. I verified three bugs against the code, and the user asked for all three to be fixed, including the pre-existing SummaC scorer. Each fix went into the branch that introduced the bug and was merged forward through the stack (B → C → D → E → F).
+
+- **SummaC-Conv random weights (PR #10; also on `main`)**: `SummaCConv(...)` without `start_file` keeps an untrained, randomly initialised convolution layer (checked in summac 0.0.4's source), so `per_scorer.summac_conv` (existing scorer, `scorers.py`) and `document_level.summac_*` were neither SummaC-Conv nor reproducible. Both loaders now share `SUMMAC_CONV_KWARGS` with `start_file="default"`, so summac fetches its released `summac_conv_vitc_sent_perc_e.bin` into the working directory; that file is gitignored. Tests with a fake `summac` module assert that both loaders request the released weights. No archived result used SummaC, so no published number changes. This is a deliberate change to an existing computation, approved by the user.
+- **`entity_f1` dropped the worst pairs (PR #8)**: a target keeping none of its source's entities had recall 0 but F1 `None`. F1 is now `2·shared / (|src| + |tgt|)`: 0 when either side has entities and none are shared, `None` only when neither side has any. Tests cover both cases; the docs were updated on the E branch.
+- **`label_tables.py` crash (PR #12)**: `_join([])` raised `IndexError` whenever no domain was single-task, and an empty results set crashed in the footnote. It now renders without the single-task sentence, `render({})` raises a clear `ValueError`, and the CLI exits 2 with a message. The committed RESULTS.md block is unchanged (`--check` exits 0).
+- **Result:** pass. Full `pytest -q` green with HF forced offline. Two smoke runs byte-identical.
+- **Open from the review, not fixed (awaiting a decision):** WordRank re-parses sentences; M4 NER is uncached and duplicated with M7; the document-level SummaC model is duplicated; abstractivity recomputes `1 − coverage`; model downloads have no opt-out flag; topic similarity uses English stop words; M5 duplicates the abstract rule.

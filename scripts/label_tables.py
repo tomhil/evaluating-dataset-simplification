@@ -265,9 +265,11 @@ def _sizes_footnote(results: dict[str, dict]) -> str:
 
 
 def render(results: dict[str, dict], anchors: dict[str, str] | None = None) -> str:
+    if not results:
+        raise ValueError("no results to render: no results/*.json for a dataset in ORDER")
     anchors = anchors_by_key([m.key for m in REGISTRY]) if anchors is None else anchors
     multi, single = split_domains(results)
-    single_text = _join([f"{dom} ({', '.join(tasks)} only)" for dom, tasks in single])
+    single_text = _join([f"{dom} ({', '.join(tasks)} only)" for dom, tasks in single]) if single else ""
     lines = [
         BEGIN,
         "## Datasets by metric label",
@@ -327,7 +329,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--results", default=str(_ROOT / "results"), help="directory of results/*.json")
     args = ap.parse_args(argv)
 
-    block = render(load_results(Path(args.results)))
+    results = load_results(Path(args.results))
+    if not results:
+        print(f"{args.results}: no results/*.json for any dataset in ORDER", file=sys.stderr)
+        return 2
+    block = render(results)
     if args.write:
         path = Path(args.write)
         path.write_text(replace_block(path.read_text(), block))

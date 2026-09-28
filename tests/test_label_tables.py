@@ -187,3 +187,22 @@ def test_committed_results_domains():
     multi, single = lt.split_domains(lt.load_results(REPO / "results"))
     assert multi == ["biomedical", "legal"]
     assert dict(single) == {"encyclopedia": ["DS"], "news": ["SUM"]}
+
+
+def test_every_domain_multi_task_renders(tmp_path):
+    # cochrane (PLS) and med_easi (DS) are both biomedical: no single-task domain.
+    for name in ("cochrane", "med_easi"):
+        (tmp_path / f"{name}.json").write_text(json.dumps(_result(coverage=0.5)))
+    results = lt.load_results(tmp_path)
+    multi, single = lt.split_domains(results)
+    assert multi == ["biomedical"] and single == []
+    text = lt.render(results)
+    assert "#### Biomedical" in text
+    assert "only)" not in text and "get a table." in text
+
+
+def test_empty_results_is_a_clear_error_not_a_crash(tmp_path, capsys):
+    assert lt.main(["--results", str(tmp_path)]) == 2
+    assert "no results" in capsys.readouterr().err
+    with pytest.raises(ValueError):
+        lt.render({})
