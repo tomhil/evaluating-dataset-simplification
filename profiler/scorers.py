@@ -264,6 +264,19 @@ def _load_alignscore() -> SentenceScorer:  # pragma: no cover - optional dep
     return _AlignScoreScorer()
 
 
+# SummaC-Conv's 1-D convolution layer is trained. Without start_file it keeps
+# torch's random initialisation, so scores are neither SummaC-Conv's nor
+# reproducible; "default" makes summac load its released weights
+# (summac_conv_vitc_sent_perc_e.bin, fetched into the working directory on
+# first use), which require percentile bins and the vitc model.
+SUMMAC_CONV_KWARGS = {
+    "models": ["vitc"],
+    "bins": "percentile",
+    "granularity": "sentence",
+    "start_file": "default",
+}
+
+
 def _load_summac() -> SentenceScorer:  # pragma: no cover - optional dep
     from summac.model_summac import SummaCConv  # type: ignore
 
@@ -271,7 +284,7 @@ def _load_summac() -> SentenceScorer:  # pragma: no cover - optional dep
         name = "summac_conv"
 
         def __init__(self):
-            self._m = SummaCConv(models=["vitc"], bins="percentile", granularity="sentence", device="cpu")
+            self._m = SummaCConv(**SUMMAC_CONV_KWARGS, device="cpu")
 
         def score(self, target_sents, source_sents):
             doc = " ".join(source_sents)

@@ -163,3 +163,44 @@ def test_m8_deferred_metrics_are_null_with_reasons():
     joined = " ".join(res.notes)
     for name in ("BLANC is DEFERRED", "SUPERT is DEFERRED", "SummaQA is DEFERRED"):
         assert name in joined
+
+
+# --------------------------------------------------------------------------
+# SummaC-Conv must load its released weights (both loaders)
+# --------------------------------------------------------------------------
+@pytest.fixture
+def fake_summac(monkeypatch):
+    """A stand-in summac.model_summac that records how SummaCConv is built."""
+    import types
+
+    calls: list[dict] = []
+
+    class SummaCConv:
+        def __init__(self, **kwargs):
+            calls.append(kwargs)
+
+        def score(self, originals, generateds):
+            return {"scores": [0.5] * len(generateds)}
+
+    pkg = types.ModuleType("summac")
+    mod = types.ModuleType("summac.model_summac")
+    mod.SummaCConv = SummaCConv
+    pkg.model_summac = mod
+    monkeypatch.setitem(sys.modules, "summac", pkg)
+    monkeypatch.setitem(sys.modules, "summac.model_summac", mod)
+    return calls
+
+
+def test_sentence_summac_loads_released_weights(fake_summac):
+    from profiler.scorers import _load_summac
+
+    scorer = _load_summac()
+    assert scorer.score(["a"], ["b"]) == [0.5]
+    assert fake_summac[-1]["start_file"] == "default"
+    assert fake_summac[-1]["bins"] == "percentile" and fake_summac[-1]["models"] == ["vitc"]
+
+
+def test_document_summac_loads_released_weights(fake_summac):
+    score = mm.load_summac_doc("cpu")
+    assert score("source text", "target text") == 0.5
+    assert fake_summac[-1]["start_file"] == "default"

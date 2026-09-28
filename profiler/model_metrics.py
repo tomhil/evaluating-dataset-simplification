@@ -146,15 +146,17 @@ QAFACTEVAL_DEFERRED = (
 
 
 def load_summac_doc(device: str = "auto"):  # pragma: no cover - optional dep
-    """SummaC-Conv as M5's sentence scorer configures it, scoring whole documents:
+    """SummaC-Conv as M5's sentence scorer configures it (released weights),
+    scoring whole documents:
     ``score(originals, generateds)`` gives one score per (original, generated)."""
 
     from summac.model_summac import SummaCConv  # type: ignore
 
     from .embeddings import resolve_device
 
-    model = SummaCConv(models=["vitc"], bins="percentile", granularity="sentence",
-                       device=resolve_device(device))
+    from .scorers import SUMMAC_CONV_KWARGS
+
+    model = SummaCConv(**SUMMAC_CONV_KWARGS, device=resolve_device(device))
     return lambda original, generated: float(model.score([original], [generated])["scores"][0])
 
 
