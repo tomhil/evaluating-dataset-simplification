@@ -227,8 +227,10 @@ def _entity_preservation(pairs: Sequence[Pair], proc) -> tuple[dict[str, dict], 
 
     Precision is the share of the target's distinct entities also in the source;
     recall is the share of the source's distinct entities kept in the target.
-    Undefined sides are None. Without NER every value is None and a note says
-    so, rather than reporting zeros that look like measured absence.
+    A ratio with an empty denominator is None; F1 is 0 whenever either side has
+    entities and none are shared, so pairs that drop every entity still count.
+    Without NER every value is None and a note says so, rather than reporting
+    zeros that look like measured absence.
     """
 
     keys = ("entity_precision", "entity_recall", "entity_f1")
@@ -247,11 +249,10 @@ def _entity_preservation(pairs: Sequence[Pair], proc) -> tuple[dict[str, dict], 
         shared = len(src & tgt)
         precision = shared / len(tgt) if tgt else None
         recall = shared / len(src) if src else None
-        if precision is None or recall is None:
-            f1 = None
-        elif precision + recall == 0:
-            f1 = 0.0
-        else:
-            f1 = 2 * precision * recall / (precision + recall)
+        # F1 = 2*shared / (|src| + |tgt|): the harmonic mean of P and R, and
+        # 0 -- not undefined -- when one side has entities and nothing is
+        # shared, e.g. a target that drops every source entity. Only a pair
+        # with no entities on either side has no F1.
+        f1 = (2 * shared / (len(src) + len(tgt))) if (src or tgt) else None
         out[p.id] = {"entity_precision": precision, "entity_recall": recall, "entity_f1": f1}
     return out, None

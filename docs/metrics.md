@@ -1003,7 +1003,9 @@ Reported once at the top of M4's corpus block, not per τ.
 **How to read it.** Low precision flags entities the source never mentioned — a
 faithfulness warning. Low recall means entities were dropped, which is expected
 under heavy compression. A side with no entities gives `None` for the ratio that
-needs it.
+needs it, but F1 (`2·shared / (|source| + |target|)`) is 0 whenever either side
+has entities and none are shared, so a target that drops every entity still
+counts; F1 is `None` only when neither side has any.
 
 **Papers.** [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278).
 
@@ -1055,8 +1057,10 @@ sentences, target sentence).
 **What it does.** A factual-consistency score for each target sentence against
 its source.
 
-**How it works.** SummaC-Conv (Laban et al. 2022) with the `vitc` NLI model and
-percentile bins, scoring each target sentence against the whole source; the
+**How it works.** SummaC-Conv (Laban et al. 2022) with the `vitc` NLI model,
+percentile bins and the released convolution weights
+(`summac_conv_vitc_sent_perc_e.bin`, which summac fetches into the working
+directory on first use), scoring each target sentence against the whole source; the
 block has the same shape as the other scorers (`score`, `score_histogram`,
 `not_entailed_rate`).
 
@@ -1184,7 +1188,7 @@ source.
 **Papers.** [Laban et al. 2022 (SummaC)](https://aclanthology.org/2022.tacl-1.10/); [Fabbri et al. 2022 (QAFactEval)](https://aclanthology.org/2022.naacl-main.187); [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626); [Devaraj et al. 2022](https://aclanthology.org/2022.acl-long.506).
 
 **Implementation notes.** SummaC runs when `run.summac` is set, with the same
-configuration as the sentence-level scorer; under the smoke settings an offline
+configuration as the sentence-level scorer, released weights included; under the smoke settings an offline
 content-word stand-in is used and flagged in `document_level.scorers_run` and
 `notes`. **QAFactEval is deferred**: its package fails to build against the core
 dependencies, so its keys are null with a note in every run.
