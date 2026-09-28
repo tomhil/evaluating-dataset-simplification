@@ -10,7 +10,8 @@ class Pair:
     """A single parallel document pair (source -> target).
 
     ``meta`` carries any adapter-specific fields (original record, provenance,
-    etc.) and is never interpreted by the metric modules.
+    etc.). The metric modules interpret exactly one key: ``meta["abstract"]``,
+    read by M2's abstract-based metrics, which are null without it.
     """
 
     id: str

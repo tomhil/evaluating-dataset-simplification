@@ -105,3 +105,39 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Phase B gate:** passed. Known-answer tests green, smoke run completes, no-regression green. Pushed and opened the Phase B PR.
 - **Next item:** Phase C, `jsonl` adapter passes extra fields into `Pair.meta`.
 - **DEFERRED:** none in this item (`abstractivity_p2`, see item 2).
+
+## 2026-09-28 — Phase C, item 1: `jsonl` extra fields → `Pair.meta`
+
+- **Branch:** `feature/metric-labels-c` (stacked on `feature/metric-labels-b`)
+- **Item:** the `jsonl` adapter now copies every field except the id, source and target fields into `Pair.meta`. The adapter's own `lineno` still wins over a field of the same name. The `Pair` docstring now says `meta["abstract"]` is the one key modules read. New test in `tests/test_adapters.py`; existing adapter tests unchanged.
+- **Result:** pass. `pytest -q`: 432 passed. Two smoke runs byte-identical.
+- **Next item:** PLOS and eLife fetchers write `abstract` (inspect one fetched record first).
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase C, item 2: PLOS/eLife fetchers write `abstract`
+
+- **Branch:** `feature/metric-labels-c`
+- **Field layout (inspected one live record each, 2026-09-28):** `tomasg25/scientific_lay_summarisation` parquet columns are `article, summary, section_headings, keywords, year, title`. There is **no abstract column**. `article` is the sections joined by `\n` (5 sections), and `section_headings` lists them in the same order: `Abstract\nIntroduction\nResults\nDiscussion\nMaterials and methods` for both PLOS and eLife.
+- **Item:** `_laysumm_abstract` returns the section headed "Abstract", and nothing when headings and sections don't line up. `_parquet_rows` gained optional `extra_columns`/`extra`, and `_write` stores a row's optional fourth element (a dict) beside id/source/target. Only `fetch_plos` and `fetch_elife` use it; every other fetcher's rows and files are unchanged. The source is still the full article, abstract included. `data/` was not re-fetched. New offline tests in `tests/test_fetch_abstract.py`, with an inline parquet fixture and a round trip through the `jsonl` adapter into `meta["abstract"]`.
+- **Result:** pass. `pytest -q`: 436 passed. Two smoke runs byte-identical.
+- **Next item:** M2 `rouge_abstract_target`.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase C, item 3: M2 `rouge_abstract_target`
+
+- **Branch:** `feature/metric-labels-c`
+- **Item:** `abstractiveness.rouge_abstract_target.{rouge1_f1, rouge2_f1, rougeL_f1}`, the ROUGE F1 of `meta["abstract"]` against the target with clipped n-gram counts. It is Goldsack et al. 2022's ABSTRACT baseline; §5.2 reports ROUGE-1/2/L F1, so all three are emitted under the one key. Registry row 20 (PLS; needs `abstract`; headline is all three medians). Pairs without an abstract are null, and a note counts them. On the smoke corpus: `n = 0`, all `None`, with the note (the Phase C gate condition).
+- **Process fix:** the double-smoke check now runs into fixed directories and fails if either run fails. Before this, a crashed run could have compared two stale outputs. It caught nothing earlier: every earlier item's pytest passed, and pytest runs the pipeline.
+- **Result:** pass. `pytest -q`: 438 passed. Two smoke runs byte-identical.
+- **Next item:** M2 `abstract_content_overlap`.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase C, item 4: M2 `abstract_content_overlap`
+
+- **Branch:** `feature/metric-labels-c`
+- **Item:** `abstractiveness.abstract_content_overlap` = {`all`, `by_abstract_count` {1, 2-10, 11-100, 100+}, `by_type` {noun, propn, verb, num}}. Each is the per-pair share of the abstract's distinct content words (spaCy POS NOUN/PROPN/VERB/NUM, lowercased) that appear among the target's words. Buckets count how many abstracts in the corpus contain the word, which is why this lives in a full-corpus module. Registry row 14 (PLS; needs `abstract`; headline `all.median`). Without an abstract a pair is null (the existing abstract note counts them). Without a POS tagger (`has_parser` False) every value is null and a note is added. Tests use an offline POS stand-in: partial overlap, bucket and type splits, identity = 1.0, and the no-tagger fallback.
+- **Paper check:** Goldsack et al. 2022 §4.3 treats "nouns, proper nouns, verbs, and numbers as content words", extracted with ScispaCy (`en_core_sci_scibert`), and buckets by number of abstract occurrences. Deviation: spaCy `en_core_web_sm` stands in for ScispaCy (per the PRD). The paper plots shared/not-shared percentages over all words of a type pooled across the corpus. Here each pair gets a share and the corpus reports the Summary of those shares.
+- **Result:** pass. `pytest -q`: 440 passed. Two smoke runs byte-identical.
+- **Phase C gate:** passed. Fetcher and adapter tests green; the abstract metrics are `None` on the smoke corpus with a note. Pushed and opened the Phase C PR.
+- **Next item:** Phase D, move `sample_pairs` into `profiler/sampling.py` and re-export it from `run.py`.
+- **DEFERRED:** none.
