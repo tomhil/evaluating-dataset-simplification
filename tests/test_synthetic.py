@@ -9,6 +9,8 @@ from profiler.modules import (
     m4_alignment,
     m5_elaboration,
 )
+from profiler.modules.base import Context
+from profiler.nlp import SimpleProcessor
 from profiler.types import Pair
 
 IDENTITY_TEXT = (
@@ -197,3 +199,40 @@ def test_wordrank_and_lexical_complexity(ctx):
     for m in ("wordrank", "lexical_complexity"):
         assert m3b[m]["delta"]["median"] == 0.0
         assert m3b[m]["target"]["median"] == m3b[m]["source"]["median"] > 0.0
+
+
+class _CapsNER(SimpleProcessor):
+    """Offline NER stand-in: every capitalised word after the first is an entity."""
+
+    def ner_available(self) -> bool:
+        return True
+
+    def entities(self, text):
+        words = self.words(text)
+        return [(w.lower(), i) for i, w in enumerate(words) if i and w[:1].isupper()]
+
+
+def test_entity_preservation(ctx):
+    """Entity P/R 1.0 on identity with entities; set overlap otherwise; None without NER."""
+    ner_ctx = Context(config=ctx.config, processor=_CapsNER(), cache=ctx.cache, seed=ctx.seed)
+    src = "Visitors to Paris and Berlin met Alice there."
+    pairs = [
+        Pair("same", src, src),
+        # Target keeps Paris, drops Berlin and Alice, adds Rome.
+        Pair("part", src, "Visitors to Paris and Rome."),
+    ]
+    res = _run(m4_alignment, pairs, ner_ctx)
+    rows = {r["id"]: r for r in res.per_pair}
+    assert rows["same"]["entity_precision"] == 1.0
+    assert rows["same"]["entity_recall"] == 1.0
+    assert rows["same"]["entity_f1"] == 1.0
+    assert rows["part"]["entity_precision"] == 0.5
+    assert rows["part"]["entity_recall"] == 1 / 3
+    assert abs(rows["part"]["entity_f1"] - 0.4) < 1e-12
+    assert res.corpus["entity_preservation"]["entity_precision"]["n"] == 2
+
+    # The default offline processor has no NER: nulls plus a note, never zeros.
+    plain = _run(m4_alignment, [Pair("same", src, src)], ctx)
+    ep = plain.corpus["entity_preservation"]
+    assert all(ep[k]["n"] == 0 and ep[k]["median"] is None for k in ep)
+    assert any("no NER model" in n for n in plain.notes)

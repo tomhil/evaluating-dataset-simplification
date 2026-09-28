@@ -197,9 +197,61 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         "primary_tau_for_m5_m6": primary_tau,
         "matching": "greedy many-to-many: link(i,j) iff cos(i,j) >= tau",
     }
+    entity_rows, entity_note = _entity_preservation(pairs, proc)
+    for row in per_pair_final:
+        row.update(entity_rows[row["id"]])
+    corpus["entity_preservation"] = {
+        k: summarize(
+            [r[k] for r in entity_rows.values() if r[k] is not None],
+            seed=ctx.seed, resamples=ctx.resamples,
+        ).to_dict()
+        for k in ("entity_precision", "entity_recall", "entity_f1")
+    }
+
     notes = [
         "Alignment noise propagates into M5 and M6: an unaligned target sentence "
         "may be an elaboration or an alignment failure, and an unaligned source "
         "sentence may be deleted or mis-aligned. This is why tau is swept."
     ]
+    if entity_note:
+        notes.append(entity_note)
+    params["entity_preservation"] = (
+        "Cripwell et al. 2024 entity matching: set overlap of lowercased spaCy "
+        "named entities; precision over target entities, recall over source entities"
+    )
     return ModuleResult(name=NAME, per_pair=per_pair_final, corpus=corpus, params=params, notes=notes)
+
+
+def _entity_preservation(pairs: Sequence[Pair], proc) -> tuple[dict[str, dict], str | None]:
+    """Per-pair entity precision, recall and F1 (Cripwell et al. 2024).
+
+    Precision is the share of the target's distinct entities also in the source;
+    recall is the share of the source's distinct entities kept in the target.
+    Undefined sides are None. Without NER every value is None and a note says
+    so, rather than reporting zeros that look like measured absence.
+    """
+
+    keys = ("entity_precision", "entity_recall", "entity_f1")
+    # A processor without the method (e.g. a test double) is treated as NER-less.
+    ner_available = getattr(proc, "ner_available", None)
+    if ner_available is None or not ner_available():
+        return (
+            {p.id: dict.fromkeys(keys) for p in pairs},
+            "entity_preservation not computed: no NER model is available to this "
+            "processor, so entity precision, recall and F1 are null.",
+        )
+    out: dict[str, dict] = {}
+    for p in progress.track(pairs, "M4 entities"):
+        src = {text for text, _ in proc.entities(p.source)}
+        tgt = {text for text, _ in proc.entities(p.target)}
+        shared = len(src & tgt)
+        precision = shared / len(tgt) if tgt else None
+        recall = shared / len(src) if src else None
+        if precision is None or recall is None:
+            f1 = None
+        elif precision + recall == 0:
+            f1 = 0.0
+        else:
+            f1 = 2 * precision * recall / (precision + recall)
+        out[p.id] = {"entity_precision": precision, "entity_recall": recall, "entity_f1": f1}
+    return out, None

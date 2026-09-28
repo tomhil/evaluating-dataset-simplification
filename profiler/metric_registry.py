@@ -185,6 +185,13 @@ _LITERATURE: tuple[MetricLabel, ...] = (
          direction="↓ more frequent words", headline=PAIRED),
     _lit("readability.m3b_length_invariant.lexical_complexity", {"DS"}, (MARTIN_2018, ASSET_2020),
          direction="↓ more frequent words", headline=PAIRED),
+    # Row 31
+    _lit("alignment.entity_preservation.entity_precision", {"DS"}, (CRIPWELL_2024,),
+         direction="↑ fewer entities absent from source"),
+    _lit("alignment.entity_preservation.entity_recall", {"DS"}, (CRIPWELL_2024,),
+         direction="↑ more source entities kept"),
+    _lit("alignment.entity_preservation.entity_f1", {"DS"}, (CRIPWELL_2024,),
+         direction="↑ more entity overlap"),
     # Row 9
     _lit("pair_similarity.bleu", {"DS"}, (CRIPWELL_2024,),
          direction="↑ closer to source wording", headline=()),

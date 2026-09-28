@@ -95,3 +95,13 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 427 passed. Two smoke runs byte-identical.
 - **Next item:** M4 `entity_preservation` (with no-NER fallback).
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase B, item 8: M4 `entity_preservation`
+
+- **Branch:** `feature/metric-labels-b`
+- **Item:** `alignment.entity_preservation.{entity_precision, entity_recall, entity_f1}` at the top of M4's corpus block, not per τ (registry row 31; DS, Cripwell 2024). It uses set overlap of lowercased entities from `Processor.entities()`, the same lazily built, cached NER pipe M7 uses. Precision is over the target's entities and recall over the source's. An undefined side is `None`; F1 is 0 when both sides are defined and nothing overlaps. Processors gained an additive `ner_available()` (Protocol, SimpleProcessor → False, SpacyProcessor → NER pipe loads). Without NER every value is `None` and a note is appended, never zeros. Tests: identity with entities gives P = R = F1 = 1; a partial overlap gives P 0.5, R 1/3, F1 0.4; without NER, `n = 0` plus the note.
+- **Paper check:** Cripwell et al. 2024 §3: "We extract named entities from input documents using the spaCy library and compute the precision, recall, and F1 with respect to those found in the generated simplifications." That matches.
+- **Result:** pass. `pytest -q`: 431 passed. Two smoke runs byte-identical. The smoke run has spaCy NER, so real values are emitted (F1 median 0.5, n = 5).
+- **Phase B gate:** passed. Known-answer tests green, smoke run completes, no-regression green. Pushed and opened the Phase B PR.
+- **Next item:** Phase C, `jsonl` adapter passes extra fields into `Pair.meta`.
+- **DEFERRED:** none in this item (`abstractivity_p2`, see item 2).

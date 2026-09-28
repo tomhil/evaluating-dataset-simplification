@@ -100,6 +100,11 @@ class Processor(Protocol):
         """Drop any cached parses. Part of the contract: run.py calls it."""
         ...
 
+    def ner_available(self) -> bool:
+        """Whether :meth:`entities` can find entities at all, so an empty
+        result can be told apart from missing NER."""
+        ...
+
 
 class SimpleProcessor:
     """Regex-based, dependency-free processor. No syntactic parsing."""
@@ -138,6 +143,9 @@ class SimpleProcessor:
 
     def entities(self, text: str) -> list[tuple[str, int]]:
         return []
+
+    def ner_available(self) -> bool:
+        return False
 
 
 _DOC_CACHE = 64
@@ -239,6 +247,9 @@ class SpacyProcessor:
         if ner is None:
             return []
         return [(e.text.lower(), e.start) for e in ner(text).ents]
+
+    def ner_available(self) -> bool:
+        return self._ner_pipe() is not None
 
     def _ner_pipe(self):
         """The NER-only pipeline, built once. ``None`` if the model lacks NER."""
