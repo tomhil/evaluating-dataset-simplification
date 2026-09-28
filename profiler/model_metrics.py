@@ -169,3 +169,67 @@ def summac_doc_stand_in(original: str, generated: str) -> float | None:
     if not sents:
         return None
     return sum(len(c & orig) / len(c) for c in sents) / len(sents)
+
+
+# --------------------------------------------------------------------------
+# Rhetorical roles (Goldsack et al. 2022): PubMed-RCT sentence labels
+# --------------------------------------------------------------------------
+# A public PubMed-RCT sentence classifier. Its repository ships no tokenizer;
+# its vocabulary (31,090) is SciBERT's uncased one, which it was fine-tuned from.
+RCT_MODEL = "gubartz/cls_scibert_pubmed_rct"
+RCT_TOKENIZER = "allenai/scibert_scivocab_uncased"
+RCT_LABELS = ("background", "objective", "methods", "results", "conclusions")
+RCT_OFF_DOMAIN = (
+    "rhetorical_roles uses a classifier trained on biomedical abstracts "
+    "(PubMed-RCT); it is off-domain for news, Wikipedia and legal text."
+)
+
+
+def load_rct(device: str = "auto"):  # pragma: no cover - model download
+    import torch
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+    from .embeddings import resolve_device
+
+    dev = resolve_device(device)
+    tok = AutoTokenizer.from_pretrained(RCT_TOKENIZER)
+    model = AutoModelForSequenceClassification.from_pretrained(RCT_MODEL).to(dev).eval()
+    id2label = {int(k): v.lower() for k, v in model.config.id2label.items()}
+
+    def classify(sentences, batch_size: int = 16) -> list[str]:
+        out: list[str] = []
+        sentences = list(sentences)
+        for i in range(0, len(sentences), batch_size):
+            enc = tok(sentences[i : i + batch_size], padding=True, truncation=True,
+                      max_length=128, return_tensors="pt").to(dev)
+            with torch.no_grad():
+                pred = model(**enc).logits.argmax(dim=-1).tolist()
+            out += [id2label[p] for p in pred]
+        return out
+
+    return classify
+
+
+_RCT_CUES = (
+    ("objective", re.compile(r"\b(aim|aimed|objective|purpose|we sought|to evaluate|to assess)\b", re.I)),
+    ("conclusions", re.compile(r"\b(suggest|conclude|conclusion|implications?|in summary)\b", re.I)),
+    ("methods", re.compile(r"\b(we (used|randomi[sz]ed|recruited|measured|collected)|participants|were assigned)\b", re.I)),
+    ("results", re.compile(r"\d")),
+)
+
+
+def rct_stand_in(sentences) -> list[str]:
+    """Offline stand-in: keyword cues, defaulting to background."""
+
+    out = []
+    for s in sentences:
+        out.append(next((label for label, rx in _RCT_CUES if rx.search(s)), "background"))
+    return out
+
+
+def role_shares(labels: list[str]) -> dict[str, float | None]:
+    """Share of sentences per PubMed-RCT label; None for an empty text."""
+
+    if not labels:
+        return dict.fromkeys(RCT_LABELS)
+    return {lab: sum(1 for x in labels if x == lab) / len(labels) for lab in RCT_LABELS}

@@ -217,6 +217,9 @@ _LITERATURE: tuple[MetricLabel, ...] = (
          faithfulness=True, evidence="validated", direction="↑ more source content kept"),
     _lit("elaboration.document_level.qafacteval_recall", {"DS"}, (CRIPWELL_2024,),
          faithfulness=True, evidence="validated", direction="↑ more source content kept"),
+    # Row 27: PubMed-RCT roles of target (and abstract) sentences.
+    _lit("elaboration.rhetorical_roles", {"PLS"}, (GOLDSACK_2022,), needs="target",
+         direction="↑ more background sentences", headline=("target.background.median",)),
     # Row 9
     _lit("pair_similarity.bleu", {"DS"}, (CRIPWELL_2024,),
          direction="↑ closer to source wording", headline=()),

@@ -173,3 +173,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 454 passed. Two smoke runs byte-identical.
 - **Next item:** M5 `rhetorical_roles`.
 - **DEFERRED:** QAFactEval precision/recall (install failure).
+
+## 2026-09-28 — Phase D, item 4: M5 `rhetorical_roles`
+
+- **Branch:** `feature/metric-labels-d`
+- **Item:** `elaboration.rhetorical_roles` = {`models_run`, `target` {background, objective, methods, results, conclusions}, `abstract` {same}}. Each is the Summary of per-pair shares of sentences with that PubMed-RCT label, for target sentences and, where `meta["abstract"]` exists, abstract sentences. Registry row 27 (PLS; headline `target.background.median`). Whenever it runs, a note says the classifier is off-domain for news, Wikipedia and legal text. Offline keyword stand-in under the smoke settings, flagged in notes and `models_run`. Skip path: nulls, a note, empty `models_run`.
+- **Model choice:** Hugging Face search for PubMed-RCT classifiers. `gubartz/cls_scibert_pubmed_rct` (BertForSequenceClassification; labels objective/methods/results/conclusions/background) ships no tokenizer; its vocab size 31,090 matches `allenai/scibert_scivocab_uncased`, which is used. `HimuX/pubmed-20k-bert` was rejected: its labels are unnamed `LABEL_0..4`. No model was trained. **Verified by hand:** five hand-written clinical sentences were each classified correctly (background, methods, results, conclusions, objective) through the new loader.
+- **Result:** pass. `pytest -q`: 458 passed. Two smoke runs byte-identical.
+- **Next item:** M8 BLANC, SUPERT, SummaQA.
+- **DEFERRED:** none in this item.

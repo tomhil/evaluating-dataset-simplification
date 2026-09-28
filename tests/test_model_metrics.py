@@ -107,3 +107,43 @@ def test_document_level_summac_skips_when_package_missing(monkeypatch):
     assert any("SummaC (document level) unavailable" in n for n in res.notes)
     # Existing behaviour unchanged: a skipped SummaC gets no per_scorer entry.
     assert "summac_conv" not in res.corpus["per_scorer"]
+
+
+# --------------------------------------------------------------------------
+# M5 rhetorical roles
+# --------------------------------------------------------------------------
+def test_role_shares_and_stand_in():
+    assert mm.role_shares(["results", "results", "methods", "background"])["results"] == 0.5
+    assert mm.role_shares([])["background"] is None
+    assert mm.rct_stand_in(["This study aimed to test X.", "Mortality fell by 12%.", "Cats are nice."]) == [
+        "objective", "results", "background",
+    ]
+
+
+def test_rhetorical_roles_stand_in_with_abstract():
+    ctx = _ctx()
+    pairs = [Pair("a", TEXT_A, "Cats are nice. Mortality fell by 12%.", meta={"abstract": "We aimed to test cats."}),
+             Pair("b", TEXT_A, TEXT_B)]
+    res = _m5(pairs, ctx)
+    rr = res.corpus["rhetorical_roles"]
+    assert rr["models_run"] == ["pubmed_rct:stand-in"]
+    assert rr["target"]["background"]["n"] == 2
+    assert rr["abstract"]["objective"]["n"] == 1  # only pair a has an abstract
+    rows = {r["id"]: r for r in res.per_pair}
+    assert rows["a"]["role_target_results"] == 0.5
+    assert any("off-domain" in n for n in res.notes)
+
+
+def test_rhetorical_roles_skip_when_model_cannot_load(monkeypatch):
+    monkeypatch.setitem(sys.modules, "transformers", None)
+    import profiler.modules.m5_elaboration as m5
+    from profiler.scorers import LexicalGrounding
+
+    monkeypatch.setattr(m5, "get_primary_scorer", lambda config, cache: LexicalGrounding())
+    ctx = _ctx(nli_backend="nli")
+    with pytest.warns(RuntimeWarning):
+        res = _m5([Pair("a", TEXT_A, TEXT_B)], ctx)
+    rr = res.corpus["rhetorical_roles"]
+    assert rr["models_run"] == []
+    assert all(s["median"] is None for s in rr["target"].values())
+    assert any("PubMed-RCT classifier unavailable" in n for n in res.notes)
