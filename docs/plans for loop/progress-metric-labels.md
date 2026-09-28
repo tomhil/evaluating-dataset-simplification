@@ -86,3 +86,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 424 passed. Two smoke runs byte-identical.
 - **Next item:** M3 `wordrank`.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase B, items 6–7: M3 `wordrank` and `lexical_complexity`
+
+- **Branch:** `feature/metric-labels-b`
+- **Items:** `readability.m3b_length_invariant.wordrank` and `.lexical_complexity`, each with source, target and paired delta (registry rows 12–13). Both sit in M3b's new `RANK_MEASURES` and not in `DECOMP_MEASURES`, so M3c output is unchanged; the no-regression test confirms it. Rank helpers live in `profiler/readability.py`: wordfreq `top_n_list("en", 100_000)`, rank 1 = most frequent, unknown words = 100,001, lowercased, natural log. Committed together because they share the rank table and one test; they are two metrics.
+- **Paper check:** Martin et al. 2020 (ACCESS) defines WordRank as "the third-quartile of log-ranks (inverse frequency order) of all words in a sentence", which matches the PRD; the document value is the mean over sentences. Martin et al. 2018 does *not* define "lexical complexity" as the mean squared log-rank. That definition comes from ASSET 2020 ("mean squared log-ranks of content words in a sentence (i.e. without stopwords)"), which is implemented here using M3b's content words. EASSE's reference "Lexical complexity score" is instead a WordRank-style 0.75 quantile of log(1+rank) over non-stopwords; noted for the PR. Deviation: wordfreq ranks instead of the papers' FastText ranks (50k vocab).
+- **Result:** pass. `pytest -q`: 427 passed. Two smoke runs byte-identical.
+- **Next item:** M4 `entity_preservation` (with no-NER fallback).
+- **DEFERRED:** none.

@@ -31,6 +31,10 @@ PASSIVE_DEPS = {"nsubjpass", "auxpass", "nsubj:pass", "aux:pass", "csubjpass"}
 
 DECOMP_MEASURES = rd.SURFACE_MEASURES + ["mean_zipf", "syllables_per_word", "mtld", "rare_word_rate"]
 
+# WordRank (Martin et al. 2020) and lexical complexity (ASSET 2020). Reported in
+# M3b; deliberately not in DECOMP_MEASURES, so M3c is unchanged.
+RANK_MEASURES = ["wordrank", "lexical_complexity"]
+
 
 # --------------------------------------------------------------------------
 # Syntactic features (require a parser)
@@ -313,6 +317,14 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         tgt_syn = _syntactic_features(p.target, proc)
         li_src.update(src_syn)
         li_tgt.update(tgt_syn)
+        # Frequency-rank measures. Kept out of _length_invariant so the M3c
+        # controls do not pay for them; neither is a decomposition measure.
+        for side, text, sents in (
+            ("src", p.source, src_sents_for_scores),
+            ("tgt", p.target, tgt_sents_for_scores),
+        ):
+            row[f"{side}_wordrank"] = rd.wordrank([proc.words(s) for s in sents])
+            row[f"{side}_lexical_complexity"] = rd.lexical_complexity(proc.content_words(text))
         for k, v in li_src.items():
             row[f"src_{k}"] = v
         for k, v in li_tgt.items():
@@ -457,6 +469,13 @@ def _corpus_summaries(per_pair: list[dict], ctx: Context) -> dict:
         "passive_rate",
     ]
     for m in li_measures:
+        m3b[m] = {
+            "source": summarize(col(f"src_{m}"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
+            "target": summarize(col(f"tgt_{m}"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
+            "delta": paired(f"src_{m}", f"tgt_{m}"),
+        }
+    # Literature frequency-rank measures, added after the original nine.
+    for m in RANK_MEASURES:
         m3b[m] = {
             "source": summarize(col(f"src_{m}"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
             "target": summarize(col(f"tgt_{m}"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),

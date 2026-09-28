@@ -173,3 +173,27 @@ def test_topic_similarity(ctx):
     assert res.params["topic_similarity"]["n_topics"] == 20
     again = _run(m2_abstractiveness, pairs, ctx)
     assert [r["topic_similarity"] for r in again.per_pair] == list(ts.values())
+
+
+def test_wordrank_and_lexical_complexity(ctx):
+    """Frequency-rank measures: 'the' has rank 1 (log 0); identity has zero delta."""
+    import math
+
+    from profiler import readability as rd
+
+    assert rd.log_rank("the") == 0.0
+    assert rd.log_rank("The") == 0.0
+    assert rd.log_rank("zzqxjv") == math.log(rd.RANK_VOCAB_SIZE + 1)
+    top = math.log(rd.RANK_VOCAB_SIZE + 1)
+    # Third quartile of [0, 0, 0, L] with linear interpolation: position 2.25, so L/4.
+    assert rd.wordrank([["the", "the", "the", "zzqxjv"]]) == top / 4
+    # Mean over sentences.
+    assert rd.wordrank([["zzqxjv"], ["the"]]) == top / 2
+    assert rd.lexical_complexity(["zzqxjv", "the"]) == top**2 / 2
+    assert rd.wordrank([]) is None and rd.lexical_complexity([]) is None
+
+    res = _run(m3_readability, [Pair("id", IDENTITY_TEXT, IDENTITY_TEXT)], ctx)
+    m3b = res.corpus["m3b_length_invariant"]
+    for m in ("wordrank", "lexical_complexity"):
+        assert m3b[m]["delta"]["median"] == 0.0
+        assert m3b[m]["target"]["median"] == m3b[m]["source"]["median"] > 0.0

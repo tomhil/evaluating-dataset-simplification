@@ -180,6 +180,11 @@ _LITERATURE: tuple[MetricLabel, ...] = (
          direction="↓ easier", headline=PAIRED),
     _lit("readability.m3a_surface.dcrs", {"PLS"}, (GOLDSACK_2022, BIOLAYSUMM_2024),
          direction="↓ easier", headline=PAIRED),
+    # Rows 12-13: frequency-rank measures in M3b (wordfreq ranks, not FastText).
+    _lit("readability.m3b_length_invariant.wordrank", {"PLS"}, (MARTIN_2020, GOLDSACK_2022),
+         direction="↓ more frequent words", headline=PAIRED),
+    _lit("readability.m3b_length_invariant.lexical_complexity", {"DS"}, (MARTIN_2018, ASSET_2020),
+         direction="↓ more frequent words", headline=PAIRED),
     # Row 9
     _lit("pair_similarity.bleu", {"DS"}, (CRIPWELL_2024,),
          direction="↑ closer to source wording", headline=()),
