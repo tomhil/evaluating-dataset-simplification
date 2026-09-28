@@ -47,6 +47,8 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             "mean_src_sent_len": _safe_ratio(src_tokens, n_src_sents),
             "mean_tgt_sent_len": _safe_ratio(tgt_tokens, n_tgt_sents),
             "expansion": tgt_tokens > src_tokens,
+            # EASSE: target characters / source characters, on the raw strings.
+            "char_compression_ratio": _safe_ratio(len(p.target), len(p.source)),
         }
         per_pair.append(row)
 
@@ -65,6 +67,9 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         "expansion_rate": _rate([r["expansion"] for r in per_pair]),
         "compression_histogram": histogram(compression),
         "compression_bimodality": bimodality_coefficient(compression),
+        "char_compression_ratio": summarize(
+            col("char_compression_ratio"), seed=ctx.seed, resamples=ctx.resamples
+        ).to_dict(),
     }
 
     notes = []

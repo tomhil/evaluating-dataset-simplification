@@ -132,7 +132,7 @@ def _proj(key: str, **kw) -> MetricLabel:
     )
 
 
-# --- Literature metrics: PRD Section 4, rows 1-11 ---
+# --- Literature metrics: PRD Section 4 ---
 _LITERATURE: tuple[MetricLabel, ...] = (
     # Row 1
     _lit("length.compression_ratio", {"SUM", "DS"}, (GRUSKY_2018, BOMMASANI_2020),
@@ -140,12 +140,31 @@ _LITERATURE: tuple[MetricLabel, ...] = (
     # Row 2
     _lit("length.sentence_ratio", {"DS"}, (EASSE_2019,),
          direction="↑ more target sentences per source sentence"),
+    # Row 18
+    _lit("length.char_compression_ratio", {"DS"}, (EASSE_2019,), direction="↓ more compressed"),
     # Row 3
     _lit("length.src_tokens", {"DS"}, (CRIPWELL_2024,), fmt="int"),
     _lit("length.tgt_tokens", {"DS"}, (CRIPWELL_2024,), fmt="int"),
     # Row 4
     _lit("abstractiveness.coverage", {"SUM"}, (GRUSKY_2018,), direction="↑ more copied"),
     _lit("abstractiveness.density", {"SUM"}, (GRUSKY_2018,), direction="↑ longer copied spans"),
+    # Row 19. The paper fixes p = 1, so abstractivity_p2 is not emitted.
+    _lit("abstractiveness.abstractivity_p1", {"SUM"}, (BOMMASANI_2020,), direction="↑ more abstractive"),
+    # Rows 15, 16, 21: EASSE edit features, at document level.
+    _lit("abstractiveness.exact_copies", {"DS"}, (MARTIN_2018, EASSE_2019),
+         direction="↑ more source sentences kept verbatim"),
+    _lit("abstractiveness.additions_proportion", {"DS"}, (MARTIN_2018, EASSE_2019, ASSET_2020),
+         direction="↑ more words added"),
+    _lit("abstractiveness.deletions_proportion", {"DS"}, (MARTIN_2018, EASSE_2019, ASSET_2020),
+         direction="↑ more words deleted"),
+    _lit("abstractiveness.levenshtein_similarity", {"DS"}, (MARTIN_2018, ASSET_2020),
+         direction="↑ closer to source text"),
+    # Row 24
+    _lit("abstractiveness.redundancy", {"SUM"}, (BOMMASANI_2020,), needs="target",
+         direction="↑ more repetitive target"),
+    # Row 26
+    _lit("abstractiveness.topic_similarity", {"SUM"}, (BOMMASANI_2020,),
+         direction="↑ closer topic mix to source"),
     # Row 5
     *(
         _lit(f"abstractiveness.novel_{n}gram", {"SUM", "PLS"}, (NARAYAN_2018, GOLDSACK_2022),
@@ -161,6 +180,18 @@ _LITERATURE: tuple[MetricLabel, ...] = (
          direction="↓ easier", headline=PAIRED),
     _lit("readability.m3a_surface.dcrs", {"PLS"}, (GOLDSACK_2022, BIOLAYSUMM_2024),
          direction="↓ easier", headline=PAIRED),
+    # Rows 12-13: frequency-rank measures in M3b (wordfreq ranks, not FastText).
+    _lit("readability.m3b_length_invariant.wordrank", {"PLS"}, (MARTIN_2020, GOLDSACK_2022),
+         direction="↓ more frequent words", headline=PAIRED),
+    _lit("readability.m3b_length_invariant.lexical_complexity", {"DS"}, (MARTIN_2018, ASSET_2020),
+         direction="↓ more frequent words", headline=PAIRED),
+    # Row 31
+    _lit("alignment.entity_preservation.entity_precision", {"DS"}, (CRIPWELL_2024,),
+         direction="↑ fewer entities absent from source"),
+    _lit("alignment.entity_preservation.entity_recall", {"DS"}, (CRIPWELL_2024,),
+         direction="↑ more source entities kept"),
+    _lit("alignment.entity_preservation.entity_f1", {"DS"}, (CRIPWELL_2024,),
+         direction="↑ more entity overlap"),
     # Row 9
     _lit("pair_similarity.bleu", {"DS"}, (CRIPWELL_2024,),
          direction="↑ closer to source wording", headline=()),

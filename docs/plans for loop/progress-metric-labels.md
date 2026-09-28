@@ -42,3 +42,66 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Phase A gate:** passed. No-regression and registry-coverage tests are green. Pushed `feature/metric-labels-a` and opened the Phase A PR.
 - **Next item:** Phase B. M1 `char_compression_ratio` on branch `feature/metric-labels-b`.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase B, item 1: M1 `char_compression_ratio`
+
+- **Branch:** `feature/metric-labels-b` (stacked on `feature/metric-labels-a`; PR #7 is not merged yet)
+- **Item:** M1 per-pair `char_compression_ratio` = len(target) / len(source) on the raw strings (EASSE `get_compression_ratio`), summarised like `compression_ratio`. Registry row 18 (DS, EASSE 2019). Known-answer test: identity gives 1.0, and a 5-of-10-character target gives 0.5.
+- **Result:** pass. `pytest -q`: 413 passed. Two smoke runs byte-identical. No-regression test green.
+- **Next item:** M2 abstractivity p1/p2.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase B, item 2: M2 abstractivity
+
+- **Branch:** `feature/metric-labels-b`
+- **Item:** `abstractiveness.abstractivity_p1` = 1 − Σ|f| / |S| over the Grusky fragments. The greedy fragment matcher was pulled out of `_coverage_density` into `_fragments` without changing it; the no-regression test confirms coverage and density are identical. `params.abstractivity_p = 1`. Registry row 19 (SUM, Bommasani & Cardie 2020). Known answers: identity 0.0, disjoint 1.0, half-copied 0.5.
+- **Paper check:** I read §3 of Bommasani & Cardie 2020. It says "We set p = 1." The Section 10 default is to emit p = 1 and p = 2 unless the paper fixes p, so only `abstractivity_p1` is emitted. **`abstractivity_p2` is not emitted** (open question 1). The same section also shows topic similarity uses the Jensen–Shannon *distance* with k = 20 fit on documents; that goes into item 5. Redundancy is the mean ROUGE-L F over all pairs of distinct summary sentences. Semantic coherence averages BERT's next-sentence *prediction* (an indicator), not its probability; Phase D will need that.
+- **Result:** pass. `pytest -q`: 415 passed. Two smoke runs byte-identical.
+- **Next item:** M2 edit features (`levenshtein_similarity`, `exact_copies`, `additions_proportion`, `deletions_proportion`); adds `rapidfuzz`.
+- **DEFERRED:** `abstractivity_p2`. The paper fixes p = 1 (Section 10 default), pending open question 1.
+
+## 2026-09-28 — Phase B, item 3: M2 edit features
+
+- **Branch:** `feature/metric-labels-b`
+- **Item:** `levenshtein_similarity`, `exact_copies`, `additions_proportion`, `deletions_proportion` in M2 (registry rows 15, 16, 21; DS). Checked against the EASSE/tseval reference code (`tseval/feature_extraction.py`). Levenshtein uses `rapidfuzz.fuzz.ratio/100` on raw text, the InDel ratio that `Levenshtein.ratio` computes. Additions and deletions are the multiset word difference over max(|src|, |tgt|) words. Exact copies is the share of source sentences found verbatim among target sentences, the PRD's document-level analogue of `is_exact_match`. Core deps `rapidfuzz>=3.0` and `scikit-learn>=1.3` were added to both `requirements.txt` and `pyproject.toml` and installed in `venv`.
+- **Deviations (for the PR):** EASSE normalises with the sacrebleu 13a tokenizer and works per sentence pair. Here the features run on whole documents, with the profiler's word tokenizer for additions and deletions. Values are not comparable with sentence-level numbers in the literature.
+- **Result:** pass. `pytest -q`: 420 passed (includes `test_declared_dependencies`). Two smoke runs byte-identical.
+- **Next item:** M2 `redundancy`.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase B, item 4: M2 `redundancy`
+
+- **Branch:** `feature/metric-labels-b`
+- **Item:** `abstractiveness.redundancy` = mean ROUGE-L F1 (2·LCS / (|a|+|b|)) over all pairs of distinct target sentences (Bommasani & Cardie §3, read in item 2). `None` below two sentences. It reuses M2's LCS with its existing size cap. Registry row 24 (SUM; needs `target`). Known answers: repeated sentence 1.0, disjoint 0.0, one sentence `None`.
+- **Cost note:** quadratic in target sentences. Cheap for short summaries, noticeable for full-article targets (SWiPE).
+- **Result:** pass. `pytest -q`: 422 passed. Two smoke runs byte-identical.
+- **Next item:** M2 `topic_similarity` (LDA).
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase B, item 5: M2 `topic_similarity`
+
+- **Branch:** `feature/metric-labels-b`
+- **Item:** `abstractiveness.topic_similarity` = 1 − Jensen–Shannon distance (base 2) between the source and target topic mixtures under one sklearn LDA model, fit on the corpus's sources with k = 20 and seed 13. All settings are recorded in `params.topic_similarity`. If the vocabulary is empty, every value is `None` and a note is added. Registry row 26 (SUM). Test: identity pairs give 1.0, an unrelated pair scores lower, and reruns are deterministic.
+- **Paper check:** Bommasani & Cardie §3 and appendix A.2 specify k = 20, T = D (the documents) and JS *distance*. The PRD said "divergence", but the paper wins, so this uses distance (noted for the PR). The paper used gensim and gives no log base or preprocessing. Base 2 keeps the value in [0, 1] as the paper states every metric is; English stop words are removed. Both are implementation choices, noted in params.
+- **Result:** pass. `pytest -q`: 424 passed. Two smoke runs byte-identical.
+- **Next item:** M3 `wordrank`.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase B, items 6–7: M3 `wordrank` and `lexical_complexity`
+
+- **Branch:** `feature/metric-labels-b`
+- **Items:** `readability.m3b_length_invariant.wordrank` and `.lexical_complexity`, each with source, target and paired delta (registry rows 12–13). Both sit in M3b's new `RANK_MEASURES` and not in `DECOMP_MEASURES`, so M3c output is unchanged; the no-regression test confirms it. Rank helpers live in `profiler/readability.py`: wordfreq `top_n_list("en", 100_000)`, rank 1 = most frequent, unknown words = 100,001, lowercased, natural log. Committed together because they share the rank table and one test; they are two metrics.
+- **Paper check:** Martin et al. 2020 (ACCESS) defines WordRank as "the third-quartile of log-ranks (inverse frequency order) of all words in a sentence", which matches the PRD; the document value is the mean over sentences. Martin et al. 2018 does *not* define "lexical complexity" as the mean squared log-rank. That definition comes from ASSET 2020 ("mean squared log-ranks of content words in a sentence (i.e. without stopwords)"), which is implemented here using M3b's content words. EASSE's reference "Lexical complexity score" is instead a WordRank-style 0.75 quantile of log(1+rank) over non-stopwords; noted for the PR. Deviation: wordfreq ranks instead of the papers' FastText ranks (50k vocab).
+- **Result:** pass. `pytest -q`: 427 passed. Two smoke runs byte-identical.
+- **Next item:** M4 `entity_preservation` (with no-NER fallback).
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase B, item 8: M4 `entity_preservation`
+
+- **Branch:** `feature/metric-labels-b`
+- **Item:** `alignment.entity_preservation.{entity_precision, entity_recall, entity_f1}` at the top of M4's corpus block, not per τ (registry row 31; DS, Cripwell 2024). It uses set overlap of lowercased entities from `Processor.entities()`, the same lazily built, cached NER pipe M7 uses. Precision is over the target's entities and recall over the source's. An undefined side is `None`; F1 is 0 when both sides are defined and nothing overlaps. Processors gained an additive `ner_available()` (Protocol, SimpleProcessor → False, SpacyProcessor → NER pipe loads). Without NER every value is `None` and a note is appended, never zeros. Tests: identity with entities gives P = R = F1 = 1; a partial overlap gives P 0.5, R 1/3, F1 0.4; without NER, `n = 0` plus the note.
+- **Paper check:** Cripwell et al. 2024 §3: "We extract named entities from input documents using the spaCy library and compute the precision, recall, and F1 with respect to those found in the generated simplifications." That matches.
+- **Result:** pass. `pytest -q`: 431 passed. Two smoke runs byte-identical. The smoke run has spaCy NER, so real values are emitted (F1 median 0.5, n = 5).
+- **Phase B gate:** passed. Known-answer tests green, smoke run completes, no-regression green. Pushed and opened the Phase B PR.
+- **Next item:** Phase C, `jsonl` adapter passes extra fields into `Pair.meta`.
+- **DEFERRED:** none in this item (`abstractivity_p2`, see item 2).
