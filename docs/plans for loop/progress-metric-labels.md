@@ -25,3 +25,11 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q` full suite green. Two smoke runs byte-identical.
 - **Next item:** `metric_labels` block in `metrics.json`.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase A, item 4: `metric_labels` in metrics.json
+
+- **Branch:** `feature/metric-labels-a`
+- **Item:** `run.metric_labels()` adds a top-level `metric_labels` block, keyed by concrete metric path, with `tasks` (sorted), `papers`, `contested_by`, `evidence` and `module`. It holds only the paths present in the run. `tests/test_metric_labels_output.py` checks that coverage matches the run, the entry shape, and that the other top-level blocks equal the baseline.
+- **Result:** pass. `pytest -q`: 410 passed. Two smoke runs byte-identical.
+- **Next item:** "Metric labels" section at the end of `report.md`.
+- **DEFERRED:** none.

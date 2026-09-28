@@ -24,6 +24,7 @@ from . import report as report_mod
 from .adapters import load_pairs
 from .cache import Cache
 from .config import Config
+from .metric_registry import label_for, metric_paths
 from .modules import (
     m1_length,
     m2_abstractiveness,
@@ -257,6 +258,28 @@ def run(config: Config, output_dir: str | Path | None = None) -> Path:
     return base
 
 
+def metric_labels(modules: dict) -> dict[str, dict]:
+    """Literature labels for the metric paths present in this run.
+
+    A label says which task's literature uses a metric, never what the corpus
+    is. Keys are concrete paths, e.g. ``alignment.by_tau.0.40.source_coverage``.
+    """
+
+    out: dict[str, dict] = {}
+    for path in metric_paths(modules):
+        m = label_for(path)
+        if m is None:
+            continue
+        out[path] = {
+            "tasks": sorted(m.tasks),
+            "papers": [p.url for p in m.papers],
+            "contested_by": [p.url for p in m.contested_by],
+            "evidence": m.evidence,
+            "module": m.module,
+        }
+    return out
+
+
 def _write_metrics(path: Path, config: Config, results: dict, meta: dict) -> None:
     # Deterministic: exclude wall-clock timestamp and absolute paths.
     modules_out = {}
@@ -287,6 +310,7 @@ def _write_metrics(path: Path, config: Config, results: dict, meta: dict) -> Non
         "corpus_warnings": meta.get("corpus_warnings", []),
         "degenerate_pairs": meta.get("degenerate_pairs", []),
         "modules": modules_out,
+        "metric_labels": metric_labels(_to_jsonable(modules_out)),
     }
     text = json.dumps(_to_jsonable(payload), sort_keys=True, indent=2, ensure_ascii=True)
     path.write_text(text + "\n", encoding="utf-8")
