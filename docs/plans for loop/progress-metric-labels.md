@@ -306,3 +306,26 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
 - **Next item:** add the markers to `RESULTS.md` once, run `--write`, and add the committed-block staleness test.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase F, item 3: RESULTS.md block + gate + stop condition
+
+- **Branch:** `feature/metric-labels-f`
+- **Item:** the two markers were added to `RESULTS.md` once, immediately before `## M1 — Length and compression`, and the block between them was written by `python scripts/label_tables.py --write RESULTS.md`. `git diff` on RESULTS.md shows 123 insertions and 0 deletions; no other line was touched and no number was typed. New tests: the committed block equals the script's output (`--check` returns 0); the block sits right before M1 with one marker pair; and on the committed results, biomedical and legal get tables while encyclopedia (DS only) and news (SUM only) are named.
+- **Result:** pass. `pytest -q`: 907 passed, 2 skipped, including with `HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1`. `python scripts/label_tables.py --check RESULTS.md` exits 0. Two smoke runs byte-identical; the smoke run also completes with HF offline.
+- **Phase F gate:** passed. Pushed and opened the Phase F PR, which is the final PR.
+
+### Section 7 checklist (stop condition)
+- [x] **No regression**: `tests/test_no_regression.py` (baseline captured from `main` 5f69bec).
+- [x] **Registry coverage**: `tests/test_metric_registry.py`, on the smoke run and every `results/*.json`.
+- [x] **Label integrity**: same file; every labelled entry has ≥1 paper; URLs ⊆ `ALLOWED_PAPER_URLS`.
+- [x] **Inventory complete** (one key DEFERRED): `tests/test_inventory.py` runs all eight modules in-test. `abstractivity_p2` is DEFERRED (the paper fixes p = 1). QAFactEval, BLANC, SUPERT and SummaQA keys appear as `None` with notes. `per_scorer.summac_conv`/`alignscore` may be absent, as §7 allows.
+- [x] **Placement**: configs, `profiler/config.py` and the `run.py` module lists are unchanged vs `main` (checked with `git diff`). `sample_pairs` is in `profiler/sampling.py` and re-exported. M3d `n` = the sample size (`test_m3d_stand_ins_on_sample`, and the smoke run's `n = n_sample = 10`).
+- [x] **Outputs**: `metric_labels` in metrics.json; the report ends with "Metric labels"; smoke runs byte-identical; existing report tests pass.
+- [x] **Known answers**: `tests/test_synthetic.py` covers every new non-model metric; identity gives Levenshtein 1.0, exact copies 1.0, additions/deletions 0, abstractivity 0, char compression 1.0, entity P/R 1.0. The model-based metrics' checks live in `tests/test_model_metrics.py`, since their stand-in values are not the metrics.
+- [x] **Optional models**: skip tests (import blocked, then note + `*_run` record) for M3d (SLE, coherence), M5 document-level SummaC and rhetorical roles. DEFERRED: QAFactEval, BLANC, SUPERT, SummaQA, each with a null-plus-note test and its install error recorded.
+- [x] **Abstract field**: `tests/test_fetch_abstract.py` (inline parquet fixture) and `tests/test_adapters.py`.
+- [x] **Docs**: `docs/metrics.md` has a section for every metric, all eight module pages follow §6.2, `tests/test_metrics_doc.py` passes, and the moved paragraphs are listed in Phase E's entries and PR #11.
+- [x] **Label tables**: `scripts/label_tables.py`, `tests/test_label_tables.py`; `DOMAIN` covers `ORDER`; `--check RESULTS.md` exits 0.
+- [x] **Suite**: `pytest` passes fully offline, including `test_declared_dependencies`; `python -m profiler run --config configs/smoke.yaml` completes.
+
+**Stop condition met.** Every Section 7 box is checked or has its exceptions DEFERRED with reasons.

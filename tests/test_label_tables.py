@@ -164,3 +164,26 @@ def test_check_detects_a_stale_block(tmp_path, inline_results):
     assert lt.main(["--check", str(doc), "--results", str(results_dir)]) == 1
     assert lt.main(["--write", str(doc), "--results", str(results_dir)]) == 0
     assert lt.main(["--check", str(doc), "--results", str(results_dir)]) == 0
+
+
+# --------------------------------------------------------------------------
+# The committed block
+# --------------------------------------------------------------------------
+REPO = lt._ROOT
+
+
+def test_committed_results_block_is_current():
+    assert lt.main(["--check", str(REPO / "RESULTS.md")]) == 0
+
+
+def test_committed_block_sits_immediately_before_m1():
+    text = (REPO / "RESULTS.md").read_text()
+    after_end = text.split(lt.END, 1)[1]
+    assert after_end.lstrip("\n").startswith("## M1 — Length and compression")
+    assert text.count(lt.BEGIN) == 1 and text.count(lt.END) == 1
+
+
+def test_committed_results_domains():
+    multi, single = lt.split_domains(lt.load_results(REPO / "results"))
+    assert multi == ["biomedical", "legal"]
+    assert dict(single) == {"encyclopedia": ["DS"], "news": ["SUM"]}
