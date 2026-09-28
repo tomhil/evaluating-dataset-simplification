@@ -63,3 +63,47 @@ def test_m3d_skips_gracefully_when_models_cannot_load(monkeypatch):
     assert block["semantic_coherence"]["median"] is None
     assert any("SLE unavailable (" in n for n in res.notes)
     assert any("next-sentence prediction unavailable" in n for n in res.notes)
+
+
+# --------------------------------------------------------------------------
+# M5 document-level faithfulness
+# --------------------------------------------------------------------------
+def _m5(pairs, ctx):
+    from profiler.modules import m4_alignment, m5_elaboration
+
+    m4_alignment.compute(pairs, ctx)
+    return m5_elaboration.compute(pairs, ctx)
+
+
+def test_document_level_stand_in():
+    ctx = _ctx()
+    res = _m5([Pair("same", TEXT_A, TEXT_A), Pair("short", TEXT_A, TEXT_B)], ctx)
+    dl = res.corpus["document_level"]
+    assert dl["scorers_run"] == ["summac:stand-in"]
+    rows = {r["id"]: r for r in res.per_pair}
+    assert rows["same"]["doc_summac_precision"] == 1.0
+    assert rows["same"]["doc_summac_recall"] == 1.0
+    # A shortened target keeps less of the source: recall drops below precision.
+    assert rows["short"]["doc_summac_recall"] < rows["short"]["doc_summac_precision"]
+    assert dl["qafacteval_precision"]["n"] == 0 and dl["qafacteval_recall"]["median"] is None
+    assert any("QAFactEval is DEFERRED" in n for n in res.notes)
+
+
+def test_document_level_summac_skips_when_package_missing(monkeypatch):
+    monkeypatch.setitem(sys.modules, "summac", None)
+    monkeypatch.setitem(sys.modules, "summac.model_summac", None)
+    # Real-model mode with SummaC requested; NLI replaced by the offline scorer
+    # so the test downloads nothing.
+    import profiler.modules.m5_elaboration as m5
+    from profiler.scorers import LexicalGrounding
+
+    monkeypatch.setattr(m5, "get_primary_scorer", lambda config, cache: LexicalGrounding())
+    ctx = _ctx(nli_backend="nli", summac=True)
+    with pytest.warns(RuntimeWarning):
+        res = _m5([Pair("same", TEXT_A, TEXT_A)], ctx)
+    dl = res.corpus["document_level"]
+    assert dl["scorers_run"] == []
+    assert dl["summac_precision"]["median"] is None and dl["summac_recall"]["n"] == 0
+    assert any("SummaC (document level) unavailable" in n for n in res.notes)
+    # Existing behaviour unchanged: a skipped SummaC gets no per_scorer entry.
+    assert "summac_conv" not in res.corpus["per_scorer"]

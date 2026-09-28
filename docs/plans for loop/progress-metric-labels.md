@@ -161,3 +161,15 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 448 passed. Two smoke runs byte-identical.
 - **Next item:** M5 document-level SummaC precision/recall and QAFactEval, plus the SummaC key fix (the existing scorer emits `per_scorer.summac_conv`, not `per_scorer.summac`).
 - **DEFERRED:** none in this item.
+
+## 2026-09-28 — Phase D, item 3: M5 `document_level` faithfulness
+
+- **Branch:** `feature/metric-labels-d`
+- **Item:** `elaboration.document_level` = {`scorers_run`, `summac_precision`, `summac_recall`, `qafacteval_precision`, `qafacteval_recall`}. Precision is SummaC-Conv on (source → target), with the same config as M5's existing sentence scorer (vitc, percentile bins). Recall swaps the roles, so each source sentence is checked against the target. SummaC loads only when `run.summac` is set, so no config changes. Under the smoke settings an offline content-word stand-in is used and flagged. The API was checked against summac 0.0.4's source: `SummaCConv.score(originals, generateds)` returns one score per pair. Registry rows 17 (recall; DS) and 23 (precision; SUM, DS), all `validated`, with Devaraj 2022 and SummEval caveats.
+- **Key fix (row 10):** M5's existing SummaC scorer is named `summac_conv` (`scorers._load_summac`), so real runs emit `elaboration.per_scorer.summac_conv`, not the PRD's `per_scorer.summac`. The registry now labels the real key (PRD §5.1: "Keys use the real metrics.json paths"); my Phase A registry test was updated to match.
+- **Install check:** `pip install summac` resolves only by downgrading transformers 5.15 → 4.35.2 (summac pins it), so it was not installed here. The code path is not exercised against the real package on this machine; the skip test blocks the import.
+- **DEFERRED — QAFactEval:** `pip install qafacteval` fails while building its dependencies ("pip subprocess to install build dependencies did not run successfully", during a cython build under Python 3.13). Its four keys are emitted as `None` with a note in every run.
+- **Tests:** stand-in (identity gives 1.0/1.0, a shortened target has recall < precision, QAFactEval null plus note) and a skip test (summac import blocked, `run.summac: true`: nulls, a note, empty `scorers_run`, and still no `per_scorer.summac_conv` entry).
+- **Result:** pass. `pytest -q`: 454 passed. Two smoke runs byte-identical.
+- **Next item:** M5 `rhetorical_roles`.
+- **DEFERRED:** QAFactEval precision/recall (install failure).

@@ -132,3 +132,40 @@ def coherence(sentences: list[str], is_next: Callable[[str, str], bool]) -> floa
         return None
     hits = sum(1 for a, b in zip(sents, sents[1:]) if is_next(a, b))
     return hits / (len(sents) - 1)
+
+
+# --------------------------------------------------------------------------
+# Document-level faithfulness (M5): SummaC precision/recall, QAFactEval
+# --------------------------------------------------------------------------
+# QAFactEval could not be installed (see the progress log): its build fails on
+# this stack. Its keys stay None with this note until it is installed and wired.
+QAFACTEVAL_DEFERRED = (
+    "qafacteval_precision/recall not computed: QAFactEval is DEFERRED (its "
+    "package fails to build against the core dependencies); keys are null."
+)
+
+
+def load_summac_doc(device: str = "auto"):  # pragma: no cover - optional dep
+    """SummaC-Conv as M5's sentence scorer configures it, scoring whole documents:
+    ``score(originals, generateds)`` gives one score per (original, generated)."""
+
+    from summac.model_summac import SummaCConv  # type: ignore
+
+    from .embeddings import resolve_device
+
+    model = SummaCConv(models=["vitc"], bins="percentile", granularity="sentence",
+                       device=resolve_device(device))
+    return lambda original, generated: float(model.score([original], [generated])["scores"][0])
+
+
+def summac_doc_stand_in(original: str, generated: str) -> float | None:
+    """Offline stand-in: mean share of each generated sentence's content words
+    found in the original (the lexical_grounding idea at document level)."""
+
+    from .nlp import SimpleProcessor
+
+    orig = _content(original)
+    sents = [c for c in (_content(s) for s in SimpleProcessor().sentences(generated)) if c]
+    if not sents:
+        return None
+    return sum(len(c & orig) / len(c) for c in sents) / len(sents)

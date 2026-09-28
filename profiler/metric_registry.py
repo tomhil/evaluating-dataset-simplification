@@ -208,11 +208,22 @@ _LITERATURE: tuple[MetricLabel, ...] = (
          sample_based=True),
     _lit("readability.m3d_model_based.semantic_coherence", {"SUM"}, (BOMMASANI_2020,), needs="target",
          direction="↑ more coherent", sample_based=True),
+    # Rows 17 and 23: document-level faithfulness in M5.
+    _lit("elaboration.document_level.summac_precision", {"SUM", "DS"}, (LABAN_2022, CRIPWELL_2024),
+         faithfulness=True, evidence="validated", direction="↑ more grounded in source"),
+    _lit("elaboration.document_level.qafacteval_precision", {"SUM", "DS"}, (FABBRI_2022, CRIPWELL_2024),
+         faithfulness=True, evidence="validated", direction="↑ more grounded in source"),
+    _lit("elaboration.document_level.summac_recall", {"DS"}, (CRIPWELL_2024,),
+         faithfulness=True, evidence="validated", direction="↑ more source content kept"),
+    _lit("elaboration.document_level.qafacteval_recall", {"DS"}, (CRIPWELL_2024,),
+         faithfulness=True, evidence="validated", direction="↑ more source content kept"),
     # Row 9
     _lit("pair_similarity.bleu", {"DS"}, (CRIPWELL_2024,),
          direction="↑ closer to source wording", headline=()),
     # Rows 10-11
-    _lit("elaboration.per_scorer.summac", {"SUM", "PLS", "DS"}, (LABAN_2022, BIOLAYSUMM_2024, CRIPWELL_2024),
+    # M5 names its SummaC-Conv scorer "summac_conv" (scorers._load_summac), so
+    # that is the key metrics.json carries; the PRD's row 10 says "summac".
+    _lit("elaboration.per_scorer.summac_conv", {"SUM", "PLS", "DS"}, (LABAN_2022, BIOLAYSUMM_2024, CRIPWELL_2024),
          faithfulness=True, evidence="validated", direction="↑ more grounded in source",
          headline=("score.median",)),
     _lit("elaboration.per_scorer.alignscore", {"SUM", "PLS"}, (ZHA_2023, BIOLAYSUMM_2024),

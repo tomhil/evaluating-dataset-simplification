@@ -89,13 +89,13 @@ def test_literature_rows_as_in_prd():
         "readability.m3a_surface.cli": {"PLS"},
         "readability.m3a_surface.dcrs": {"PLS"},
         "pair_similarity.bleu": {"DS"},
-        "elaboration.per_scorer.summac": {"SUM", "PLS", "DS"},
+        "elaboration.per_scorer.summac_conv": {"SUM", "PLS", "DS"},
         "elaboration.per_scorer.alignscore": {"SUM", "PLS"},
     }
     for key, tasks in expected.items():
         assert label_for(key).tasks == tasks, key
     assert label_for("readability.m3a_surface.fkgl").contested_by
-    assert label_for("elaboration.per_scorer.summac").evidence == "validated"
+    assert label_for("elaboration.per_scorer.summac_conv").evidence == "validated"
     assert label_for("abstractiveness.rouge1_recall").tasks == frozenset()
 
 
