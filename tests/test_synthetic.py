@@ -94,3 +94,12 @@ def test_pure_paraphrase_pair(ctx):
     # Every source sentence aligns to a target sentence (content preserved).
     cov = m4.corpus["by_tau"]["0.40"]["source_coverage"]["mean"]
     assert cov == 1.0
+
+
+def test_char_compression_ratio(ctx):
+    """EASSE character compression: 1.0 on identity, target/source chars otherwise."""
+    same = _run(m1_length, [Pair("id", IDENTITY_TEXT, IDENTITY_TEXT)], ctx)
+    assert same.per_pair[0]["char_compression_ratio"] == 1.0
+    assert same.corpus["char_compression_ratio"]["median"] == 1.0
+    half = _run(m1_length, [Pair("id", "abcdefghij", "abcde")], ctx).per_pair[0]
+    assert half["char_compression_ratio"] == 0.5

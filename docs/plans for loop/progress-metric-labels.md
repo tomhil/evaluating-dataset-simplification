@@ -42,3 +42,11 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Phase A gate:** passed. No-regression and registry-coverage tests are green. Pushed `feature/metric-labels-a` and opened the Phase A PR.
 - **Next item:** Phase B. M1 `char_compression_ratio` on branch `feature/metric-labels-b`.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase B, item 1: M1 `char_compression_ratio`
+
+- **Branch:** `feature/metric-labels-b` (stacked on `feature/metric-labels-a`; PR #7 is not merged yet)
+- **Item:** M1 per-pair `char_compression_ratio` = len(target) / len(source) on the raw strings (EASSE `get_compression_ratio`), summarised like `compression_ratio`. Registry row 18 (DS, EASSE 2019). Known-answer test: identity gives 1.0, and a 5-of-10-character target gives 0.5.
+- **Result:** pass. `pytest -q`: 413 passed. Two smoke runs byte-identical. No-regression test green.
+- **Next item:** M2 abstractivity p1/p2.
+- **DEFERRED:** none.

@@ -132,7 +132,7 @@ def _proj(key: str, **kw) -> MetricLabel:
     )
 
 
-# --- Literature metrics: PRD Section 4, rows 1-11 ---
+# --- Literature metrics: PRD Section 4 ---
 _LITERATURE: tuple[MetricLabel, ...] = (
     # Row 1
     _lit("length.compression_ratio", {"SUM", "DS"}, (GRUSKY_2018, BOMMASANI_2020),
@@ -140,6 +140,8 @@ _LITERATURE: tuple[MetricLabel, ...] = (
     # Row 2
     _lit("length.sentence_ratio", {"DS"}, (EASSE_2019,),
          direction="↑ more target sentences per source sentence"),
+    # Row 18
+    _lit("length.char_compression_ratio", {"DS"}, (EASSE_2019,), direction="↓ more compressed"),
     # Row 3
     _lit("length.src_tokens", {"DS"}, (CRIPWELL_2024,), fmt="int"),
     _lit("length.tgt_tokens", {"DS"}, (CRIPWELL_2024,), fmt="int"),
