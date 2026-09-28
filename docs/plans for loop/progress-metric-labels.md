@@ -202,3 +202,13 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Phase D gate:** passed. Each optional model is either implemented with a passing skip test (SLE, coherence, document-level SummaC, rhetorical roles) or DEFERRED with its install error recorded (QAFactEval, BLANC, SUPERT, SummaQA). Pushed and opened the Phase D PR.
 - **Next item:** Phase E, `docs/metrics.md` and the eight module pages, plus `tests/test_metrics_doc.py`.
 - **DEFERRED:** none new.
+
+## 2026-09-28 — Phase E, item 1: `docs/metrics.md` (M1) + M1 page + doc test
+
+- **Branch:** `feature/metric-labels-e` (stacked on `feature/metric-labels-d`)
+- **Item:** new `docs/metrics.md` (opening, M1 sections; the index is added in the last Phase E item). `docs/modules/m1-length.md` restructured per §6.2: Overview, Metrics in this module (linked), Module-level material, and the glossary with links. New `tests/test_metrics_doc.py` checks every §6.3 rule and has a shared `github_slug()` helper. It runs over a `DOCUMENTED` module set that grows each item and is removed once all eight are done.
+- **Moved paragraphs (M1 page → metrics.md):** `compression_ratio` description → `length.compression_ratio`. "The mean vs. the corpus-level ratio" (D-Wikipedia table and discussion) → `length.compression_ratio` "How to read it"; a short pointer section with the same heading stays on the M1 page, because `RESULTS.md:319` links to that anchor and RESULTS.md may not be edited. `sentence_ratio` → `length.sentence_ratio`. `mean_src/tgt_sent_len` → `length.mean_…_sent_len`. `src/tgt_tokens` → `length.src_tokens, length.tgt_tokens`. `expansion_rate` → `length.expansion_rate`. `compression_dip_statistic` → `length.compression_bimodality`, "Implementation notes". Per-pair columns, `compression_histogram` and "Reading it" stay on the module page.
+- **Corrections (not deletions):** the M1 page documented `compression_dip_statistic` (ECDF gap, 0.1 threshold), but the code emits `compression_bimodality` (Sarle's coefficient, 0.555). The new section documents the code and keeps the old description as a note. `docs/modules/README.md` claimed M1 publishes a corpus-level ratio-of-sums; it does not (as the PRD notes), and the sentence now says so. Its stale M1 anchor link now points to metrics.md.
+- **Result:** pass. `pytest -q`: 544 passed, 2 skipped. Two smoke runs byte-identical.
+- **Next item:** M2 sections and M2 page.
+- **DEFERRED:** none.
