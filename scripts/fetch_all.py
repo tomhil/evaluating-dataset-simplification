@@ -21,9 +21,12 @@ import os
 import random
 import urllib.request
 from pathlib import Path
-from typing import Iterator
+from typing import Callable, Iterator
 
 Pair = tuple[str, str, str]  # id, source, target
+# A fetcher may append a dict of extra fields (e.g. {"abstract": ...}); _write
+# stores them beside id/source/target, and the jsonl adapter passes them into
+# Pair.meta.
 
 # Matches the profiler's default run.seed, so the corpus draw and the M4-M6
 # sample draw are reproducible from the same number.
@@ -50,12 +53,13 @@ def _write(name: str, split: str, limit: int, rows: Iterator[Pair]) -> Path:
     n = skipped = 0
     try:
         with tmp.open("w", encoding="utf-8") as fh:
-            for pid, src, tgt in rows:
+            for pid, src, tgt, *rest in rows:
                 src, tgt = src.strip(), tgt.strip()
                 if not src or not tgt:
                     skipped += 1
                     continue
-                fh.write(json.dumps({"id": pid, "source": src, "target": tgt}) + "\n")
+                extras = rest[0] if rest else {}
+                fh.write(json.dumps({"id": pid, "source": src, "target": tgt, **extras}) + "\n")
                 n += 1
                 if n >= limit:
                     break
@@ -102,7 +106,9 @@ def _allocate(sizes: list[int], limit: int) -> list[int]:
 
 
 def _parquet_rows(
-    urls: list[str] | str, src_field: str, tgt_field: str, prefix: str, limit: int
+    urls: list[str] | str, src_field: str, tgt_field: str, prefix: str, limit: int,
+    extra_columns: tuple[str, ...] = (),
+    extra: Callable[[dict], dict] | None = None,
 ) -> Iterator[Pair]:
     """Sample rows over HTTP range requests, stratified across a whole split.
 
@@ -116,6 +122,9 @@ def _parquet_rows(
     chosen row group the rows are sampled at random, because these files are
     ordered -- PLOS and eLife by year and journal, XSum by article -- and taking
     the leading rows would skew the profile.
+
+    With ``extra``, ``extra_columns`` are read as well and each row gains a
+    fourth element, ``extra(record)``: a dict of fields for ``_write`` to store.
     """
     import fsspec
     import pyarrow.parquet as pq
@@ -156,7 +165,7 @@ def _parquet_rows(
             continue
         if url not in handles:
             handles[url] = pq.ParquetFile(fsspec.open(url).open())
-        table = handles[url].read_row_group(rg, columns=[src_field, tgt_field])
+        table = handles[url].read_row_group(rg, columns=[src_field, tgt_field, *extra_columns])
         recs = table.to_pylist()
         # The row-group index is file-local, so include the shard to keep ids
         # unique across a multi-shard corpus (run.validate_corpus rejects
@@ -169,6 +178,7 @@ def _parquet_rows(
                     str(rec[src_field] or ""),
                     str(rec[tgt_field] or ""),
                 )
+                + ((extra(rec),) if extra else ())
                 for j, rec in enumerate(rng.sample(recs, min(want, len(recs))))
             ]
         )
@@ -294,18 +304,45 @@ def fetch_dwikipedia(limit: int) -> Path:
     return _write("dwikipedia", "test", limit, rows)
 
 
+def _laysumm_abstract(rec: dict) -> dict:
+    """The abstract of a PLOS/eLife record, as ``{"abstract": text}``.
+
+    These records have no abstract column. ``article`` is the sections joined
+    by newlines, and ``section_headings`` names them in the same order, the
+    first being "Abstract" (checked on one record of each, 2026-09-28). The
+    article, abstract included, stays the source; this only exposes the
+    abstract separately. Headings that do not line up with the sections give
+    no abstract rather than a guessed one.
+    """
+
+    sections = str(rec.get("article") or "").split("\n")
+    headings = str(rec.get("section_headings") or "").split("\n")
+    if len(sections) != len(headings):
+        return {}
+    for heading, text in zip(headings, sections):
+        if heading.strip().lower() == "abstract" and text.strip():
+            return {"abstract": text.strip()}
+    return {}
+
+
 def fetch_plos(limit: int) -> Path:
     """PLOS (Goldsack et al. 2022), PLS. Script-based on HF, so we read the
     auto-converted parquet branch directly."""
     # Two shards; both are sampled so the draw spans the whole training split.
     urls = [f"{LAYSUMM}/plos/train/{i:04d}.parquet" for i in range(2)]
-    return _write("plos", "train", limit, _parquet_rows(urls, "article", "summary", "plos", limit))
+    return _write("plos", "train", limit, _parquet_rows(
+        urls, "article", "summary", "plos", limit,
+        extra_columns=("section_headings",), extra=_laysumm_abstract,
+    ))
 
 
 def fetch_elife(limit: int) -> Path:
     """eLife (Goldsack et al. 2022), PLS."""
     urls = [f"{LAYSUMM}/elife/train/0000.parquet"]  # single shard
-    return _write("elife", "train", limit, _parquet_rows(urls, "article", "summary", "elife", limit))
+    return _write("elife", "train", limit, _parquet_rows(
+        urls, "article", "summary", "elife", limit,
+        extra_columns=("section_headings",), extra=_laysumm_abstract,
+    ))
 
 
 def _stream_json_array(url: str, chunk: int = 1 << 20) -> Iterator[dict]:

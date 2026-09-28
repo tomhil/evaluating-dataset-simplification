@@ -113,3 +113,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 432 passed. Two smoke runs byte-identical.
 - **Next item:** PLOS and eLife fetchers write `abstract` (inspect one fetched record first).
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase C, item 2: PLOS/eLife fetchers write `abstract`
+
+- **Branch:** `feature/metric-labels-c`
+- **Field layout (inspected one live record each, 2026-09-28):** `tomasg25/scientific_lay_summarisation` parquet columns are `article, summary, section_headings, keywords, year, title`. There is **no abstract column**. `article` is the sections joined by `\n` (5 sections), and `section_headings` lists them in the same order: `Abstract\nIntroduction\nResults\nDiscussion\nMaterials and methods` for both PLOS and eLife.
+- **Item:** `_laysumm_abstract` returns the section headed "Abstract", and nothing when headings and sections don't line up. `_parquet_rows` gained optional `extra_columns`/`extra`, and `_write` stores a row's optional fourth element (a dict) beside id/source/target. Only `fetch_plos` and `fetch_elife` use it; every other fetcher's rows and files are unchanged. The source is still the full article, abstract included. `data/` was not re-fetched. New offline tests in `tests/test_fetch_abstract.py`, with an inline parquet fixture and a round trip through the `jsonl` adapter into `meta["abstract"]`.
+- **Result:** pass. `pytest -q`: 436 passed. Two smoke runs byte-identical.
+- **Next item:** M2 `rouge_abstract_target`.
+- **DEFERRED:** none.
