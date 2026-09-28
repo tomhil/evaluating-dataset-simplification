@@ -17,8 +17,10 @@ from __future__ import annotations
 
 from typing import Sequence
 
+from .. import model_metrics as mm
 from .. import readability as rd
 from ..nlp import Processor
+from ..sampling import sample_pairs
 from ..stats import histogram, paired_delta_summary, summarize
 from .. import progress
 from ..types import Pair
@@ -364,6 +366,10 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
 
     corpus = _corpus_summaries(per_pair, ctx)
     notes = []
+    corpus["m3d_model_based"], m3d_rows, m3d_notes = _model_based(pairs, ctx)
+    by_id = {r["id"]: r for r in per_pair}
+    for r in m3d_rows:
+        by_id[r["id"]].update({k: v for k, v in r.items() if k != "id"})
     if not proc.has_parser:
         notes.append(
             "No syntactic parser available: M3b dependency distance, parse "
@@ -371,6 +377,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         )
     if not ctx.config.run.jargon_terms:
         notes.append("No jargon term list supplied; M3b jargon_rate is null.")
+    notes.extend(m3d_notes)
 
     params = {
         "surface_measures": rd.SURFACE_MEASURES,
@@ -385,6 +392,69 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         ),
     }
     return ModuleResult(name=NAME, per_pair=per_pair, corpus=corpus, params=params, notes=notes)
+
+
+# --------------------------------------------------------------------------
+# M3d model-based block (on the pipeline sample)
+# --------------------------------------------------------------------------
+def _model_based(pairs: Sequence[Pair], ctx: Context) -> tuple[dict, list[dict], list[str]]:
+    """SLE (Cripwell et al. 2023) and semantic coherence (Bommasani & Cardie
+    2020), computed on exactly the seeded sample M4-M8 receive.
+
+    ``sle_doc`` is the mean sentence SLE of each text (source and target);
+    ``sle_gain`` is target minus source. Coherence scores the target.
+    """
+
+    sample = sample_pairs(list(pairs), ctx.config)
+    proc = ctx.processor
+    notes: list[str] = []
+    models_run: list[str] = []
+
+    if mm.use_stand_ins(ctx.config):
+        sle, is_next = mm.sle_stand_in, mm.nsp_stand_in
+        models_run = ["sle:stand-in", "coherence:stand-in"]
+        notes.append(
+            "m3d_model_based uses offline stand-ins (nli_backend=lexical): SLE is a "
+            "sentence-length proxy and coherence a content-word-overlap proxy. These "
+            "are not the published metrics."
+        )
+    else:
+        sle, sle_note = mm.try_load("SLE", lambda: mm.load_sle(ctx.config.run.device))
+        is_next, nsp_note = mm.try_load("BERT next-sentence prediction", lambda: mm.load_nsp(ctx.config.run.device))
+        models_run = [n for n, m in (("sle", sle), ("coherence", is_next)) if m is not None]
+        notes.extend(n for n in (sle_note, nsp_note) if n)
+
+    rows: list[dict] = []
+    for p in progress.track(sample, "M3d model-based"):
+        row: dict = {"id": p.id, "src_sle_doc": None, "tgt_sle_doc": None, "semantic_coherence": None}
+        tgt_sents = proc.sentences(p.target)
+        if sle is not None:
+            for side, text in (("src", p.source), ("tgt", p.target)):
+                sents = proc.sentences(text)
+                scores = sle(sents) if sents else []
+                row[f"{side}_sle_doc"] = (sum(scores) / len(scores)) if scores else None
+        if is_next is not None:
+            row["semantic_coherence"] = mm.coherence(tgt_sents, is_next)
+        rows.append(row)
+
+    def col(name: str) -> list[float]:
+        return [r[name] for r in rows if r[name] is not None]
+
+    both = [r for r in rows if r["src_sle_doc"] is not None and r["tgt_sle_doc"] is not None]
+    block = {
+        "n": len(sample),
+        "models_run": models_run,
+        "sle_doc": {
+            "source": summarize(col("src_sle_doc"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
+            "target": summarize(col("tgt_sle_doc"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
+        },
+        "sle_gain": paired_delta_summary(
+            [r["src_sle_doc"] for r in both], [r["tgt_sle_doc"] for r in both],
+            seed=ctx.seed, resamples=ctx.resamples,
+        ).to_dict(),
+        "semantic_coherence": summarize(col("semantic_coherence"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
+    }
+    return block, rows, notes
 
 
 def _corpus_share(per_pair: list[dict], measure: str) -> float | None:

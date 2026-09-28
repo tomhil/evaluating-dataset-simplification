@@ -149,3 +149,15 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 442 passed. Two smoke runs byte-identical.
 - **Next item:** survey the optional-model packages (SLE, BERT NSP, SummaC, QAFactEval, PubMed-RCT classifier, BLANC, SUPERT, SummaQA) in a scratch virtualenv, then implement each or mark it DEFERRED.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase D, item 2: M3 `m3d_model_based` (SLE, coherence)
+
+- **Branch:** `feature/metric-labels-d`
+- **Item:** new M3 block `readability.m3d_model_based` = {`n`, `models_run`, `sle_doc` {source, target}, `sle_gain` (paired target − source), `semantic_coherence`}. It is computed on `sample_pairs(pairs, ctx.config)`, the same seeded sample M4–M8 get; the smoke run gives n = `n_sample` = 10. Registry rows 22 (DS, validated, contested by REFeREE) and 25 (SUM, needs `target`). `models_run` added to BOOKKEEPING. The loaders live in the new `profiler/model_metrics.py`. Offline stand-ins, selected by `nli_backend: lexical` or `heuristic_only` and flagged in notes and `models_run` as `:stand-in`: SLE = a sentence-length proxy on the 0–4 scale, coherence = a content-word-overlap proxy. In real-model mode a model that cannot load is skipped with a note, and its keys are `None`.
+- **SLE:** the released checkpoint `liamcripwell/sle-base`, loaded through `transformers` exactly as the reference `sle.scorer.SLEScorer` does (one-logit head, max_length 128). The `sle` repo itself pins transformers==4.29.1 and torch==1.13.1. The PyPI package named `sle` is an unrelated space-link protocol library and must never be installed. **Verified by hand** (not in tests): the loader reproduces the reference README's example scores [3.9843, 0.5840].
+- **Coherence:** `bert-base-uncased` NSP head. **Paper wins:** Bommasani & Cardie average the NSP *prediction* 1_BERT(S_j | S_{j−1}); the PRD said "probability". Verified by hand: a following sentence gives True, an unrelated one False.
+- **Tests:** `tests/test_model_metrics.py` covers stand-ins on the sample (n = sample size), and a skip test that blocks `transformers` in real-model mode and checks null values, notes and an empty `models_run`.
+- **Process fixes:** the check script now fails on pytest failures; before, a failing `&&` chain didn't trip `set -e`. It flagged two failures, both fixed before this commit: (1) the new notes were first placed before the baseline notes, and (2) a direct `import sle` broke `test_declared_dependencies`. Loading the checkpoint through `transformers` removes that import, so no existing test was edited.
+- **Result:** pass. `pytest -q`: 448 passed. Two smoke runs byte-identical.
+- **Next item:** M5 document-level SummaC precision/recall and QAFactEval, plus the SummaC key fix (the existing scorer emits `per_scorer.summac_conv`, not `per_scorer.summac`).
+- **DEFERRED:** none in this item.

@@ -199,6 +199,15 @@ _LITERATURE: tuple[MetricLabel, ...] = (
          direction="↑ more source entities kept"),
     _lit("alignment.entity_preservation.entity_f1", {"DS"}, (CRIPWELL_2024,),
          direction="↑ more entity overlap"),
+    # Rows 22, 25: M3's m3d_model_based block, on the pipeline sample.
+    _lit("readability.m3d_model_based.sle_doc", {"DS"}, (SLE_2023, CRIPWELL_2024),
+         contested_by=(REFEREE_2024,), evidence="validated", direction="↑ simpler",
+         headline=("target.median",), sample_based=True),
+    _lit("readability.m3d_model_based.sle_gain", {"DS"}, (SLE_2023, CRIPWELL_2024),
+         contested_by=(REFEREE_2024,), evidence="validated", direction="↑ simpler than source",
+         sample_based=True),
+    _lit("readability.m3d_model_based.semantic_coherence", {"SUM"}, (BOMMASANI_2020,), needs="target",
+         direction="↑ more coherent", sample_based=True),
     # Row 9
     _lit("pair_similarity.bleu", {"DS"}, (CRIPWELL_2024,),
          direction="↑ closer to source wording", headline=()),
@@ -285,6 +294,7 @@ BOOKKEEPING: frozenset[str] = frozenset(
         "primary_tau",
         "tau_sweep",
         "heuristic_only",
+        "models_run",
         "bertscore_n_source_truncated",
         "compression_histogram",
         "density_histogram",
