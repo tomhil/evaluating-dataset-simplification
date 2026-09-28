@@ -63,3 +63,18 @@ def test_filedir_unmatched_raises(tmp_path):
     cfg = _cfg({"adapter": "filedir", "src_dir": str(src), "tgt_dir": str(tgt)})
     with pytest.raises(FileNotFoundError):
         list(load_pairs(cfg))
+
+
+def test_jsonl_passes_extra_fields_into_meta(tmp_path):
+    p = tmp_path / "c.jsonl"
+    rows = [
+        {"id": "a", "src": "s", "tgt": "t", "abstract": "An abstract.", "doi": "10.1/x"},
+        {"id": "b", "src": "s", "tgt": "t"},
+    ]
+    p.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+    cfg = _cfg({"adapter": "jsonl", "path": str(p), "source_field": "src", "target_field": "tgt"})
+    a, b = load_pairs(cfg)
+    assert a.meta == {"abstract": "An abstract.", "doi": "10.1/x", "lineno": 1}
+    assert b.meta == {"lineno": 2}
+    # The core fields are not duplicated into meta.
+    assert not {"id", "src", "tgt"} & set(a.meta)

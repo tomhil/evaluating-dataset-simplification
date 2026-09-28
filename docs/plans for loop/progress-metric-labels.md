@@ -105,3 +105,11 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Phase B gate:** passed. Known-answer tests green, smoke run completes, no-regression green. Pushed and opened the Phase B PR.
 - **Next item:** Phase C, `jsonl` adapter passes extra fields into `Pair.meta`.
 - **DEFERRED:** none in this item (`abstractivity_p2`, see item 2).
+
+## 2026-09-28 — Phase C, item 1: `jsonl` extra fields → `Pair.meta`
+
+- **Branch:** `feature/metric-labels-c` (stacked on `feature/metric-labels-b`)
+- **Item:** the `jsonl` adapter now copies every field except the id, source and target fields into `Pair.meta`. The adapter's own `lineno` still wins over a field of the same name. The `Pair` docstring now says `meta["abstract"]` is the one key modules read. New test in `tests/test_adapters.py`; existing adapter tests unchanged.
+- **Result:** pass. `pytest -q`: 432 passed. Two smoke runs byte-identical.
+- **Next item:** PLOS and eLife fetchers write `abstract` (inspect one fetched record first).
+- **DEFERRED:** none.

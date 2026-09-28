@@ -1,4 +1,9 @@
-"""JSONL adapter: one JSON object per line."""
+"""JSONL adapter: one JSON object per line.
+
+Fields other than the id, source and target fields are passed through into
+``Pair.meta``, so ``{id, source, target, abstract}`` supplies ``meta["abstract"]``
+for M2's abstract-based metrics.
+"""
 
 from __future__ import annotations
 
@@ -34,9 +39,13 @@ class JsonlAdapter:
                         f"'{ds.source_field}' or '{ds.target_field}'"
                     )
                 pid = str(rec.get(id_field, lineno))
+                core = {id_field, ds.source_field, ds.target_field}
+                extras = {k: v for k, v in rec.items() if k not in core}
                 yield Pair(
                     id=pid,
                     source=str(rec[ds.source_field]),
                     target=str(rec[ds.target_field]),
-                    meta={"lineno": lineno + 1},
+                    # lineno last: the adapter's provenance wins over a field
+                    # of the same name.
+                    meta={**extras, "lineno": lineno + 1},
                 )
