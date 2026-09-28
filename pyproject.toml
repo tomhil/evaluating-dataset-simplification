@@ -26,6 +26,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Optional model-based metrics (SLE, BERT coherence, PubMed-RCT roles) need only
+# the `models` extra; SummaC, QAFactEval, BLANC, SUPERT and SummaQA are not
+# installable against these pins -- see requirements.txt.
 models = ["spacy>=3.7", "sentence-transformers>=2.2", "transformers>=4.35", "torch>=2.0", "datasets>=2.14",
           # M8 pair_similarity: BLEU and BERTScore.
           "sacrebleu>=2.4", "bert-score>=0.3.12"]

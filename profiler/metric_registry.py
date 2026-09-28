@@ -199,11 +199,41 @@ _LITERATURE: tuple[MetricLabel, ...] = (
          direction="↑ more source entities kept"),
     _lit("alignment.entity_preservation.entity_f1", {"DS"}, (CRIPWELL_2024,),
          direction="↑ more entity overlap"),
+    # Rows 22, 25: M3's m3d_model_based block, on the pipeline sample.
+    _lit("readability.m3d_model_based.sle_doc", {"DS"}, (SLE_2023, CRIPWELL_2024),
+         contested_by=(REFEREE_2024,), evidence="validated", direction="↑ simpler",
+         headline=("target.median",), sample_based=True),
+    _lit("readability.m3d_model_based.sle_gain", {"DS"}, (SLE_2023, CRIPWELL_2024),
+         contested_by=(REFEREE_2024,), evidence="validated", direction="↑ simpler than source",
+         sample_based=True),
+    _lit("readability.m3d_model_based.semantic_coherence", {"SUM"}, (BOMMASANI_2020,), needs="target",
+         direction="↑ more coherent", sample_based=True),
+    # Rows 17 and 23: document-level faithfulness in M5.
+    _lit("elaboration.document_level.summac_precision", {"SUM", "DS"}, (LABAN_2022, CRIPWELL_2024),
+         faithfulness=True, evidence="validated", direction="↑ more grounded in source"),
+    _lit("elaboration.document_level.qafacteval_precision", {"SUM", "DS"}, (FABBRI_2022, CRIPWELL_2024),
+         faithfulness=True, evidence="validated", direction="↑ more grounded in source"),
+    _lit("elaboration.document_level.summac_recall", {"DS"}, (CRIPWELL_2024,),
+         faithfulness=True, evidence="validated", direction="↑ more source content kept"),
+    _lit("elaboration.document_level.qafacteval_recall", {"DS"}, (CRIPWELL_2024,),
+         faithfulness=True, evidence="validated", direction="↑ more source content kept"),
+    # Row 27: PubMed-RCT roles of target (and abstract) sentences.
+    _lit("elaboration.rhetorical_roles", {"PLS"}, (GOLDSACK_2022,), needs="target",
+         direction="↑ more background sentences", headline=("target.background.median",)),
+    # Rows 28-30: reference-free summary quality in M8 (all DEFERRED; null keys).
+    _lit("pair_similarity.blanc", {"SUM"}, (VASILYEV_2020,), evidence="validated",
+         direction="↑ more helpful summary"),
+    _lit("pair_similarity.supert", {"SUM"}, (GAO_2020,), evidence="validated",
+         direction="↑ better summary"),
+    _lit("pair_similarity.summaqa", {"SUM"}, (SCIALOM_2019,), evidence="validated",
+         direction="↑ better summary"),
     # Row 9
     _lit("pair_similarity.bleu", {"DS"}, (CRIPWELL_2024,),
          direction="↑ closer to source wording", headline=()),
     # Rows 10-11
-    _lit("elaboration.per_scorer.summac", {"SUM", "PLS", "DS"}, (LABAN_2022, BIOLAYSUMM_2024, CRIPWELL_2024),
+    # M5 names its SummaC-Conv scorer "summac_conv" (scorers._load_summac), so
+    # that is the key metrics.json carries; the PRD's row 10 says "summac".
+    _lit("elaboration.per_scorer.summac_conv", {"SUM", "PLS", "DS"}, (LABAN_2022, BIOLAYSUMM_2024, CRIPWELL_2024),
          faithfulness=True, evidence="validated", direction="↑ more grounded in source",
          headline=("score.median",)),
     _lit("elaboration.per_scorer.alignscore", {"SUM", "PLS"}, (ZHA_2023, BIOLAYSUMM_2024),
@@ -285,6 +315,7 @@ BOOKKEEPING: frozenset[str] = frozenset(
         "primary_tau",
         "tau_sweep",
         "heuristic_only",
+        "models_run",
         "bertscore_n_source_truncated",
         "compression_histogram",
         "density_histogram",

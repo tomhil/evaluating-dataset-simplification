@@ -200,6 +200,16 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             f"from cache."
         )
 
+    # Reference-free summary-quality metrics (PRD rows 28-30), each treating the
+    # target as the summary of its source. All three are DEFERRED: null keys
+    # plus a note, and an empty models_run.
+    from .. import model_metrics as mm
+
+    corpus["models_run"] = []
+    for key, reason in mm.M8_DEFERRED.items():
+        corpus[key] = summarize([], seed=ctx.seed, resamples=ctx.resamples).to_dict()
+        notes.append(reason + " Its key is null.")
+
     return ModuleResult(
         name=NAME,
         per_pair=per_pair,
