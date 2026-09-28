@@ -287,3 +287,11 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Phase E gate:** passed. `test_metrics_doc.py` passes, and every moved paragraph is listed in the item 1–8 entries above and in the PR. Pushed and opened the Phase E PR.
 - **Next item:** Phase F, `DOMAIN` dict in `scripts/compare_runs.py`.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase F, item 1: `DOMAIN` in `scripts/compare_runs.py`
+
+- **Branch:** `feature/metric-labels-f` (stacked on `feature/metric-labels-e`)
+- **Item:** `DOMAIN` added next to `TASK`, verbatim from §5.7; no other change to `compare_runs.py`. `tests/test_label_tables.py` starts with a test that every dataset in `ORDER` has a `DOMAIN` entry.
+- **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
+- **Next item:** `scripts/label_tables.py` with its layout, formatting and domain tests.
+- **DEFERRED:** none.
