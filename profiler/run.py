@@ -36,7 +36,7 @@ from .modules import (
     m8_similarity,
 )
 from .modules.base import Context
-from .sampling import sample_pairs  # noqa: F401  (re-exported; moved unchanged)
+from .sampling import sample_pairs  # moved unchanged; importable from here as before
 from .nlp import get_processor
 from .types import Pair
 

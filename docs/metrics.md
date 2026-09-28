@@ -91,6 +91,7 @@ key, such as a τ value.
 | [`alignment.entity_preservation.entity_recall`](#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching) | Entity matching | DS | introduced | M4 |
 | [`alignment.entity_preservation.entity_f1`](#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching) | Entity matching | DS | introduced | M4 |
 | [`elaboration.per_scorer.lexical_grounding`](#elaborationper_scorernli-elaborationper_scorerlexical_grounding--nli-and-lexical-grounding-scores) | NLI and lexical grounding scores | project-specific | project-specific | M5 |
+| [`elaboration.per_scorer.heuristic_grounding`](#elaborationper_scorernli-elaborationper_scorerlexical_grounding--nli-and-lexical-grounding-scores) | NLI and lexical grounding scores | project-specific | project-specific | M5 |
 | [`elaboration.per_scorer.nli`](#elaborationper_scorernli-elaborationper_scorerlexical_grounding--nli-and-lexical-grounding-scores) | NLI and lexical grounding scores | project-specific | project-specific | M5 |
 | [`elaboration.per_scorer.summac_conv`](#elaborationper_scorersummac_conv--summac-conv-sentence-level) | SummaC-Conv, sentence level | SUM, PLS, DS | validated | M5 |
 | [`elaboration.per_scorer.alignscore`](#elaborationper_scoreralignscore--alignscore-sentence-level) | AlignScore, sentence level | SUM, PLS | validated | M5 |
@@ -1021,6 +1022,8 @@ zero.
 
 ### `elaboration.per_scorer.nli`, `elaboration.per_scorer.lexical_grounding` — NLI and lexical grounding scores
 
+**Keys:** `elaboration.per_scorer.nli`, `elaboration.per_scorer.lexical_grounding`, `elaboration.per_scorer.heuristic_grounding`
+
 **Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M5 — Content addition](modules/m5-elaboration.md)
 
 **What it does.** How well each target sentence is supported by its source, and
@@ -1035,7 +1038,8 @@ the share of target sentences that are not.
   *any* source sentence entails it.
 - **`lexical_grounding`** (`LexicalGrounding`) — fraction of the target
   sentence's content words present anywhere in the source. Deterministic,
-  offline, no model. Used for tests, smoke runs, and `heuristic_only` mode.
+  offline, no model. Used for tests and smoke runs; in `heuristic_only` mode
+  the same scorer runs under the key **`heuristic_grounding`**, in place of NLI.
 
 For each scorer the block holds `score` (the usual Summary), `score_histogram`
 (20 bins), and `not_entailed_rate` = `{n, rate, threshold}`, the fraction of

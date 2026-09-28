@@ -11,6 +11,7 @@ from collections import Counter
 from typing import Sequence
 
 from rapidfuzz import fuzz
+from rapidfuzz.distance import LCSseq
 
 from ..stats import histogram, summarize
 from .. import progress
@@ -94,18 +95,6 @@ def _fragments(src_tokens: list[str], tgt_tokens: list[str]) -> list[int]:
     return fragments
 
 
-def _coverage_density(src_tokens: list[str], tgt_tokens: list[str]) -> tuple[float | None, float | None]:
-    """Grusky et al. (2018) extractive fragments via greedy matching.
-
-    coverage = fraction of target tokens covered by extractive fragments.
-    density  = mean squared fragment length, normalised by target length.
-    """
-
-    if not tgt_tokens:
-        return None, None
-    return _coverage_density_from(_fragments(src_tokens, tgt_tokens), len(tgt_tokens))
-
-
 def _coverage_density_from(fragments: list[int], n_tgt: int) -> tuple[float | None, float | None]:
     """Coverage and density from already-matched fragments."""
 
@@ -114,15 +103,6 @@ def _coverage_density_from(fragments: list[int], n_tgt: int) -> tuple[float | No
     coverage = sum(fragments) / n_tgt
     density = sum(f * f for f in fragments) / n_tgt
     return coverage, density
-
-
-def _abstractivity(src_tokens: list[str], tgt_tokens: list[str], p: int) -> float | None:
-    """Bommasani & Cardie (2020): ABS_p = 1 - sum(|f|^p) / |S|^p over the
-    Grusky fragments f of summary S. The paper sets p = 1."""
-
-    if not tgt_tokens:
-        return None
-    return _abstractivity_from(_fragments(src_tokens, tgt_tokens), len(tgt_tokens), p)
 
 
 def _abstractivity_from(fragments: list[int], n_tgt: int, p: int) -> float | None:
@@ -183,14 +163,14 @@ def _redundancy(tgt_sent_tokens: list[list[str]]) -> float | None:
     sents = [t for t in tgt_sent_tokens if t]
     if len(sents) < 2:
         return None
-    scores: list[float] = []
-    for i in range(len(sents)):
-        for j in range(i + 1, len(sents)):
-            lcs = _lcs_length(sents[i], sents[j])
-            if lcs is None:
-                continue
-            scores.append(2 * lcs / (len(sents[i]) + len(sents[j])))
-    return sum(scores) / len(scores) if scores else None
+    # rapidfuzz's LCSseq works on token lists in C++; the pairs are quadratic
+    # in the sentence count, so this runs no size cap.
+    scores = [
+        2 * LCSseq.similarity(sents[i], sents[j]) / (len(sents[i]) + len(sents[j]))
+        for i in range(len(sents))
+        for j in range(i + 1, len(sents))
+    ]
+    return sum(scores) / len(scores)
 
 
 def _topic_similarity(sources: list[str], targets: list[str]) -> tuple[list[float | None], str | None]:
@@ -249,8 +229,6 @@ def _rouge_f1(cand: list[str], ref: list[str]) -> dict:
     }
 
 
-def _abstract(p: Pair) -> str | None:
-    return p.abstract()
 
 
 # Goldsack et al. (2022) s4.3: content words are nouns, proper nouns, verbs and
@@ -287,7 +265,7 @@ def _abstract_content_overlap(
     content: list[dict[str, str] | None] = []
     doc_freq: Counter = Counter()
     for p in pairs:
-        abstract = _abstract(p)
+        abstract = p.abstract()
         if abstract is None:
             content.append(None)
             continue
@@ -358,9 +336,11 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         # One greedy fragment match feeds coverage, density and abstractivity.
         fragments = _fragments(src_tokens, tgt_tokens) if tgt_tokens else []
         coverage, density = _coverage_density_from(fragments, len(tgt_tokens))
-        abstract = _abstract(p)
+        abstract = p.abstract()
         abstract_rouge = (
-            _rouge_f1([t.lower() for t in proc.words(abstract)], tgt_tokens)
+            # words_fast: the same tokens, no parse (the overlap metric below
+            # parses the abstract once, for POS tags).
+            _rouge_f1([t.lower() for t in proc.words_fast(abstract)], tgt_tokens)
             if abstract is not None
             else dict.fromkeys(ROUGE_F1_KEYS)
         )
@@ -460,7 +440,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         notes.append(topic_note)
     if overlap_note:
         notes.append(overlap_note)
-    n_no_abstract = sum(1 for p in pairs if _abstract(p) is None)
+    n_no_abstract = sum(1 for p in pairs if p.abstract() is None)
     if n_no_abstract:
         notes.append(
             f"{n_no_abstract} of {len(pairs)} pair(s) have no abstract "

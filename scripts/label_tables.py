@@ -24,7 +24,8 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from profiler.metric_registry import REGISTRY, MetricLabel  # noqa: E402
+from profiler.metric_registry import REGISTRY, STAND_IN_RECORDS, MetricLabel  # noqa: E402,F401
+from profiler.metric_registry import from_stand_in as _from_stand_in  # noqa: E402
 from scripts.compare_runs import DOMAIN, ORDER, TASK  # noqa: E402
 from scripts.metric_docs import anchors_by_key  # noqa: E402
 
@@ -141,25 +142,11 @@ def metric_node(result: dict, key: str):
     return _get(result.get("modules", {}).get(module, {}).get("corpus", {}), rest)
 
 
-# Metrics with an offline stand-in: where the run records which model produced
-# them, and that model's name there. A value produced by a stand-in is not the
-# published metric, so it is shown as missing, never as the metric.
-STAND_IN_RECORDS = {
-    "readability.m3d_model_based.sle_doc": ("readability.m3d_model_based.models_run", "sle"),
-    "readability.m3d_model_based.sle_gain": ("readability.m3d_model_based.models_run", "sle"),
-    "readability.m3d_model_based.semantic_coherence": ("readability.m3d_model_based.models_run", "coherence"),
-    "elaboration.document_level.summac_precision": ("elaboration.document_level.scorers_run", "summac"),
-    "elaboration.document_level.summac_recall": ("elaboration.document_level.scorers_run", "summac"),
-    "elaboration.rhetorical_roles": ("elaboration.rhetorical_roles.models_run", "pubmed_rct"),
-}
-
-
 def from_stand_in(result: dict, key: str) -> bool:
-    record = STAND_IN_RECORDS.get(key)
-    if record is None:
-        return False
-    run_list = metric_node(result, record[0]) or []
-    return f"{record[1]}:stand-in" in run_list
+    """A value produced by an offline stand-in is not the published metric, so
+    it is shown as missing, never as the metric."""
+
+    return _from_stand_in(result.get("modules", {}), key)
 
 
 def cell(result: dict, m: MetricLabel) -> str:

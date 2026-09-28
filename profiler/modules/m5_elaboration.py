@@ -85,12 +85,23 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         # further down still left this path, which returns before reaching it --
         # the caveat moved rather than becoming unconditional, and a source-text
         # assertion did not notice.
+        # The newer blocks do not depend on target sentences being scored, so
+        # they are emitted here too (null where nothing can be computed) and
+        # the corpus keys are the same whatever the sample holds.
+        doc_block, _doc_rows, doc_notes = _document_level(pairs, ctx)
+        role_block, _role_rows, role_notes = _rhetorical_roles(pairs, ctx, tgt_sents_by_id)
         return ModuleResult(
             name=NAME,
-            corpus={"n_target_sentences": 0},
+            corpus={
+                "n_target_sentences": 0,
+                "document_level": doc_block,
+                "rhetorical_roles": role_block,
+            },
             notes=[
                 "No target sentences.",
                 upper_bound_note(ctx.config.run.heuristic_only),
+                *doc_notes,
+                *role_notes,
             ],
         )
 

@@ -370,3 +370,17 @@ The re-review of `main...feature/metric-labels-f` returned 9 findings. Triage, c
 - **Not fixed; not bugs:** (5) document-level SummaC on cpu (it shares the existing scorer's cpu instance; moving the existing scorer's device would change an existing computation); (6) NSP coherence is not batched; (7) M3d sits in the full-corpus M3 module rather than the sample phase (a placement choice the PRD made: "M3 runs on the full corpus, but its new m3d_model_based block must run on the sample"). All three are performance or placement, recorded for follow-up.
 - **Result:** pass. Full `pytest -q`: 922 passed, 2 skipped, HF offline. Two smoke runs byte-identical. `label_tables.py --check` exits 0.
 - **Next:** review pass 3.
+
+
+## 2026-09-28 — Review loop, pass 3
+
+Review pass 3 returned 10 findings, mostly minor or performance. Triage, checked against the code:
+
+- **Fixed (correctness).** `heuristic_only` runs emit `elaboration.per_scorer.heuristic_grounding` (existing M5 behaviour), which had no registry label. It is now labelled project-specific and documented through a `**Keys:**` line plus an index row. New test: a heuristic_only smoke run is fully labelled.
+- **Fixed (correctness).** M5's existing no-target-sentences early return skipped the new `document_level` and `rhetorical_roles` blocks, so their keys vanished. The early return now emits both (null where nothing can be computed) and their notes. The existing test pins only `n_target_sentences`, so it is unchanged. New test added.
+- **Fixed (design).** Stand-in values carried no marker outside the label tables. `STAND_IN_RECORDS` and `from_stand_in()` moved into the registry, and `metric_labels` entries get `"stand_in": true` when the run used a stand-in; `label_tables.py` reuses the same function. Test: the smoke run's stand-in keys are marked and FKGL is not.
+- **Fixed (performance).** Abstract ROUGE tokens use `words_fast` (one parse per abstract, for POS only). Redundancy uses rapidfuzz's C++ `LCSseq` on token lists; a 200-case randomized test checks it equals M2's own LCS. The per-call `import math` / `import numpy` in the WordRank helpers moved to module level.
+- **Cleanup.** Removed the now-unused `_coverage_density` wrapper and my `_abstractivity` / `_abstract` wrappers, and fixed the misleading `noqa: F401` comment on run.py's `sample_pairs` import.
+- **Not fixed (design/performance, recorded):** M3d draws its own sample and `SAMPLE_MODULES` mirrors run.py's groups (a PRD-mandated placement; a test now ties `SAMPLE_MODULES` to `run.EXPENSIVE`); document-level SummaC on cpu (pass 2 decision); the stand-in duplicating LexicalGrounding (stand-in-only code).
+- **Result:** pass. Full `pytest -q`: 930 passed, 2 skipped, HF offline. Two smoke runs byte-identical. `label_tables.py --check` exits 0.
+- **Next:** review pass 4, to confirm no major bugs remain.

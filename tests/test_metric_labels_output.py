@@ -69,3 +69,13 @@ def test_report_ends_with_metric_labels_section(tmp_path):
     # A τ-parametrised metric is listed once, by its registry key.
     assert section.count("alignment.by_tau.*.source_coverage") == 1
     assert "| `abstractiveness.rouge1_recall` | project-specific | — |" in section
+
+
+def test_stand_in_values_are_marked_in_metric_labels(metrics):
+    labels = metrics["metric_labels"]
+    # The smoke settings select the stand-ins for these.
+    for key in ("readability.m3d_model_based.sle_doc", "readability.m3d_model_based.semantic_coherence",
+                "elaboration.document_level.summac_precision", "elaboration.rhetorical_roles"):
+        assert labels[key].get("stand_in") is True, key
+    # Real values carry no marker.
+    assert "stand_in" not in labels["readability.m3a_surface.fkgl"]
