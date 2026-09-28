@@ -231,3 +231,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
 - **Next item:** M4 sections and M4 page.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 4: M4 docs
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** 5 M4 sections covering all 16 M4 registry keys; the ten alignment-type keys share one section, with a `**Keys:**` line. `docs/modules/m4-alignment.md` restructured per §6.2; `DOCUMENTED` includes M4.
+- **Moved paragraphs (M4 page → metrics.md):** "Metrics, per τ" — `source_coverage`, `target_groundedness` and `kendall_tau` → their sections; `alignment_type_counts / alignment_type_distribution` (table, "not the same unit", interpretation) → alignment type counts and distribution. "How the alignment works", "The τ sweep", "What it hands to M5 and M6", the self-caveat and the glossary stay on the page, the glossary now linked. No incoming links to the removed anchors.
+- **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
+- **Next item:** M5 sections and M5 page.
+- **DEFERRED:** none.

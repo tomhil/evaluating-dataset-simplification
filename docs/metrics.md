@@ -777,3 +777,115 @@ with redundancy, suggesting BERT leans on word overlap for its judgement.
 *prediction* (an indicator), which is implemented; the PRD's wording
 ("probability") differed. Offline stand-in: consecutive sentences "follow" when
 they share a content word, flagged as such.
+
+## M4 — Alignment and content preservation
+
+### `alignment.by_tau.*.source_coverage` — Source coverage
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M4 — Alignment and content preservation](modules/m4-alignment.md)
+
+**What it does.** The share of source sentences that made it into the target in
+some form.
+
+**How it works.** Per pair, the fraction of source sentences with at least one
+alignment link at threshold τ; summarised across pairs with the usual
+mean/median/IQR/CI, once per τ in the sweep.
+
+**How to read it.** **How much of the source survives into the target.** High =
+content-preserving; low = selective retention. A lower τ links more and inflates
+it, so check the sweep.
+
+**Implementation notes.** See the module page for how links are made.
+
+### `alignment.by_tau.*.target_groundedness` — Target groundedness
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M4 — Alignment and content preservation](modules/m4-alignment.md)
+
+**What it does.** The share of target sentences that can be traced back to a
+source sentence.
+
+**How it works.** Per pair, the fraction of target sentences with at least one
+link at τ, per τ.
+
+**How to read it.** Sentences that aren't grounded are either added content or
+alignment failures — M5 exists to tell those apart, and it cannot do so
+perfectly, which is why `alignment_error` is one of its manual annotation
+categories.
+
+**Implementation notes.** None.
+
+### `alignment.by_tau.*.kendall_tau` — Kendall's tau (reordering)
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M4 — Alignment and content preservation](modules/m4-alignment.md)
+
+**What it does.** Whether the target keeps the source's ordering.
+
+**How it works.** Kendall's τ between each aligned target's **best-matching
+source index** and its own position, via `scipy.stats.kendalltau`.
+
+**How to read it.** Measures **reordering**. Near 1 = the target follows source
+order; lower = content reordered. `None` when fewer than two target sentences
+are aligned, so its `n` is often well below the pair count — check it before
+reading the value. Note the name collision: this is Kendall's τ, unrelated to
+the alignment threshold τ.
+
+**Implementation notes.** None.
+
+### `alignment.by_tau.*.alignment_type_counts.n_1_1` and related — Alignment type counts and distribution
+
+**Keys:** `alignment.by_tau.*.alignment_type_counts.n_1_1`, `alignment.by_tau.*.alignment_type_counts.n_1_n_split`, `alignment.by_tau.*.alignment_type_counts.n_n_1_merge`, `alignment.by_tau.*.alignment_type_counts.n_1_0_deletion`, `alignment.by_tau.*.alignment_type_counts.n_0_1_insertion`, `alignment.by_tau.*.alignment_type_distribution.n_1_1`, `alignment.by_tau.*.alignment_type_distribution.n_1_n_split`, `alignment.by_tau.*.alignment_type_distribution.n_n_1_merge`, `alignment.by_tau.*.alignment_type_distribution.n_1_0_deletion`, `alignment.by_tau.*.alignment_type_distribution.n_0_1_insertion`
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M4 — Alignment and content preservation](modules/m4-alignment.md)
+
+**What it does.** Counts of sentence-level operations implied by the alignment
+graph, summed over the sample, and their shares.
+
+**How it works.**
+
+| Key | Definition | Counted over |
+|---|---|---|
+| `n_1_1` | links where both endpoints have degree 1 | **links** |
+| `n_1_n_split` | source sentences with degree ≥ 2 | source sentences |
+| `n_n_1_merge` | target sentences with degree ≥ 2 | target sentences |
+| `n_1_0_deletion` | source sentences with degree 0 | source sentences |
+| `n_0_1_insertion` | target sentences with degree 0 | target sentences |
+
+**These five counts are not the same unit** — one counts links, two count source
+sentences, two count target sentences. The `distribution` normalises each by
+their sum, so it is a share of a heterogeneous total, not a partition of a single
+population. It is a useful shape summary and a poor probability: read the
+relative sizes, don't treat a value as "the proportion of sentences that were
+split".
+
+**How to read it.** **`n_1_n_split` high** = sentence splitting, the classic
+simplification operation. **`n_n_1_merge` high** = consolidation, typical of
+summarization. **`n_1_0_deletion` high** = content selection. **`n_0_1_insertion`
+high** = added material, or alignment failure. **`n_1_1` high** = sentence-level
+correspondence, i.e. content-preserving rewriting.
+
+**Implementation notes.** Counts are metrics, not bookkeeping: each has a
+registry entry.
+
+### `alignment.entity_preservation.entity_precision`, `alignment.entity_preservation.entity_recall`, `alignment.entity_preservation.entity_f1` — Entity matching
+
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M4 — Alignment and content preservation](modules/m4-alignment.md)
+
+**What it does.** Whether the target keeps the source's named entities and
+avoids introducing new ones.
+
+**How it works.** Cripwell et al. (2024): named entities are extracted from
+source and target with spaCy, lowercased and compared as sets. Precision = the
+share of the target's distinct entities also in the source; recall = the share
+of the source's distinct entities kept in the target; F1 their harmonic mean.
+Reported once at the top of M4's corpus block, not per τ.
+
+**How to read it.** Low precision flags entities the source never mentioned — a
+faithfulness warning. Low recall means entities were dropped, which is expected
+under heavy compression. A side with no entities gives `None` for the ratio that
+needs it.
+
+**Papers.** [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278).
+
+**Implementation notes.** Reuses the `Processor`'s cached NER pipe (the one M7
+uses). Without an NER model every value is `None` and a note says so, never
+zero.
