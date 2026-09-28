@@ -193,3 +193,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 462 passed. Two smoke runs byte-identical.
 - **Next item:** inventory test that runs the smoke corpus with M7/M8 enabled in-test and checks every Section 4 key appears (Section 7 "Inventory complete").
 - **DEFERRED:** BLANC, SUPERT, SummaQA (above).
+
+## 2026-09-28 — Phase D, item 6: inventory test
+
+- **Branch:** `feature/metric-labels-d`
+- **Item:** `tests/test_inventory.py` runs the smoke corpus with all eight modules enabled in-test; `configs/smoke.yaml` is unchanged. It asserts that each of the 44 Section 4 keys has a literature label and appears in `metrics.json` and `metric_labels`, and that every emitted path is labelled. Exceptions follow Section 7: `per_scorer.summac_conv` and `per_scorer.alignscore` are skipped when absent from `scorers_run`. `abstractivity_p2` is DEFERRED and asserted absent. This closes the gap noted in PR #7, where the smoke config itself doesn't run M7/M8.
+- **Result:** pass. `pytest -q`: 506 passed, 2 skipped (the two optional per_scorer entries). Two smoke runs byte-identical.
+- **Phase D gate:** passed. Each optional model is either implemented with a passing skip test (SLE, coherence, document-level SummaC, rhetorical roles) or DEFERRED with its install error recorded (QAFactEval, BLANC, SUPERT, SummaQA). Pushed and opened the Phase D PR.
+- **Next item:** Phase E, `docs/metrics.md` and the eight module pages, plus `tests/test_metrics_doc.py`.
+- **DEFERRED:** none new.
