@@ -231,6 +231,16 @@ def test_entity_preservation(ctx):
     assert abs(rows["part"]["entity_f1"] - 0.4) < 1e-12
     assert res.corpus["entity_preservation"]["entity_precision"]["n"] == 2
 
+    # A target that drops every source entity: recall 0, precision undefined,
+    # F1 0 -- it must stay in the F1 summary, not fall out of it.
+    dropped = _run(m4_alignment, [Pair("drop", src, "visitors met there.")], ner_ctx).per_pair[0]
+    assert dropped["entity_recall"] == 0.0
+    assert dropped["entity_precision"] is None
+    assert dropped["entity_f1"] == 0.0
+    # No entities on either side: no F1.
+    none = _run(m4_alignment, [Pair("none", "visitors met.", "visitors met.")], ner_ctx).per_pair[0]
+    assert none["entity_f1"] is None
+
     # The default offline processor has no NER: nulls plus a note, never zeros.
     plain = _run(m4_alignment, [Pair("same", src, src)], ctx)
     ep = plain.corpus["entity_preservation"]
