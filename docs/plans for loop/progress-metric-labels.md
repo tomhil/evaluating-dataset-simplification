@@ -295,3 +295,14 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
 - **Next item:** `scripts/label_tables.py` with its layout, formatting and domain tests.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase F, item 2: `scripts/label_tables.py`
+
+- **Branch:** `feature/metric-labels-f`
+- **Item:** `scripts/label_tables.py` renders the "Datasets by metric label" block from `results/*.json`, `REGISTRY`, and `ORDER`/`TASK`/`DOMAIN` imported from `compare_runs.py`. Part 1 has one table per label group (metrics as rows; datasets in ORDER, sorted by their own task PLS→DS→SUM; a `*dataset task*` first row; row label = linked name + † if sample-based + direction; all-empty metrics collapsed into "Not yet computed for any dataset: …"). Part 2 has one table per domain with ≥2 task labels, grouped by bold sub-headers, and names the single-task domains in one sentence. Cells follow the registry `headline`: median, `target (Δ delta)` or a plain number. Formatting per §5.7 (3 significant figures, signed 2-decimal Δ, whole-number counts, `<0.001`, `—`, U+2212). The footnote sizes come from `n_full`/`n_sample`, and the script emits all the fixed text. `--write` and `--check` operate between the markers. Output is deterministic, with no timestamps. Row names for the literature metrics live in the script's `NAMES` (a test checks coverage).
+- **Shared helper:** `github_slug()` and the section parser moved into `scripts/metric_docs.py`, used by both this script and `tests/test_metrics_doc.py` (the PRD asks for one shared slug helper).
+- **Output check:** on the committed results the cells match the PRD's prototype exactly (Coverage 0.704/0.913/…/0.650/0.906; FKGL `12.6 (Δ −1.60)`, `14.6 (Δ +1.80)`, `20.7 (Δ 0.00)`; BLEU `11.9`, `0.00`, `0.0184`; legal `7.60 (Δ −6.15)`), as does the footnote text.
+- **Tests:** `tests/test_label_tables.py` covers the known formatting answers, the layout on inline results, a multi-label metric in each table, the fixed text, domain splitting, row-name coverage and `--check` detecting a stale block. My first domain assertion was wrong (the inline biomedical datasets are all PLS) and was corrected before commit.
+- **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
+- **Next item:** add the markers to `RESULTS.md` once, run `--write`, and add the committed-block staleness test.
+- **DEFERRED:** none.
