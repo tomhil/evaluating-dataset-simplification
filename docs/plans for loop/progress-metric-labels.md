@@ -122,3 +122,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 436 passed. Two smoke runs byte-identical.
 - **Next item:** M2 `rouge_abstract_target`.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase C, item 3: M2 `rouge_abstract_target`
+
+- **Branch:** `feature/metric-labels-c`
+- **Item:** `abstractiveness.rouge_abstract_target.{rouge1_f1, rouge2_f1, rougeL_f1}`, the ROUGE F1 of `meta["abstract"]` against the target with clipped n-gram counts. It is Goldsack et al. 2022's ABSTRACT baseline; §5.2 reports ROUGE-1/2/L F1, so all three are emitted under the one key. Registry row 20 (PLS; needs `abstract`; headline is all three medians). Pairs without an abstract are null, and a note counts them. On the smoke corpus: `n = 0`, all `None`, with the note (the Phase C gate condition).
+- **Process fix:** the double-smoke check now runs into fixed directories and fails if either run fails. Before this, a crashed run could have compared two stale outputs. It caught nothing earlier: every earlier item's pytest passed, and pytest runs the pipeline.
+- **Result:** pass. `pytest -q`: 438 passed. Two smoke runs byte-identical.
+- **Next item:** M2 `abstract_content_overlap`.
+- **DEFERRED:** none.

@@ -31,6 +31,8 @@ ABSTRACTIVITY_P = 1
 LDA_TOPICS = 20
 LDA_SEED = 13
 
+ROUGE_F1_KEYS = ("rouge1_f1", "rouge2_f1", "rougeL_f1")
+
 # Literature metrics added after the original eleven, summarised after them.
 NEW_METRIC_COLS = [
     "abstractivity_p1",
@@ -206,6 +208,33 @@ def _topic_similarity(sources: list[str], targets: list[str]) -> tuple[list[floa
     return values, None
 
 
+def _rouge_f1(cand: list[str], ref: list[str]) -> dict:
+    """ROUGE-1/2/L F1 with clipped n-gram counts; F1 = 2*overlap / (|cand|+|ref|).
+    ROUGE-L is None above the LCS size cap, like rougeL_recall."""
+
+    def n_f1(n: int) -> float | None:
+        c, r = _ngrams(cand, n), _ngrams(ref, n)
+        if not c or not r:
+            return None
+        rc = Counter(r)
+        overlap = sum(min(k, rc[g]) for g, k in Counter(c).items())
+        return 2 * overlap / (len(c) + len(r))
+
+    lcs = _lcs_length(cand, ref) if cand and ref else None
+    return {
+        "rouge1_f1": n_f1(1),
+        "rouge2_f1": n_f1(2),
+        "rougeL_f1": (2 * lcs / (len(cand) + len(ref))) if lcs is not None else None,
+    }
+
+
+def _abstract(p: Pair) -> str | None:
+    """The pair's abstract, if its adapter supplied a non-empty one."""
+
+    text = p.meta.get("abstract") if p.meta else None
+    return text if isinstance(text, str) and text.strip() else None
+
+
 def _edit_features(source: str, target: str, src_sents: list[str], tgt_sents: list[str],
                    src_words: list[str], tgt_words: list[str]) -> dict:
     """EASSE / tseval edit features, applied to whole documents.
@@ -241,6 +270,12 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         tgt_content_types = set(tgt_content)
 
         coverage, density = _coverage_density(src_tokens, tgt_tokens)
+        abstract = _abstract(p)
+        abstract_rouge = (
+            _rouge_f1([t.lower() for t in proc.words(abstract)], tgt_tokens)
+            if abstract is not None
+            else dict.fromkeys(ROUGE_F1_KEYS)
+        )
         tgt_sents = proc.sentences(p.target)
         redundancy = _redundancy([[t.lower() for t in proc.words(sent)] for sent in tgt_sents])
         edits = _edit_features(
@@ -274,6 +309,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
                 "abstractivity_p1": _abstractivity(src_tokens, tgt_tokens, ABSTRACTIVITY_P),
                 **edits,
                 "redundancy": redundancy,
+                **{f"abstract_target_{k}": v for k, v in abstract_rouge.items()},
             }
         )
 
@@ -302,6 +338,12 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         corpus[name] = summarize(col(name), seed=ctx.seed, resamples=ctx.resamples).to_dict()
     for name in NEW_METRIC_COLS:
         corpus[name] = summarize(col(name), seed=ctx.seed, resamples=ctx.resamples).to_dict()
+    # Goldsack et al. (2022) ABSTRACT baseline: the abstract scored as a summary
+    # against the lay summary. Needs meta["abstract"]; null without it.
+    corpus["rouge_abstract_target"] = {
+        k: summarize(col(f"abstract_target_{k}"), seed=ctx.seed, resamples=ctx.resamples).to_dict()
+        for k in ROUGE_F1_KEYS
+    }
     corpus["density_histogram"] = histogram(col("density"))
     corpus["novel_1gram_histogram"] = histogram(col("novel_1gram"))
 
@@ -315,6 +357,12 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
 
     if topic_note:
         notes.append(topic_note)
+    n_no_abstract = sum(1 for p in pairs if _abstract(p) is None)
+    if n_no_abstract:
+        notes.append(
+            f"{n_no_abstract} of {len(pairs)} pair(s) have no abstract "
+            f"(meta['abstract']); the abstract-based metrics are null for them."
+        )
 
     params = {
         "rouge_orientation": "recall(candidate=target, reference=source) = overlap / |source n-grams|",

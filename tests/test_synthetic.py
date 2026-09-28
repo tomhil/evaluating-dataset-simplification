@@ -236,3 +236,20 @@ def test_entity_preservation(ctx):
     ep = plain.corpus["entity_preservation"]
     assert all(ep[k]["n"] == 0 and ep[k]["median"] is None for k in ep)
     assert any("no NER model" in n for n in plain.notes)
+
+
+def test_rouge_abstract_target(ctx):
+    """ROUGE F1 of abstract vs target: 1.0 when equal; None (with a note) without an abstract."""
+    with_abs = Pair("a", SOURCE_LONG, IDENTITY_TEXT, meta={"abstract": IDENTITY_TEXT})
+    half = Pair("b", SOURCE_LONG, "alpha beta", meta={"abstract": "alpha gamma"})
+    none = Pair("c", SOURCE_LONG, IDENTITY_TEXT)
+    res = _run(m2_abstractiveness, [with_abs, half, none], ctx)
+    rows = {r["id"]: r for r in res.per_pair}
+    assert rows["a"]["abstract_target_rouge1_f1"] == 1.0
+    assert rows["a"]["abstract_target_rouge2_f1"] == 1.0
+    assert rows["a"]["abstract_target_rougeL_f1"] == 1.0
+    assert rows["b"]["abstract_target_rouge1_f1"] == 0.5
+    assert rows["b"]["abstract_target_rouge2_f1"] == 0.0
+    assert rows["c"]["abstract_target_rouge1_f1"] is None
+    assert res.corpus["rouge_abstract_target"]["rouge1_f1"]["n"] == 2
+    assert any("have no abstract" in n for n in res.notes)
