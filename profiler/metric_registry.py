@@ -308,3 +308,25 @@ def metric_paths(modules: dict) -> list[str]:
     for name, block in modules.items():
         walk(block.get("corpus", {}), name)
     return out
+
+
+def metric_labels(modules: dict) -> dict[str, dict]:
+    """Literature labels for the metric paths present in this run.
+
+    A label says which task's literature uses a metric, never what the corpus
+    is. Keys are concrete paths, e.g. ``alignment.by_tau.0.40.source_coverage``.
+    """
+
+    out: dict[str, dict] = {}
+    for path in metric_paths(modules):
+        m = label_for(path)
+        if m is None:
+            continue
+        out[path] = {
+            "tasks": sorted(m.tasks),
+            "papers": [p.url for p in m.papers],
+            "contested_by": [p.url for p in m.contested_by],
+            "evidence": m.evidence,
+            "module": m.module,
+        }
+    return out

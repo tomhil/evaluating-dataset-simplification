@@ -33,3 +33,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 410 passed. Two smoke runs byte-identical.
 - **Next item:** "Metric labels" section at the end of `report.md`.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase A, item 5: "Metric labels" report section
+
+- **Branch:** `feature/metric-labels-a`
+- **Item:** `report.md` now ends with a `Metric labels` section: one table (metric · label · papers), one row per registry entry present in the run, with τ-parametrised keys listed once. The intro says labels describe the metrics, not the corpus. Existing sections are untouched. `metric_labels()` moved into `profiler/metric_registry.py` so `run.py` and `report.py` share it.
+- **Result:** pass. `pytest -q`: 411 passed (existing report tests included). Two smoke runs byte-identical.
+- **Phase A gate:** passed. No-regression and registry-coverage tests are green. Pushed `feature/metric-labels-a` and opened the Phase A PR.
+- **Next item:** Phase B. M1 `char_compression_ratio` on branch `feature/metric-labels-b`.
+- **DEFERRED:** none.

@@ -53,3 +53,19 @@ def test_existing_top_level_blocks_unchanged(metrics):
         if key in ("config", "modules"):  # modules: see test_no_regression
             continue
         assert metrics[key] == BASELINE[key], key
+
+
+def test_report_ends_with_metric_labels_section(tmp_path):
+    raw = yaml.safe_load((REPO / "configs" / "smoke.yaml").read_text())
+    raw["dataset"]["path"] = str(REPO / raw["dataset"]["path"])
+    raw["run"]["cache_dir"] = str(tmp_path / "cache")
+    out = run(parse_config(raw), output_dir=tmp_path / "run")
+    text = (out / "report.md").read_text()
+    section = text[text.index("## Metric labels"):]
+    assert "## " not in section[len("## Metric labels"):], "Metric labels must be the last section"
+    assert "not this corpus" in section
+    assert "| `readability.m3a_surface.fkgl` | DS, PLS |" in section
+    assert "contested: [Tanprasert & Kauchak 2021]" in section
+    # A τ-parametrised metric is listed once, by its registry key.
+    assert section.count("alignment.by_tau.*.source_coverage") == 1
+    assert "| `abstractiveness.rouge1_recall` | project-specific | — |" in section
