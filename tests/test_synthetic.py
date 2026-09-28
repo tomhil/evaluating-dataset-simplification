@@ -143,3 +143,13 @@ def test_edit_features(ctx):
     words = _run(m2_abstractiveness, [Pair("id", "a b c d", "a b c e")], ctx).per_pair[0]
     assert words["additions_proportion"] == 0.25
     assert words["deletions_proportion"] == 0.25
+
+
+def test_redundancy(ctx):
+    """Mean pairwise ROUGE-L F1 of target sentences; None below two sentences."""
+    rep = "The frog is blue. The frog is blue."
+    assert _run(m2_abstractiveness, [Pair("id", IDENTITY_TEXT, rep)], ctx).per_pair[0]["redundancy"] == 1.0
+    disjoint = "Alpha beta gamma. Delta epsilon zeta."
+    assert _run(m2_abstractiveness, [Pair("id", IDENTITY_TEXT, disjoint)], ctx).per_pair[0]["redundancy"] == 0.0
+    one = "Just one sentence here."
+    assert _run(m2_abstractiveness, [Pair("id", IDENTITY_TEXT, one)], ctx).per_pair[0]["redundancy"] is None

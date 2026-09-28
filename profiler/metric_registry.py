@@ -159,6 +159,9 @@ _LITERATURE: tuple[MetricLabel, ...] = (
          direction="↑ more words deleted"),
     _lit("abstractiveness.levenshtein_similarity", {"DS"}, (MARTIN_2018, ASSET_2020),
          direction="↑ closer to source text"),
+    # Row 24
+    _lit("abstractiveness.redundancy", {"SUM"}, (BOMMASANI_2020,), needs="target",
+         direction="↑ more repetitive target"),
     # Row 5
     *(
         _lit(f"abstractiveness.novel_{n}gram", {"SUM", "PLS"}, (NARAYAN_2018, GOLDSACK_2022),

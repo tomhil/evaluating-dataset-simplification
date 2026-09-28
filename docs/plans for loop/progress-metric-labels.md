@@ -68,3 +68,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 420 passed (includes `test_declared_dependencies`). Two smoke runs byte-identical.
 - **Next item:** M2 `redundancy`.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase B, item 4: M2 `redundancy`
+
+- **Branch:** `feature/metric-labels-b`
+- **Item:** `abstractiveness.redundancy` = mean ROUGE-L F1 (2·LCS / (|a|+|b|)) over all pairs of distinct target sentences (Bommasani & Cardie §3, read in item 2). `None` below two sentences. It reuses M2's LCS with its existing size cap. Registry row 24 (SUM; needs `target`). Known answers: repeated sentence 1.0, disjoint 0.0, one sentence `None`.
+- **Cost note:** quadratic in target sentences. Cheap for short summaries, noticeable for full-article targets (SWiPE).
+- **Result:** pass. `pytest -q`: 422 passed. Two smoke runs byte-identical.
+- **Next item:** M2 `topic_similarity` (LDA).
+- **DEFERRED:** none.

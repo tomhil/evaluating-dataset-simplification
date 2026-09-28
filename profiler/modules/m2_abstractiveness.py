@@ -33,6 +33,7 @@ NEW_METRIC_COLS = [
     "exact_copies",
     "additions_proportion",
     "deletions_proportion",
+    "redundancy",
 ]
 
 
@@ -153,6 +154,24 @@ def _rouge_recall(tgt_tokens: list[str], src_tokens: list[str]) -> dict:
     return {"rouge1": n_recall(1), "rouge2": n_recall(2), "rougeL": rouge_l}
 
 
+def _redundancy(tgt_sent_tokens: list[list[str]]) -> float | None:
+    """Bommasani & Cardie (2020): mean ROUGE-L F1 over all pairs of distinct
+    summary sentences. F1 of an LCS is 2*lcs / (|a| + |b|). None below two
+    sentences, or if every pair exceeds the LCS size cap."""
+
+    sents = [t for t in tgt_sent_tokens if t]
+    if len(sents) < 2:
+        return None
+    scores: list[float] = []
+    for i in range(len(sents)):
+        for j in range(i + 1, len(sents)):
+            lcs = _lcs_length(sents[i], sents[j])
+            if lcs is None:
+                continue
+            scores.append(2 * lcs / (len(sents[i]) + len(sents[j])))
+    return sum(scores) / len(scores) if scores else None
+
+
 def _edit_features(source: str, target: str, src_sents: list[str], tgt_sents: list[str],
                    src_words: list[str], tgt_words: list[str]) -> dict:
     """EASSE / tseval edit features, applied to whole documents.
@@ -188,8 +207,10 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         tgt_content_types = set(tgt_content)
 
         coverage, density = _coverage_density(src_tokens, tgt_tokens)
+        tgt_sents = proc.sentences(p.target)
+        redundancy = _redundancy([[t.lower() for t in proc.words(sent)] for sent in tgt_sents])
         edits = _edit_features(
-            p.source, p.target, proc.sentences(p.source), proc.sentences(p.target),
+            p.source, p.target, proc.sentences(p.source), tgt_sents,
             proc.words(p.source), proc.words(p.target),
         )
         rouge = _rouge_recall(tgt_tokens, src_tokens)
@@ -218,6 +239,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
                 "content_type_overlap": type_overlap,
                 "abstractivity_p1": _abstractivity(src_tokens, tgt_tokens, ABSTRACTIVITY_P),
                 **edits,
+                "redundancy": redundancy,
             }
         )
 
