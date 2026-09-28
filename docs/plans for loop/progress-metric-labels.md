@@ -355,3 +355,18 @@ Started by `/loop`: fix the analysed review findings, then re-review until no ma
 - **#10 duplicated abstract rule:** new `Pair.abstract()`, used by M2 and M5. The `Pair` docstring now names both modules.
 - **Result:** pass. Full `pytest -q` green with HF offline. Two smoke runs byte-identical (the no-regression test confirms baseline leaves unchanged). `label_tables.py --check RESULTS.md` exits 0.
 - **Next:** re-run `/code-review` on `main...feature/metric-labels-f`.
+
+
+## 2026-09-28 — Review loop, pass 2
+
+The re-review of `main...feature/metric-labels-f` returned 9 findings. Triage, checked against the code:
+
+- **Fixed (major).** Document-level SummaC used the stand-in whenever `nli_backend: lexical`, even with `summac: true` and the real model loaded for the sentence scorer. The real model now wins whenever it is requested and M5 runs optional scorers (not `heuristic_only`). Test uses a fake summac.
+- **Fixed (major).** `label_tables.py` rendered stand-in values as the published metrics. `STAND_IN_RECORDS` maps each stand-in-capable metric to its `*_run` record, and a `:stand-in` value is shown as `—`. Tests cover a stand-in run (dashes), a real run (values) and records ⊆ registry.
+- **Fixed (major).** The entity cache was an unbounded dict keyed by full text that survived across corpora in one process. It is now keyed by SHA-1 and bounded LRU (8,192 entries).
+- **Fixed (minor).** Abstract content overlap re-parsed each abstract per sentence and each target once more. It now makes one `analyze_sentence(abstract)` parse and reuses the main loop's target words.
+- **Fixed (minor, latent).** The registry marked M7 as sample-based, but M7 runs on the full corpus. `SAMPLE_MODULES` = {M4, M5, M6, M8}; M3d entries set it themselves. A test ties it to `run.EXPENSIVE`.
+- **Fixed (minor).** Stand-in notes always said "nli_backend=lexical". `stand_in_reason()` names `heuristic_only` when that is the cause. Tested.
+- **Not fixed; not bugs:** (5) document-level SummaC on cpu (it shares the existing scorer's cpu instance; moving the existing scorer's device would change an existing computation); (6) NSP coherence is not batched; (7) M3d sits in the full-corpus M3 module rather than the sample phase (a placement choice the PRD made: "M3 runs on the full corpus, but its new m3d_model_based block must run on the sample"). All three are performance or placement, recorded for follow-up.
+- **Result:** pass. Full `pytest -q`: 922 passed, 2 skipped, HF offline. Two smoke runs byte-identical. `label_tables.py --check` exits 0.
+- **Next:** review pass 3.

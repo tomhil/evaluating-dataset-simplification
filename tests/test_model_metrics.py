@@ -241,3 +241,19 @@ def test_model_metrics_flag_disables_m3d_and_roles(monkeypatch):
 
 def test_model_metrics_defaults_on():
     assert _ctx().config.run.model_metrics is True
+
+
+def test_requested_summac_wins_over_the_stand_in(fake_summac):
+    # nli_backend=lexical (stand-in settings) but SummaC requested and loadable:
+    # document level must use the real model, as the sentence scorer does.
+    res = _m5([Pair("a", TEXT_A, TEXT_B)], _ctx(summac=True))
+    assert res.corpus["document_level"]["scorers_run"] == ["summac"]
+    assert "summac_conv" in res.corpus["per_scorer"]
+    assert not any("document_level SummaC uses an offline" in n for n in res.notes)
+
+
+def test_stand_in_notes_name_the_setting_that_selected_them():
+    ctx = _ctx(heuristic_only=True, nli_backend="nli", sample_size=4)
+    res = m3_readability.compute(_pairs(6), ctx)
+    assert any("stand-ins (heuristic_only)" in n for n in res.notes)
+    assert not any("nli_backend=lexical" in n for n in res.notes)

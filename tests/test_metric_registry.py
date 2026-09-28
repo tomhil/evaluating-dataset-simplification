@@ -125,3 +125,15 @@ def test_pairwise_agreement_is_labelled():
     modules = {"elaboration": {"corpus": {"pairwise_agreement": {
         "nli_vs_summac_conv": {"label_agreement": 0.8, "pearson": 0.5}}}}}
     assert all(label_for(p) is not None for p in metric_paths(modules))
+
+
+def test_sample_based_matches_the_run_populations():
+    from profiler.run import CHEAP, EXPENSIVE
+
+    sample_modules = {MODULE_IDS[name] for name in EXPENSIVE}
+    for m in REGISTRY:
+        if m.key.startswith("readability.m3d_model_based."):
+            assert m.sample_based, m.key  # the one sample block inside a cheap module
+        else:
+            assert m.sample_based == (m.module in sample_modules), m.key
+    assert "M7" not in sample_modules and "linguistic_features" in CHEAP

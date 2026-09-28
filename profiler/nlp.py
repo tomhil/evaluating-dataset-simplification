@@ -15,7 +15,9 @@ Modules always go through :func:`get_processor`; nothing imports spaCy directly.
 
 from __future__ import annotations
 
+import collections
 import functools
+import hashlib
 
 import re
 import warnings
@@ -149,6 +151,9 @@ class SimpleProcessor:
 
 
 _DOC_CACHE = 64
+# Entity lists kept per processor: enough for a 1,000-pair corpus's sources and
+# targets several times over, so M4's sample always finds what M7 extracted.
+_ENTITY_CACHE = 8192
 
 # Distinguishes "not built yet" from "built and unavailable", so a failed load
 # is not retried on every call.
@@ -197,7 +202,10 @@ class SpacyProcessor:
         # entity matching (sample) ask for the same texts, and the lists are
         # tiny next to a parse. Whether NER exists is remembered too, so M4
         # can ask after release() without rebuilding the pipeline.
-        self._entity_cache: dict[str, list[tuple[str, int]]] = {}
+        # Keyed by a hash, not the text, and bounded, so a process that
+        # profiles several corpora (the processor is lru_cached) holds neither
+        # the texts nor an unbounded number of entries.
+        self._entity_cache: collections.OrderedDict[str, list[tuple[str, int]]] = collections.OrderedDict()
         self._ner_known: bool | None = None
 
     def _parse(self, text: str):
@@ -250,14 +258,18 @@ class SpacyProcessor:
         each text goes through NER at most once per run.
         """
 
-        cached = self._entity_cache.get(text)
+        key = hashlib.sha1(text.encode("utf-8")).hexdigest()
+        cached = self._entity_cache.get(key)
         if cached is not None:
+            self._entity_cache.move_to_end(key)
             return list(cached)
         ner = self._ner_pipe()
         if ner is None:
             return []
         ents = [(e.text.lower(), e.start) for e in ner(text).ents]
-        self._entity_cache[text] = ents
+        self._entity_cache[key] = ents
+        if len(self._entity_cache) > _ENTITY_CACHE:
+            self._entity_cache.popitem(last=False)
         return list(ents)
 
     def ner_available(self) -> bool:

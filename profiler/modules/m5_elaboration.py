@@ -202,19 +202,23 @@ def _document_level(pairs: Sequence[Pair], ctx: Context) -> tuple[dict, dict[str
     notes: list[str] = []
     scorers_run: list[str] = []
     summac = None
-    if mm.use_stand_ins(ctx.config):
-        summac = mm.summac_doc_stand_in
-        scorers_run.append("summac:stand-in")
-        notes.append(
-            "document_level SummaC uses an offline content-word stand-in "
-            "(nli_backend=lexical); it is not the published metric."
-        )
-    elif ctx.config.run.summac:
+    # Real SummaC whenever it is requested and M5 runs its optional scorers
+    # (i.e. not heuristic_only) -- the same condition that loads the
+    # sentence-level SummaC -- so a run never publishes the stand-in under the
+    # SummaC keys while the real model is loaded next to it.
+    if ctx.config.run.summac and not ctx.config.run.heuristic_only:
         summac, note = mm.try_load("SummaC (document level)", lambda: mm.load_summac_doc(ctx.config.run.device))
         if summac is not None:
             scorers_run.append("summac")
         else:
             notes.append(note)
+    elif mm.use_stand_ins(ctx.config):
+        summac = mm.summac_doc_stand_in
+        scorers_run.append("summac:stand-in")
+        notes.append(
+            "document_level SummaC uses an offline content-word stand-in "
+            f"({mm.stand_in_reason(ctx.config)}); it is not the published metric."
+        )
     else:
         notes.append("document_level SummaC not requested (run.summac is false); its keys are null.")
     notes.append(mm.QAFACTEVAL_DEFERRED)
@@ -258,7 +262,7 @@ def _rhetorical_roles(
     elif mm.use_stand_ins(ctx.config):
         classify, models_run = mm.rct_stand_in, ["pubmed_rct:stand-in"]
         notes.append(
-            "rhetorical_roles uses an offline keyword stand-in (nli_backend=lexical); "
+            f"rhetorical_roles uses an offline keyword stand-in ({mm.stand_in_reason(ctx.config)}); "
             "it is not the published classifier."
         )
     else:

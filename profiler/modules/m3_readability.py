@@ -419,7 +419,7 @@ def _model_based(pairs: Sequence[Pair], ctx: Context) -> tuple[dict, list[dict],
         sle, is_next = mm.sle_stand_in, mm.nsp_stand_in
         models_run = ["sle:stand-in", "coherence:stand-in"]
         notes.append(
-            "m3d_model_based uses offline stand-ins (nli_backend=lexical): SLE is a "
+            f"m3d_model_based uses offline stand-ins ({mm.stand_in_reason(ctx.config)}): SLE is a "
             "sentence-length proxy and coherence a content-word-overlap proxy. These "
             "are not the published metrics."
         )

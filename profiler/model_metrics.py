@@ -32,6 +32,12 @@ def use_stand_ins(config) -> bool:
     return config.run.nli_backend == "lexical" or bool(config.run.heuristic_only)
 
 
+def stand_in_reason(config) -> str:
+    """Which smoke setting selected the stand-ins, for the notes."""
+
+    return "heuristic_only" if config.run.heuristic_only else "nli_backend=lexical"
+
+
 def disabled_note(what: str) -> str:
     return f"{what} not computed: run.model_metrics is false, so its model is not loaded; keys are null."
 

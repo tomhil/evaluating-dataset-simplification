@@ -101,6 +101,11 @@ ALLOWED_PAPER_URLS: frozenset[str] = frozenset(
 
 PAIRED = ("target.median", "delta.median")
 
+# Modules run on the seeded sample (run.py's EXPENSIVE group). M7 is in the
+# cheap, full-corpus group. M3's m3d_model_based entries set sample_based
+# themselves: that block alone runs on the sample.
+SAMPLE_MODULES = frozenset({"M4", "M5", "M6", "M8"})
+
 
 def _caveats(tasks: frozenset[str], faithfulness: bool = False) -> tuple[Paper, ...]:
     out: list[Paper] = []
@@ -116,7 +121,7 @@ def _caveats(tasks: frozenset[str], faithfulness: bool = False) -> tuple[Paper, 
 def _lit(key: str, tasks: set[str], papers: tuple[Paper, ...], *, faithfulness: bool = False, **kw) -> MetricLabel:
     t = frozenset(tasks)
     module = MODULE_IDS[key.split(".", 1)[0]]
-    kw.setdefault("sample_based", module in {"M4", "M5", "M6", "M7", "M8"})
+    kw.setdefault("sample_based", module in SAMPLE_MODULES)
     return MetricLabel(
         key=key, module=module, tasks=t, papers=papers,
         caveats=_caveats(t, faithfulness), **kw,
@@ -125,7 +130,7 @@ def _lit(key: str, tasks: set[str], papers: tuple[Paper, ...], *, faithfulness: 
 
 def _proj(key: str, **kw) -> MetricLabel:
     module = MODULE_IDS[key.split(".", 1)[0]]
-    kw.setdefault("sample_based", module in {"M4", "M5", "M6", "M7", "M8"})
+    kw.setdefault("sample_based", module in SAMPLE_MODULES)
     return MetricLabel(
         key=key, module=module, tasks=frozenset(), papers=kw.pop("papers", ()),
         evidence="project-specific", **kw,

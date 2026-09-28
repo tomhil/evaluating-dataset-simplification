@@ -206,3 +206,23 @@ def test_empty_results_is_a_clear_error_not_a_crash(tmp_path, capsys):
     assert "no results" in capsys.readouterr().err
     with pytest.raises(ValueError):
         lt.render({})
+
+
+def test_stand_in_values_are_never_shown_as_the_metric():
+    stand_in = {"n_full": 10, "n_sample": 10, "modules": {"readability": {"corpus": {"m3d_model_based": {
+        "models_run": ["sle:stand-in", "coherence:stand-in"],
+        "sle_gain": _summary(0.4),
+        "semantic_coherence": _summary(0.9),
+    }}}}}
+    real = json.loads(json.dumps(stand_in))
+    real["modules"]["readability"]["corpus"]["m3d_model_based"]["models_run"] = ["sle", "coherence"]
+    by_key = {m.key: m for m in REGISTRY}
+    gain = by_key["readability.m3d_model_based.sle_gain"]
+    coh = by_key["readability.m3d_model_based.semantic_coherence"]
+    assert lt.cell(stand_in, gain) == "—" and lt.cell(stand_in, coh) == "—"
+    assert lt.cell(real, gain) == "0.400" and lt.cell(real, coh) == "0.900"
+
+
+def test_every_stand_in_record_points_at_a_registered_metric():
+    keys = {m.key for m in REGISTRY}
+    assert set(lt.STAND_IN_RECORDS) <= keys

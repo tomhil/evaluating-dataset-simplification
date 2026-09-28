@@ -141,9 +141,30 @@ def metric_node(result: dict, key: str):
     return _get(result.get("modules", {}).get(module, {}).get("corpus", {}), rest)
 
 
+# Metrics with an offline stand-in: where the run records which model produced
+# them, and that model's name there. A value produced by a stand-in is not the
+# published metric, so it is shown as missing, never as the metric.
+STAND_IN_RECORDS = {
+    "readability.m3d_model_based.sle_doc": ("readability.m3d_model_based.models_run", "sle"),
+    "readability.m3d_model_based.sle_gain": ("readability.m3d_model_based.models_run", "sle"),
+    "readability.m3d_model_based.semantic_coherence": ("readability.m3d_model_based.models_run", "coherence"),
+    "elaboration.document_level.summac_precision": ("elaboration.document_level.scorers_run", "summac"),
+    "elaboration.document_level.summac_recall": ("elaboration.document_level.scorers_run", "summac"),
+    "elaboration.rhetorical_roles": ("elaboration.rhetorical_roles.models_run", "pubmed_rct"),
+}
+
+
+def from_stand_in(result: dict, key: str) -> bool:
+    record = STAND_IN_RECORDS.get(key)
+    if record is None:
+        return False
+    run_list = metric_node(result, record[0]) or []
+    return f"{record[1]}:stand-in" in run_list
+
+
 def cell(result: dict, m: MetricLabel) -> str:
     node = metric_node(result, m.key)
-    if node is None:
+    if node is None or from_stand_in(result, m.key):
         return EMPTY
     if m.headline == ():
         return fmt_value(node if not isinstance(node, dict) else None, m.fmt)

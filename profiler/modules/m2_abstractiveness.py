@@ -266,7 +266,9 @@ def _bucket(count: int) -> str:
     raise ValueError(count)
 
 
-def _abstract_content_overlap(pairs: Sequence[Pair], proc) -> tuple[list[dict], str | None]:
+def _abstract_content_overlap(
+    pairs: Sequence[Pair], proc, target_words: list[set[str]]
+) -> tuple[list[dict], str | None]:
     """Per pair: the share of the abstract's distinct content words that also
     appear in the target -- overall, per abstract-count bucket, and per word
     type. Needs a POS tagger; without one every value is None and a note says so.
@@ -290,19 +292,18 @@ def _abstract_content_overlap(pairs: Sequence[Pair], proc) -> tuple[list[dict], 
             content.append(None)
             continue
         words: dict[str, str] = {}
-        for sent in proc.sentences(abstract):
-            for tok in proc.analyze_sentence(sent):
-                kind = CONTENT_POS.get(tok.pos)
-                if kind:
-                    words.setdefault(tok.text.lower(), kind)
+        # One parse of the whole abstract; its tokens carry the POS tags.
+        for tok in proc.analyze_sentence(abstract):
+            kind = CONTENT_POS.get(tok.pos)
+            if kind:
+                words.setdefault(tok.text.lower(), kind)
         content.append(words)
         doc_freq.update(words.keys())
 
     rows: list[dict] = []
-    for p, words in zip(pairs, content):
+    for words, target in zip(content, target_words):
         row = dict(empty)
         if words:
-            target = {t.lower() for t in proc.words(p.target)}
 
             def share(ws: list[str]) -> float | None:
                 return (sum(1 for w in ws if w in target) / len(ws)) if ws else None
@@ -343,11 +344,13 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     proc = ctx.processor
     per_pair: list[dict] = []
 
+    target_word_sets: list[set[str]] = []
     for p in progress.track(pairs, "M2 abstractiveness"):
         src_words = proc.words(p.source)
         tgt_words = proc.words(p.target)
         src_tokens = [t.lower() for t in src_words]
         tgt_tokens = [t.lower() for t in tgt_words]
+        target_word_sets.append(set(tgt_tokens))
         src_content = {t.lower() for t in proc.content_words(p.source)}
         tgt_content = [t.lower() for t in proc.content_words(p.target)]
         tgt_content_types = set(tgt_content)
@@ -398,7 +401,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             }
         )
 
-    overlap_rows, overlap_note = _abstract_content_overlap(pairs, proc)
+    overlap_rows, overlap_note = _abstract_content_overlap(pairs, proc, target_word_sets)
     for row, overlap in zip(per_pair, overlap_rows):
         row.update({f"abstract_overlap_{k}": v for k, v in overlap.items()})
 

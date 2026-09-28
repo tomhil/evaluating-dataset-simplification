@@ -1193,9 +1193,10 @@ source.
 
 **Implementation notes.** SummaC runs when `run.summac` is set, with the same
 configuration as the sentence-level scorer, released weights included, and the
-same model instance (on cpu), so SummaC is loaded once per run; under the smoke settings an offline
-content-word stand-in is used and flagged in `document_level.scorers_run` and
-`notes`. **QAFactEval is deferred**: its package fails to build against the core
+same model instance (on cpu), so SummaC is loaded once per run. When SummaC is
+not requested, the smoke settings use an offline content-word stand-in, flagged
+in `document_level.scorers_run` and `notes`; the label tables never show a
+stand-in value. **QAFactEval is deferred**: its package fails to build against the core
 dependencies, so its keys are null with a note in every run.
 
 ### `elaboration.document_level.summac_recall`, `elaboration.document_level.qafacteval_recall` — Document-level faithfulness, recall
