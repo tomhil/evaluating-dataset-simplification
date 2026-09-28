@@ -221,3 +221,13 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q` full suite green. Two smoke runs byte-identical.
 - **Next item:** M3 sections and M3 page.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 3: M3 docs
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** 11 M3 sections covering all 24 M3 registry keys; M3b's lexical and syntactic features each share one section, with a `**Keys:**` line. `docs/modules/m3-readability.md` restructured per §6.2, including the new M3d block. `DOCUMENTED` includes M3.
+- **Moved paragraphs (M3 page → metrics.md):** M3a table rows → the `fkgl`, `fre`, `cli`/`dcrs` and `ari`/`smog` sections. "SMOG's minimum length" → the `ari`/`smog` section. M3b "Lexical" bullets → lexical length-invariant measures; M3b "Syntactic" bullets and the "these four plus sentence_ratio" paragraph → syntactic length-invariant measures. The whole of "M3c — Length-matched decomposition", "How to read share_attributable", "Its instability…" and "share_attributable_corpus — the field to read" → `readability.m3c_decomposition.*`. "These are weak instruments", the textstat pin, "Notes this module emits", "Reading it" and the glossary stay on the page, the glossary now linked.
+- **Correction (not a deletion):** the moved M3c paragraph said "This is the same distinction M1 draws between its per-pair compression mean and its corpus-level ratio". M1 has no corpus-level ratio in code, so that clause was dropped from the moved text (the M1 section says so explicitly).
+- **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
+- **Next item:** M4 sections and M4 page.
+- **DEFERRED:** none.

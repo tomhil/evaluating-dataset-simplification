@@ -469,3 +469,311 @@ words. **This metric cannot tell those apart**; M5 is what separates added
 content from reworded content.
 
 **Implementation notes.** None.
+
+## M3 — Readability
+
+### `readability.m3a_surface.fkgl` — Flesch–Kincaid Grade Level
+
+**Label:** PLS, DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** The US school grade needed to read the text.
+
+**How it works.** `textstat` 0.7.3's FKGL, from words per sentence and
+syllables per word, with sentences segmented by the shared `Processor`.
+Reported as `source`, `target`, and a **paired** `delta` (target − source, with
+a paired bootstrap that resamples rows jointly). `None` for empty text.
+
+**How to read it.** US grade; **lower = easier**. It takes sentence length as a
+direct input, so it falls when a text is merely shortened, with no lexical or
+syntactic simplification (Tanprasert & Kauchak 2021). A negative FKGL delta on
+its own demonstrates nothing; read it against M3c's decomposition. The
+literature table quotes FKGL for Cochrane, PLOS and eLife.
+
+**Papers.** [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/); [BioLaySumm 2024](https://arxiv.org/pdf/2408.08566); [Cripwell et al. 2023](https://arxiv.org/pdf/2305.06274). **Contested by.** [Tanprasert & Kauchak 2021](https://aclanthology.org/2021.gem-1.1). **Caveats.** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
+
+**Implementation notes.** `textstat` is pinned to 0.7.3; see the module page.
+
+### `readability.m3a_surface.fre` — Flesch Reading Ease
+
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** Reading ease on a 0–100 scale.
+
+**How it works.** `textstat`'s FRE; source, target and paired delta, as for FKGL.
+
+**How to read it.** 0–100; **higher = easier** (inverted vs. the other
+formulas). Shares FKGL's inputs and its length confound.
+
+**Papers.** [Alva-Manchego et al. 2021](https://aclanthology.org/2021.cl-4.28). **Contested by.** [Tanprasert & Kauchak 2021](https://aclanthology.org/2021.gem-1.1).
+
+**Implementation notes.** As for FKGL.
+
+### `readability.m3a_surface.cli`, `readability.m3a_surface.dcrs` — Coleman–Liau Index and Dale–Chall Readability Score
+
+**Label:** PLS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** Two surface grade estimates: CLI from word and sentence length
+in characters, DCRS from the share of words outside a familiar-word list.
+
+**How it works.** `textstat`'s `coleman_liau_index` and
+`dale_chall_readability_score`; source, target and paired delta.
+
+**How to read it.** **Lower = easier** for both. Goldsack et al. report DCRS as
+their measure of lexical complexity and CLI alongside FKGL.
+
+**Papers.** [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/); [BioLaySumm 2024](https://arxiv.org/pdf/2408.08566). **Caveats.** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
+
+**Implementation notes.** As for FKGL.
+
+### `readability.m3a_surface.ari`, `readability.m3a_surface.smog` — Automated Readability Index and SMOG
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** Two more surface grade estimates: ARI from characters per word
+and words per sentence, SMOG from multi-syllable words.
+
+**How it works.** `textstat`'s `automated_readability_index` and `smog_index`;
+source, target and paired delta.
+
+**How to read it.** Grade; **lower = easier**.
+
+**SMOG's minimum length.** `textstat.smog_index` returns `0.0`, not an error,
+for text with fewer than three sentences. 0.0 is a valid SMOG grade, so that
+sentinel read as a measured score: every XSum target is a single sentence, and
+the run reported a paired delta of −11.31 — a fabricated eleven-grade
+improvement, which M3c then decomposed. `smog` is now `None` below three
+sentences, so a corpus of single-sentence targets reports no SMOG rather than a
+wrong one, and `n` on the smog fields will be lower than on the other measures.
+Cochrane loses 31 of 1000 pairs this way and its delta moves from −1.85 to −1.40.
+
+**Implementation notes.** As for FKGL.
+
+### `readability.m3b_length_invariant.mean_zipf` and related — Lexical length-invariant measures
+
+**Keys:** `readability.m3b_length_invariant.mean_zipf`, `readability.m3b_length_invariant.rare_word_rate`, `readability.m3b_length_invariant.syllables_per_word`, `readability.m3b_length_invariant.mtld`, `readability.m3b_length_invariant.jargon_rate`
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** Five lexical measures that take no sentence or document length
+as input, each reported as `source`, `target`, `delta`.
+
+**How it works.**
+
+- **`mean_zipf`** — mean Zipf frequency of content words from `wordfreq`
+  (log-scale; ~7 = very common, ~1 = very rare). Requires `wordfreq`.
+- **`rare_word_rate`** — proportion of content tokens outside the top-3,000
+  English words. Range 0–1.
+- **`syllables_per_word`** — heuristic vowel-group count with a silent-e
+  adjustment, implemented locally (`readability.count_syllables`) rather than
+  taken from a formula library, so it stays deterministic and offline.
+- **`mtld`** — Measure of Textual Lexical Diversity (McCarthy & Jarvis 2010),
+  threshold 0.72, averaged over a forward and a backward pass. **This is the
+  length-robust replacement for type-token ratio**, which is the whole reason
+  it's here: raw TTR falls mechanically as texts get longer, so it cannot be
+  compared between a long source and a short target. `None` for texts under 10
+  tokens.
+- **`jargon_rate`** — fraction of content tokens matching the configured
+  `jargon_terms` list. **`None` when no list is supplied** — the measure is
+  undefined without a domain vocabulary, deliberately not zero.
+
+**How to read it.** `mean_zipf`: **higher = more common vocabulary = easier**; a
+*positive* delta means the target uses commoner words. `rare_word_rate`: lower
+= easier; a negative delta means rarer vocabulary was removed or replaced.
+`syllables_per_word`: lower = easier. `mtld`: higher = more varied wording.
+`jargon_rate`: for cross-corpus comparison, supply one shared list to every
+corpus rather than tuning per domain.
+
+**Implementation notes.** `mean_zipf`, `syllables_per_word`, `mtld` and
+`rare_word_rate` also feed M3c's decomposition.
+
+### `readability.m3b_length_invariant.mean_dependency_distance` and related — Syntactic length-invariant measures
+
+**Keys:** `readability.m3b_length_invariant.mean_dependency_distance`, `readability.m3b_length_invariant.mean_parse_depth`, `readability.m3b_length_invariant.subordinate_clause_ratio`, `readability.m3b_length_invariant.passive_rate`
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** Four syntactic measures from a dependency parse, each reported
+as `source`, `target`, `delta`.
+
+**How it works.** Null unless spaCy is available (the module emits a note when
+it isn't).
+
+- **`mean_dependency_distance`** — mean `|token index − head index|`.
+- **`mean_parse_depth`** — max depth from any node to its root, averaged over
+  sentences. The traversal carries a `seen` set so a malformed cyclic parse
+  terminates instead of recursing forever.
+- **`subordinate_clause_ratio`** — fraction of sentences containing any of
+  `advcl, ccomp, xcomp, acl, relcl, csubj, csubjpass`.
+- **`passive_rate`** — fraction of sentences containing any of `nsubjpass,
+  auxpass, nsubj:pass, aux:pass, csubjpass` (both spaCy and UD label spellings).
+
+**How to read it.** Dependency distance: lower = flatter, more local structure =
+easier to process. Parse depth: lower = less nesting. A negative
+`subordinate_clause_ratio` delta is direct evidence of **clause unnesting**, one
+of the core sentence-level simplification operations. These four plus M1's
+`sentence_ratio` are where sentence-level simplification shows up in a
+document-level profile.
+
+**Implementation notes.** None.
+
+### `readability.m3b_length_invariant.wordrank` — WordRank
+
+**Label:** PLS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** How rare a text's words are, sentence by sentence.
+
+**How it works.** Martin et al. (2020): per sentence, the third quartile of the
+log frequency-ranks of all its words; the document value is the mean over
+sentences. Reported as `source`, `target`, `delta`.
+
+**How to read it.** Lower = more frequent words = lexically simpler; a negative
+delta means the target uses commoner words. Not a length input, so it does not
+fall with truncation.
+
+**Papers.** [Martin et al. 2020](https://aclanthology.org/2020.lrec-1.577/); [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/). **Caveats.** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
+
+**Implementation notes.** Ranks come from `wordfreq.top_n_list("en", 100_000)`
+(rank 1 = most frequent; unknown words rank 100,001; lowercased; natural log),
+not the paper's FastText ranks, so values compare across corpora in this
+pipeline but not with published numbers. Not in M3c's decomposition.
+
+### `readability.m3b_length_invariant.lexical_complexity` — Lexical complexity
+
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** How rare a text's content words are, weighting the rarest most.
+
+**How it works.** ASSET's definition: the mean squared log-rank of content words
+(stopwords removed), using M3b's content-word extraction. Reported as `source`,
+`target`, `delta`.
+
+**How to read it.** Lower = simpler vocabulary. Squaring makes a few very rare
+words count heavily.
+
+**Papers.** [Martin et al. 2018](https://aclanthology.org/W18-7005/); [ASSET 2020](https://arxiv.org/html/2005.00481).
+
+**Implementation notes.** wordfreq ranks as for WordRank (ASSET used the 50k
+most frequent FastText words). The definition is ASSET's; Martin et al. 2018 has
+no feature of this form, and EASSE's reference "lexical complexity score" is a
+WordRank-style quantile instead. Not in M3c's decomposition.
+
+### `readability.m3c_decomposition.*` — Length-matched decomposition
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** The module's headline. It answers: **of the readability
+change actually observed, how much survives when length is held constant?**
+
+**How it works.** For each pair, two length-matched controls are built from the
+source at a budget of `len(target words)`:
+
+- **LEAD-k** — take source sentences in order until the budget is hit. The
+  trivial-truncation baseline. Reported for reference; not used in the ratio.
+- **EXT-ORACLE-k** — greedily select source sentences maximising ROUGE-1 +
+  ROUGE-2 recall against the target, up to the budget. This is the strongest
+  *purely extractive* text of the target's length: it selects the same content
+  the target covers, without rewriting a word. It is the control the
+  decomposition uses.
+
+Then for each measure R:
+
+```
+total        = R(target)      − R(source)      # everything that changed
+attributable = R(target)      − R(EXT-ORACLE)  # what survives length matching
+artifact     = R(EXT-ORACLE)  − R(source)      # what mere shortening achieved
+
+share_attributable = attributable / total
+```
+
+The logic: EXT-ORACLE-k is the same length as the target and covers the same
+content, but involves **no rewriting**. Whatever readability gap remains between
+it and the real target is what rewriting bought you.
+
+Computed over `DECOMP_MEASURES` — the six surface formulas **plus** `mean_zipf`,
+`syllables_per_word`, `mtld`, `rare_word_rate`. Each reports `total`,
+`attributable_to_rewriting`, `length_artifact`, `share_attributable`,
+`share_attributable_corpus` and a `share_histogram`.
+
+**How to read it.** `share_attributable`, roughly: **≈1** — the change is
+genuine rewriting, length explains none of it. **≈0** — the change is entirely
+a length artifact; an extractive system of the same length scores the same.
+**>1** — rewriting moved further than the total, i.e. shortening pushed the
+*wrong* way and rewriting overcame it. **<0** — total and attributable have
+opposite signs.
+
+*Its instability, which is not a minor caveat.* `share_attributable` is a
+**ratio with a difference in the denominator**, and `total` is near zero
+whenever a corpus barely changes readability. The code guards exact
+division-by-zero (`None` when `|total| < 1e-9`) but nothing prevents a
+denominator of 0.001 from producing a value in the hundreds. Consequently
+**`share_attributable.mean` is not a usable summary**. Use
+`share_attributable_corpus`, or the **median**, the IQR, and the
+`share_histogram`. The `ci95` is a bootstrap CI *of the mean*, so it is skewed
+too. On a real run this field has shown a mean of 2.96 against a median of 1.0 —
+the median was the honest number. In the committed CNN/DailyMail run, one pair
+scored 6388.9 on `mean_zipf` and contributed 6.39 of the reported corpus mean of
+6.87; `rare_word_rate`'s mean came out sign-flipped against its median (−0.72
+against +0.68).
+
+*`share_attributable_corpus` — the field to read.* Sums the numerator and the
+denominator over the corpus *before* dividing:
+
+```
+share_attributable_corpus = Σ attributable / Σ total
+```
+
+No single near-zero denominator can dominate it, because no pair contributes a
+denominator of its own. It is `None` when the totals cancel — the share is
+genuinely undefined then, not large. It is a corpus-level quantity, so it has
+no CI: for spread, read the per-pair median and IQR alongside it.
+
+**Implementation notes.** The `*` is one of `DECOMP_MEASURES`. WordRank and
+lexical complexity are deliberately not decomposed.
+
+### `readability.m3d_model_based.sle_doc`, `readability.m3d_model_based.sle_gain` — SLE, document level, and its gain
+
+**Label:** DS · **Evidence:** validated · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** A learned estimate of how simple a text is, and how much
+simpler the target is than its source.
+
+**How it works.** SLE (Cripwell et al. 2023) scores each sentence with a
+regression model trained on reading levels. `sle_doc` = the mean sentence SLE of
+the source and of the target (`{source, target}`); `sle_gain` = the paired
+target − source difference. Computed on the pipeline sample.
+
+**How to read it.** SLE runs on a 0–4 reading-level scale; **higher = simpler**.
+A positive gain means the target reads as simpler. Unlike the surface formulas,
+it is not a direct function of sentence length.
+
+**Papers.** [Cripwell et al. 2023 (SLE)](https://aclanthology.org/2023.emnlp-main.739/); [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278). **Contested by.** [REFeREE 2024](https://arxiv.org/html/2403.17640v1).
+
+**Implementation notes.** The released checkpoint `liamcripwell/sle-base`,
+loaded through `transformers` exactly as the reference `SLEScorer` does
+(one-logit head, inputs truncated at 128 tokens), rather than through the `sle`
+repository, whose pins conflict with the core stack. Cripwell et al. 2024's
+ϵSLE variant is not implemented. Offline stand-in under the smoke settings: a
+sentence-length proxy on the same scale, flagged in `models_run` and `notes`.
+Null with a note when the model cannot load.
+
+### `readability.m3d_model_based.semantic_coherence` — Semantic coherence
+
+**Label:** SUM · **Evidence:** introduced · **Needs:** target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** How often each target sentence plausibly follows the one
+before it.
+
+**How it works.** Bommasani & Cardie (2020): for consecutive target sentences,
+BERT's next-sentence-prediction head predicts whether the second follows the
+first; the score is the share predicted to follow. `None` below two sentences.
+Computed on the pipeline sample.
+
+**How to read it.** 0–1; higher = more coherent. The paper finds it patterns
+with redundancy, suggesting BERT leans on word overlap for its judgement.
+
+**Papers.** [Bommasani & Cardie 2020](https://aclanthology.org/2020.emnlp-main.649/). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
+
+**Implementation notes.** `bert-base-uncased`. The paper averages the NSP
+*prediction* (an indicator), which is implemented; the PRD's wording
+("probability") differed. Offline stand-in: consecutive sentences "follow" when
+they share a content word, flagged as such.
