@@ -79,3 +79,15 @@ def test_stand_in_values_are_marked_in_metric_labels(metrics):
         assert labels[key].get("stand_in") is True, key
     # Real values carry no marker.
     assert "stand_in" not in labels["readability.m3a_surface.fkgl"]
+
+
+def test_report_marks_stand_in_values(tmp_path):
+    raw = yaml.safe_load((REPO / "configs" / "smoke.yaml").read_text())
+    raw["dataset"]["path"] = str(REPO / raw["dataset"]["path"])
+    raw["run"]["cache_dir"] = str(tmp_path / "cache")
+    out = run(parse_config(raw), output_dir=tmp_path / "run")
+    section = (out / "report.md").read_text().split("## Metric labels")[1]
+    sle = next(l for l in section.splitlines() if "`readability.m3d_model_based.sle_doc`" in l)
+    assert "offline stand-in value" in sle
+    fkgl = next(l for l in section.splitlines() if "`readability.m3a_surface.fkgl`" in l)
+    assert "stand-in" not in fkgl

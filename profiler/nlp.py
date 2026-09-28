@@ -151,9 +151,10 @@ class SimpleProcessor:
 
 
 _DOC_CACHE = 64
-# Entity lists kept per processor: enough for a 1,000-pair corpus's sources and
-# targets several times over, so M4's sample always finds what M7 extracted.
-_ENTITY_CACHE = 8192
+# Entity lists kept per processor, keyed by hash (so an entry is a few hundred
+# bytes). Holds every source and target of a corpus up to 32,768 pairs, so
+# M4's sample finds what M7 extracted; beyond that M4 re-runs NER on misses.
+_ENTITY_CACHE = 65536
 
 # Distinguishes "not built yet" from "built and unavailable", so a failed load
 # is not retried on every call.

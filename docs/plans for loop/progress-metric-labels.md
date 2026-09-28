@@ -384,3 +384,21 @@ Review pass 3 returned 10 findings, mostly minor or performance. Triage, checked
 - **Not fixed (design/performance, recorded):** M3d draws its own sample and `SAMPLE_MODULES` mirrors run.py's groups (a PRD-mandated placement; a test now ties `SAMPLE_MODULES` to `run.EXPENSIVE`); document-level SummaC on cpu (pass 2 decision); the stand-in duplicating LexicalGrounding (stand-in-only code).
 - **Result:** pass. Full `pytest -q`: 930 passed, 2 skipped, HF offline. Two smoke runs byte-identical. `label_tables.py --check` exits 0.
 - **Next:** review pass 4, to confirm no major bugs remain.
+
+
+## 2026-09-28 — Review loop, pass 4 (final)
+
+Pass 4's first attempt stopped at the session usage limit; the rerun returned 9 findings. None is a major bug (the reviewer: "none of them crashes the pipeline"), which meets the loop's stop condition. The cheap ones were fixed:
+
+- **Per-pair coverage.** M5 pairs with no target sentences got document-level and role values in the corpus summaries but no `per_pair` row, and the early-return path discarded the rows. Every sampled pair now gets a row. Test added.
+- **Classifier labels.** `load_rct` now refuses a checkpoint whose labels are not the five PubMed-RCT roles, so `try_load` skips with a note instead of publishing zeros. Test uses a fake `transformers`.
+- **Report.** The "Metric labels" table marks stand-in values ("offline stand-in value, not this metric"). Test: SLE marked, FKGL not. Its placement after the footer is what §5.2 asks for ("Append a final section").
+- **Entity cache.** Grown to 65,536 hashed entries (a few hundred bytes each), and the comment now states the real bound (M4 finds M7's entities for corpora up to 32,768 pairs).
+- **pyproject comment.** Now says SummaC installs separately (pinning transformers 4.35.2), consistent with requirements.txt.
+- **Recorded, not fixed (performance/placement, not bugs):**
+  - document-level SummaC runs on cpu (it shares the existing scorer's instance);
+  - the SummaC model stays cached for the process;
+  - LDA fits an unbounded vocabulary (capping it would change the metric's definition);
+  - M3d re-segments its sampled texts.
+- **Result:** pass. Full `pytest -q`: 933 passed, 2 skipped, HF offline. Two smoke runs byte-identical. `label_tables.py --check` exits 0.
+- **Loop stopped:** four review passes; the last found no major bugs.

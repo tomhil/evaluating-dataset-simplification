@@ -257,3 +257,38 @@ def test_stand_in_notes_name_the_setting_that_selected_them():
     res = m3_readability.compute(_pairs(6), ctx)
     assert any("stand-ins (heuristic_only)" in n for n in res.notes)
     assert not any("nli_backend=lexical" in n for n in res.notes)
+
+
+def test_m5_per_pair_covers_pairs_without_target_sentences():
+    from profiler.modules import m4_alignment, m5_elaboration
+
+    ctx = _ctx()
+    pairs = [Pair("a", TEXT_A, TEXT_B), Pair("b", TEXT_A, "x")]
+    m4_alignment.compute(pairs, ctx)
+    ctx.shared["alignment"]["tgt_sents"]["b"] = []
+    res = m5_elaboration.compute(pairs, ctx)
+    rows = {r["id"]: r for r in res.per_pair}
+    assert set(rows) == {"a", "b"}
+    assert rows["b"]["n_tgt_sents"] == 0 and "doc_summac_precision" in rows["b"]
+
+
+def test_rct_loader_refuses_unexpected_labels(monkeypatch):
+    import types
+
+    class _Model:
+        config = types.SimpleNamespace(id2label={0: "LABEL_0", 1: "LABEL_1"})
+
+        def to(self, dev):
+            return self
+
+        def eval(self):
+            return self
+
+    fake = types.ModuleType("transformers")
+    fake.AutoTokenizer = types.SimpleNamespace(from_pretrained=lambda name: object())
+    fake.AutoModelForSequenceClassification = types.SimpleNamespace(from_pretrained=lambda name: _Model())
+    monkeypatch.setitem(sys.modules, "transformers", fake)
+    with pytest.raises(ValueError, match="are not"):
+        mm.load_rct("cpu")
+    model, note = mm.try_load("PubMed-RCT classifier", lambda: mm.load_rct("cpu"))
+    assert model is None and "unavailable (ValueError)" in note

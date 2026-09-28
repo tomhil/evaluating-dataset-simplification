@@ -208,6 +208,11 @@ def load_rct(device: str = "auto"):  # pragma: no cover - model download
     tok = AutoTokenizer.from_pretrained(RCT_TOKENIZER)
     model = AutoModelForSequenceClassification.from_pretrained(RCT_MODEL).to(dev).eval()
     id2label = {int(k): v.lower() for k, v in model.config.id2label.items()}
+    # A checkpoint with other label names (LABEL_0.., singular forms) would
+    # count every sentence as none of the five roles and publish zeros; refuse
+    # it here, so try_load skips the metric with a note instead.
+    if set(id2label.values()) != set(RCT_LABELS):
+        raise ValueError(f"{RCT_MODEL} labels {sorted(id2label.values())} are not {sorted(RCT_LABELS)}")
 
     def classify(sentences, batch_size: int = 16) -> list[str]:
         out: list[str] = []

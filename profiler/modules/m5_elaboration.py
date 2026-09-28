@@ -88,10 +88,14 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         # The newer blocks do not depend on target sentences being scored, so
         # they are emitted here too (null where nothing can be computed) and
         # the corpus keys are the same whatever the sample holds.
-        doc_block, _doc_rows, doc_notes = _document_level(pairs, ctx)
-        role_block, _role_rows, role_notes = _rhetorical_roles(pairs, ctx, tgt_sents_by_id)
+        doc_block, doc_rows, doc_notes = _document_level(pairs, ctx)
+        role_block, role_rows, role_notes = _rhetorical_roles(pairs, ctx, tgt_sents_by_id)
         return ModuleResult(
             name=NAME,
+            per_pair=[
+                {"id": p.id, "n_tgt_sents": 0, **doc_rows.get(p.id, {}), **role_rows.get(p.id, {})}
+                for p in pairs
+            ],
             corpus={
                 "n_target_sentences": 0,
                 "document_level": doc_block,
@@ -181,6 +185,11 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     notes.extend(doc_notes)
     corpus["rhetorical_roles"], role_rows, role_notes = _rhetorical_roles(pairs, ctx, tgt_sents_by_id)
     notes.extend(role_notes)
+    # A sampled pair with no target sentences has no sentence-level row, but it
+    # has document-level and role values; give it a row so per_pair.parquet
+    # covers the same pairs as the corpus summaries.
+    have = {row["id"] for row in per_pair}
+    per_pair += [{"id": p.id, "n_tgt_sents": 0} for p in pairs if p.id not in have]
     for row in per_pair:
         row.update(doc_rows.get(row["id"], {}))
         row.update(role_rows.get(row["id"], {}))
