@@ -251,3 +251,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
 - **Next item:** M6 sections and M6 page.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 6: M6 docs
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** one M6 section, `deletion_profile.features.*`, the only M6 registry key. `docs/modules/m6-deletion-profile.md` restructured per §6.2; `DOCUMENTED` includes M6.
+- **Moved paragraphs (M6 page → metrics.md):** "Features" (salience, difficulty and redundancy tables) and "Statistics, per feature" ("`stratified_effect` — the one to read"; "pooled, confounded", including the textrank ρ = −0.92 evidence and the abandoned z-score approach) → `deletion_profile.features.*`. The design decision, "What counts as deleted" (with the validation table), plot data, corpus/per-pair fields and the unit-shift caveat, "Reading it", the removed feature, notes and the glossary stay on the page, the glossary now linked. The glossary gained the `syllables_per_word` row, which was missing (the feature exists in code and the moved table).
+- **Result:** pass. Doc tests green; docs-only change (no code touched since the last full check).
+- **Next item:** M7 sections and M7 page.
+- **DEFERRED:** none.

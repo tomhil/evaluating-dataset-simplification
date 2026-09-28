@@ -1110,3 +1110,76 @@ own. Goldsack et al. trained Cohan et al.'s (2019) sequential classifier on
 PubMed RCT, which also sees neighbouring sentences. It is trained on biomedical abstracts and is off-domain for news,
 Wikipedia and legal text; the module says so in `notes`. Offline keyword
 stand-in under the smoke settings, flagged.
+
+## M6 — Deletion profile
+
+### `deletion_profile.features.*` — Deleted-versus-retained feature effects
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M6 — Deletion profile](modules/m6-deletion-profile.md)
+
+**What it does.** For each sentence feature, how the source sentences a corpus
+drops differ from the ones it keeps: on salience, difficulty or redundancy.
+
+**How it works.** Each feature is measured on every source sentence in the
+sample; sentences are split into deleted and retained by M4's alignment at
+`m6_tau` (see the module page). The `*` is one feature:
+
+*Salience — is this sentence important?*
+
+| Feature | Definition |
+|---|---|
+| `textrank` | PageRank over the sentence-similarity graph (damping 0.85, 50 iterations, diagonal zeroed, negatives clipped, rows normalised). Higher = more central. |
+| `centroid_sim` | Cosine of the sentence to the mean of all source embeddings. Higher = more representative of the document. |
+| `norm_position` | Position normalised to `[0, 1]` (`0.0` for single-sentence documents). Captures lead bias — in news, early sentences are disproportionately retained. |
+
+*Difficulty — is this sentence hard?*
+
+| Feature | Definition |
+|---|---|
+| `fkgl` | Flesch–Kincaid grade of the single sentence. Noisy at sentence length; `None` on failure. On one sentence it is `0.39·sent_len + 11.8·syllables_per_word − 15.59`, so its dominant term duplicates `sent_len` — prefer `syllables_per_word`. |
+| `syllables_per_word` | Average syllables per word: the length-free half of `fkgl`, added so difficulty has a feature that does not restate sentence length. |
+| `rare_word_rate` | Content words outside the top-3,000 band. Computed over the sentence's content-word **set** (types, not tokens). |
+| `mean_dependency_distance` | Mean `\|token − head\|`. Null without a parser. |
+| `jargon_rate` | Share matching `jargon_terms`; **null without a list**. Also computed over the content-word set. |
+| `sent_len` | Token count. |
+
+*Redundancy — is this sentence already said elsewhere?*
+
+| Feature | Definition |
+|---|---|
+| `max_sim_other` | Highest cosine to any *other* source sentence (diagonal set to −1; zeros for single-sentence documents). High = the document says this elsewhere too. |
+
+Per feature the block holds `deleted` and `retained` (`Summary`s), and two
+comparison views, **of which only the first is trustworthy**.
+
+*`stratified_effect` — the one to read.* The deleted-versus-retained difference
+computed **inside each document**, then averaged. Fields: `effect` (the mean),
+`median`, `iqr`, `n_documents`, `n_source_sentences`. Per document the effect is
+`(mean_deleted − mean_retained) / spread`, where spread is that document's own
+standard deviation for the feature. **Sign convention: negative means the
+feature is lower in deleted sentences.** A document contributes to a feature
+only if that feature has both a deleted and a retained value *in that document*.
+Otherwise it is absent from the aggregate rather than diluting it — which is why
+`n_documents` is per feature, not per corpus: a document can support one feature
+and not another.
+
+*`cohens_d_deleted_vs_retained` and `point_biserial_with_deletion` — pooled,
+confounded.* Standardised mean difference and point-biserial correlation over
+**every sentence from every document pooled into one array**. Retained for
+continuity with earlier results, but they carry document length as well as the
+feature.
+
+**How to read it.** Rank the features by `|stratified_effect.effect|`; roughly,
+0.2 is slight, 0.5 moderate, 0.8 strong. Why the pooled views mislead:
+`textrank` is a per-document stationary distribution summing to 1, so a sentence
+in a 5-sentence document scores ~0.2 and one in a 400-sentence document
+~0.0025. Measured on 120 D-Wikipedia documents, the raw feature correlates with
+its own document's sentence count at **ρ = −0.92**; `centroid_sim` at −0.43 and
+`max_sim_other` at +0.31. On a 20-document probe the correction moved
+`centroid_sim` from −1.34 pooled to −0.49 stratified.
+
+**Implementation notes.** Standardising within each document and then pooling
+the z-scores was tried first and abandoned: the guards were per document while
+the z-scores were per feature over non-null values, so a document could pass
+every check while one feature inside it had two non-null values (saturated) or
+no contrast at all.
