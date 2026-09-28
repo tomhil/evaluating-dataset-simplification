@@ -20,6 +20,12 @@ NAME = "abstractiveness"
 # few very long documents cannot dominate the "cheap" full-corpus pass.
 _LCS_CELL_CAP = 4_000_000
 
+# Bommasani & Cardie (2020) s3: "We set p = 1." Only that p is emitted.
+ABSTRACTIVITY_P = 1
+
+# Literature metrics added after the original eleven, summarised after them.
+NEW_METRIC_COLS = ["abstractivity_p1"]
+
 
 def _ngrams(tokens: list[str], n: int) -> list[tuple[str, ...]]:
     if len(tokens) < n:
@@ -36,15 +42,9 @@ def _novel_rate(tgt_tokens: list[str], src_tokens: list[str], n: int) -> float |
     return novel / len(tgt_ng)
 
 
-def _coverage_density(src_tokens: list[str], tgt_tokens: list[str]) -> tuple[float | None, float | None]:
-    """Grusky et al. (2018) extractive fragments via greedy matching.
+def _fragments(src_tokens: list[str], tgt_tokens: list[str]) -> list[int]:
+    """Lengths of Grusky et al. (2018) extractive fragments, greedily matched."""
 
-    coverage = fraction of target tokens covered by extractive fragments.
-    density  = mean squared fragment length, normalised by target length.
-    """
-
-    if not tgt_tokens:
-        return None, None
     src = src_tokens
     tgt = tgt_tokens
     # Map source token -> positions for greedy longest-match extension.
@@ -73,10 +73,33 @@ def _coverage_density(src_tokens: list[str], tgt_tokens: list[str]) -> tuple[flo
             i += best_len
         else:
             i += 1
+    return fragments
 
+
+def _coverage_density(src_tokens: list[str], tgt_tokens: list[str]) -> tuple[float | None, float | None]:
+    """Grusky et al. (2018) extractive fragments via greedy matching.
+
+    coverage = fraction of target tokens covered by extractive fragments.
+    density  = mean squared fragment length, normalised by target length.
+    """
+
+    if not tgt_tokens:
+        return None, None
+    fragments = _fragments(src_tokens, tgt_tokens)
+    n_tgt = len(tgt_tokens)
     coverage = sum(fragments) / n_tgt
     density = sum(f * f for f in fragments) / n_tgt
     return coverage, density
+
+
+def _abstractivity(src_tokens: list[str], tgt_tokens: list[str], p: int) -> float | None:
+    """Bommasani & Cardie (2020): ABS_p = 1 - sum(|f|^p) / |S|^p over the
+    Grusky fragments f of summary S. The paper sets p = 1."""
+
+    if not tgt_tokens:
+        return None
+    fragments = _fragments(src_tokens, tgt_tokens)
+    return 1.0 - sum(f**p for f in fragments) / len(tgt_tokens) ** p
 
 
 def _lcs_length(a: list[str], b: list[str]) -> int | None:
@@ -157,6 +180,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
                 "rouge2_recall": rouge["rouge2"],
                 "rougeL_recall": rouge["rougeL"],
                 "content_type_overlap": type_overlap,
+                "abstractivity_p1": _abstractivity(src_tokens, tgt_tokens, ABSTRACTIVITY_P),
             }
         )
 
@@ -179,6 +203,8 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     corpus = {"n": len(per_pair)}
     for name in metric_cols:
         corpus[name] = summarize(col(name), seed=ctx.seed, resamples=ctx.resamples).to_dict()
+    for name in NEW_METRIC_COLS:
+        corpus[name] = summarize(col(name), seed=ctx.seed, resamples=ctx.resamples).to_dict()
     corpus["density_histogram"] = histogram(col("density"))
     corpus["novel_1gram_histogram"] = histogram(col("novel_1gram"))
 
@@ -193,5 +219,6 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     params = {
         "rouge_orientation": "recall(candidate=target, reference=source) = overlap / |source n-grams|",
         "lcs_cell_cap": _LCS_CELL_CAP,
+        "abstractivity_p": ABSTRACTIVITY_P,
     }
     return ModuleResult(name=NAME, per_pair=per_pair, corpus=corpus, params=params, notes=notes)

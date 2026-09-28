@@ -103,3 +103,16 @@ def test_char_compression_ratio(ctx):
     assert same.corpus["char_compression_ratio"]["median"] == 1.0
     half = _run(m1_length, [Pair("id", "abcdefghij", "abcde")], ctx).per_pair[0]
     assert half["char_compression_ratio"] == 0.5
+
+
+def test_abstractivity(ctx):
+    """Bommasani & Cardie ABS_1 = 1 - coverage: 0 on identity, 1 with no overlap."""
+    same = _run(m2_abstractiveness, [Pair("id", IDENTITY_TEXT, IDENTITY_TEXT)], ctx)
+    assert same.per_pair[0]["abstractivity_p1"] == 0.0
+    assert same.corpus["abstractivity_p1"]["median"] == 0.0
+    disjoint = _run(m2_abstractiveness, [Pair("id", "alpha beta gamma", "delta epsilon zeta")], ctx)
+    assert disjoint.per_pair[0]["abstractivity_p1"] == 1.0
+    # Half the target copied as one fragment.
+    half = _run(m2_abstractiveness, [Pair("id", "alpha beta gamma", "alpha beta delta epsilon")], ctx)
+    assert half.per_pair[0]["abstractivity_p1"] == 0.5
+    assert same.params["abstractivity_p"] == 1

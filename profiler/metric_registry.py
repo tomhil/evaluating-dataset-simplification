@@ -148,6 +148,8 @@ _LITERATURE: tuple[MetricLabel, ...] = (
     # Row 4
     _lit("abstractiveness.coverage", {"SUM"}, (GRUSKY_2018,), direction="↑ more copied"),
     _lit("abstractiveness.density", {"SUM"}, (GRUSKY_2018,), direction="↑ longer copied spans"),
+    # Row 19. The paper fixes p = 1, so abstractivity_p2 is not emitted.
+    _lit("abstractiveness.abstractivity_p1", {"SUM"}, (BOMMASANI_2020,), direction="↑ more abstractive"),
     # Row 5
     *(
         _lit(f"abstractiveness.novel_{n}gram", {"SUM", "PLS"}, (NARAYAN_2018, GOLDSACK_2022),

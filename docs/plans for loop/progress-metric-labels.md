@@ -50,3 +50,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 413 passed. Two smoke runs byte-identical. No-regression test green.
 - **Next item:** M2 abstractivity p1/p2.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase B, item 2: M2 abstractivity
+
+- **Branch:** `feature/metric-labels-b`
+- **Item:** `abstractiveness.abstractivity_p1` = 1 − Σ|f| / |S| over the Grusky fragments. The greedy fragment matcher was pulled out of `_coverage_density` into `_fragments` without changing it; the no-regression test confirms coverage and density are identical. `params.abstractivity_p = 1`. Registry row 19 (SUM, Bommasani & Cardie 2020). Known answers: identity 0.0, disjoint 1.0, half-copied 0.5.
+- **Paper check:** I read §3 of Bommasani & Cardie 2020. It says "We set p = 1." The Section 10 default is to emit p = 1 and p = 2 unless the paper fixes p, so only `abstractivity_p1` is emitted. **`abstractivity_p2` is not emitted** (open question 1). The same section also shows topic similarity uses the Jensen–Shannon *distance* with k = 20 fit on documents; that goes into item 5. Redundancy is the mean ROUGE-L F over all pairs of distinct summary sentences. Semantic coherence averages BERT's next-sentence *prediction* (an indicator), not its probability; Phase D will need that.
+- **Result:** pass. `pytest -q`: 415 passed. Two smoke runs byte-identical.
+- **Next item:** M2 edit features (`levenshtein_similarity`, `exact_copies`, `additions_proportion`, `deletions_proportion`); adds `rapidfuzz`.
+- **DEFERRED:** `abstractivity_p2`. The paper fixes p = 1 (Section 10 default), pending open question 1.
