@@ -212,3 +212,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 544 passed, 2 skipped. Two smoke runs byte-identical.
 - **Next item:** M2 sections and M2 page.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 2: M2 docs
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** 13 M2 sections in `docs/metrics.md` covering all 22 M2 registry keys. `docs/modules/m2-abstractiveness.md` restructured per §6.2; `DOCUMENTED` now includes M2.
+- **Moved paragraphs (M2 page → metrics.md):** "Novel n-gram rates" (formula, range, XSum reference) → `abstractiveness.novel_1gram…novel_4gram`; its `novel_content_1gram` paragraph → `abstractiveness.novel_content_1gram`. "Grusky extractive fragments" (coverage and density bullets, "read these two together") → `abstractiveness.coverage, abstractiveness.density`. "ROUGE recall" (orientation, clipping, LCS cap, compression covariance) → `abstractiveness.rouge1_recall…rougeL_recall`. "`content_type_overlap`" → `abstractiveness.content_type_overlap`. The tokenisation note, histograms, "Reading it" and the glossary stay on the page, the glossary now linked. No incoming links to the removed M2 anchors exist in the repo.
+- **Result:** pass. `pytest -q` full suite green. Two smoke runs byte-identical.
+- **Next item:** M3 sections and M3 page.
+- **DEFERRED:** none.
