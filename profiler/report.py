@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Any
 
 from . import reference
+from .metric_registry import label_for, metric_paths
 from .modules.base import ModuleResult
 
 
@@ -102,7 +103,34 @@ def build_report(config, results: dict[str, ModuleResult], meta: dict) -> str:
         "\n---\n*The report states what was measured. It does not state what the "
         "dataset is.*\n"
     )
+    parts.append(_metric_labels(results))
     return "\n".join(parts)
+
+
+def _metric_labels(results: dict[str, ModuleResult]) -> str:
+    """One row per registry entry present in this run; τ-parametrised keys once."""
+
+    out = [_h(2, "Metric labels")]
+    out.append(
+        "Labels record which task's literature uses each metric: SUM (generic "
+        "summarization), PLS (plain-language summarization), DS (document "
+        "simplification). They describe the metrics, not this corpus. Metrics "
+        "without a label are specific to this project.\n"
+    )
+    out.append("| metric | label | papers |\n|---|---|---|")
+    modules = {name: {"corpus": r.corpus} for name, r in results.items()}
+    seen: set[str] = set()
+    for path in metric_paths(modules):
+        m = label_for(path)
+        if m is None or m.key in seen:
+            continue
+        seen.add(m.key)
+        label = ", ".join(sorted(m.tasks)) if m.tasks else "project-specific"
+        papers = "; ".join(f"[{p.title}]({p.url})" for p in m.papers)
+        if m.contested_by:
+            papers += "; contested: " + "; ".join(f"[{p.title}]({p.url})" for p in m.contested_by)
+        out.append(f"| `{m.key}` | {label} | {papers or '—'} |")
+    return "\n".join(out) + "\n"
 
 
 def _m1(r: ModuleResult) -> str:
