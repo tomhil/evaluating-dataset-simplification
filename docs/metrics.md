@@ -434,7 +434,9 @@ seed 13) over a lowercased `CountVectorizer` with English stop words removed;
 the paper used gensim and gives no log base or preprocessing, so base 2 (keeping
 TS in [0, 1]) and the stop-word list are choices recorded in
 `params.topic_similarity`. The PRD said "divergence"; the paper uses the
-distance, which is implemented.
+distance, which is implemented. A source or target with no in-vocabulary word
+(e.g. only stop words) gets LDA's prior rather than a topic mix, so that pair's
+value is `None`.
 
 ### `abstractiveness.levenshtein_similarity` — Levenshtein similarity
 
@@ -875,7 +877,8 @@ loaded through `transformers` exactly as the reference `SLEScorer` does
 repository, whose pins conflict with the core stack. Cripwell et al. 2024's
 ϵSLE variant is not implemented. Offline stand-in under the smoke settings: a
 sentence-length proxy on the same scale, flagged in `models_run` and `notes`.
-Null with a note when the model cannot load.
+Null with a note when the model cannot load, or when `run.model_metrics` is
+false.
 
 ### `readability.m3d_model_based.semantic_coherence` — Semantic coherence
 
@@ -897,7 +900,8 @@ with redundancy, suggesting BERT leans on word overlap for its judgement.
 **Implementation notes.** `bert-base-uncased`. The paper averages the NSP
 *prediction* (an indicator), which is implemented; the PRD's wording
 ("probability") differed. Offline stand-in: consecutive sentences "follow" when
-they share a content word, flagged as such.
+they share a content word, flagged as such. Skipped, with null keys, when
+`run.model_metrics` is false.
 
 ## M4 — Alignment and content preservation
 
@@ -1009,8 +1013,8 @@ counts; F1 is `None` only when neither side has any.
 
 **Papers.** [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278).
 
-**Implementation notes.** Reuses the `Processor`'s cached NER pipe (the one M7
-uses). Without an NER model every value is `None` and a note says so, never
+**Implementation notes.** Uses the `Processor`'s NER, whose results are cached
+per text, so with M7 enabled each text goes through NER once. Without an NER model every value is `None` and a note says so, never
 zero.
 
 ## M5 — Content addition (elaboration)
@@ -1188,7 +1192,8 @@ source.
 **Papers.** [Laban et al. 2022 (SummaC)](https://aclanthology.org/2022.tacl-1.10/); [Fabbri et al. 2022 (QAFactEval)](https://aclanthology.org/2022.naacl-main.187); [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626); [Devaraj et al. 2022](https://aclanthology.org/2022.acl-long.506).
 
 **Implementation notes.** SummaC runs when `run.summac` is set, with the same
-configuration as the sentence-level scorer, released weights included; under the smoke settings an offline
+configuration as the sentence-level scorer, released weights included, and the
+same model instance (on cpu), so SummaC is loaded once per run; under the smoke settings an offline
 content-word stand-in is used and flagged in `document_level.scorers_run` and
 `notes`. **QAFactEval is deferred**: its package fails to build against the core
 dependencies, so its keys are null with a note in every run.
@@ -1234,7 +1239,8 @@ background is one form of elaboration, which is why this lives in M5.
 own. Goldsack et al. trained Cohan et al.'s (2019) sequential classifier on
 PubMed RCT, which also sees neighbouring sentences. It is trained on biomedical abstracts and is off-domain for news,
 Wikipedia and legal text; the module says so in `notes`. Offline keyword
-stand-in under the smoke settings, flagged.
+stand-in under the smoke settings, flagged. Skipped, with null keys, when
+`run.model_metrics` is false.
 
 ## M6 — Deletion profile
 

@@ -32,6 +32,10 @@ def use_stand_ins(config) -> bool:
     return config.run.nli_backend == "lexical" or bool(config.run.heuristic_only)
 
 
+def disabled_note(what: str) -> str:
+    return f"{what} not computed: run.model_metrics is false, so its model is not loaded; keys are null."
+
+
 def try_load(name: str, loader: Callable[[], object]) -> tuple[object | None, str | None]:
     """Load an optional model, returning ``(model, note)``.
 
@@ -145,18 +149,19 @@ QAFACTEVAL_DEFERRED = (
 )
 
 
-def load_summac_doc(device: str = "auto"):  # pragma: no cover - optional dep
+def load_summac_doc(device: str = "auto"):  # noqa: ARG001 - see below
     """SummaC-Conv as M5's sentence scorer configures it (released weights),
-    scoring whole documents:
-    ``score(originals, generateds)`` gives one score per (original, generated)."""
+    scoring whole documents: ``score(originals, generateds)`` gives one score
+    per (original, generated).
 
-    from summac.model_summac import SummaCConv  # type: ignore
+    It reuses the sentence scorer's instance, which runs on cpu, so the model
+    is loaded once per run; ``device`` is accepted for symmetry with the other
+    loaders and ignored.
+    """
 
-    from .embeddings import resolve_device
+    from .scorers import summac_conv_model
 
-    from .scorers import SUMMAC_CONV_KWARGS
-
-    model = SummaCConv(**SUMMAC_CONV_KWARGS, device=resolve_device(device))
+    model = summac_conv_model("cpu")
     return lambda original, generated: float(model.score([original], [generated])["scores"][0])
 
 

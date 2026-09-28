@@ -193,6 +193,12 @@ class SpacyProcessor:
         # so sentence-level lookups land in the document cache either way. On
         # D-Wikipedia the split was slower (108s vs 92s). Keeping it simple.
         self._doc = functools.lru_cache(maxsize=_DOC_CACHE)(self._parse)
+        # Entities per text, kept across release(): M7 (full corpus) and M4's
+        # entity matching (sample) ask for the same texts, and the lists are
+        # tiny next to a parse. Whether NER exists is remembered too, so M4
+        # can ask after release() without rebuilding the pipeline.
+        self._entity_cache: dict[str, list[tuple[str, int]]] = {}
+        self._ner_known: bool | None = None
 
     def _parse(self, text: str):
         return self._nlp(text)
@@ -239,17 +245,25 @@ class SpacyProcessor:
         NER is excluded from the main pipeline (``disable=["ner"]``) because
         M1-M6 never needed it and it is not free. M7's seven entity features do,
         so a second pipeline with *only* the NER components is built on first
-        use and cached. Building it lazily means enabling M7 costs NER, and not
-        enabling it costs nothing -- M1-M6 runs are byte-identical either way.
+        use and cached. M4's entity matching uses it too. Results are cached per
+        text and survive release(), so M4 reuses what M7 already extracted, and
+        each text goes through NER at most once per run.
         """
 
+        cached = self._entity_cache.get(text)
+        if cached is not None:
+            return list(cached)
         ner = self._ner_pipe()
         if ner is None:
             return []
-        return [(e.text.lower(), e.start) for e in ner(text).ents]
+        ents = [(e.text.lower(), e.start) for e in ner(text).ents]
+        self._entity_cache[text] = ents
+        return list(ents)
 
     def ner_available(self) -> bool:
-        return self._ner_pipe() is not None
+        if self._ner_known is None:
+            self._ner_known = self._ner_pipe() is not None
+        return self._ner_known
 
     def _ner_pipe(self):
         """The NER-only pipeline, built once. ``None`` if the model lacks NER."""
@@ -264,6 +278,7 @@ class SpacyProcessor:
                 # select_pipes, not the deprecated disable_pipes.
                 pipe.select_pipes(enable=keep)
                 self._ner = pipe if "ner" in pipe.pipe_names else None
+                self._ner_known = self._ner is not None
             except Exception as exc:  # pragma: no cover - environment dependent
                 warnings.warn(
                     f"NER unavailable ({type(exc).__name__}); M7 entity features "
@@ -272,6 +287,7 @@ class SpacyProcessor:
                     stacklevel=2,
                 )
                 self._ner = None
+                self._ner_known = False
         return self._ner
 
     def analyze_sentence(self, sent: str) -> list[Token]:

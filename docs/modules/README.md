@@ -78,6 +78,8 @@ correlation hid the fact that M4's deletion split agrees with human labels at
 | `nli_threshold` | M5 | score below which a sentence is "not entailed" |
 | `jargon_terms` | M3b, M6 | `jargon_rate` is `None` without a list |
 | `embedder`, `nli_backend` | M4–M6 | real models vs. offline stand-ins |
+| `model_metrics` | M3d, M5 roles | `false` skips SLE, BERT coherence and the PubMed-RCT classifier (no download); keys null |
+| `summac`, `alignscore` | M5 | optional scorers; `summac` also gates document-level SummaC |
 | `language` | M3, M5 | non-English corpora get M1/M2/M4 only |
 
 Whatever a module's numbers depend on is recorded verbatim in its `params` block

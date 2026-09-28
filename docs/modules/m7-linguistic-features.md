@@ -90,8 +90,9 @@ this machine, per 1000 pairs:
 **NER is 47% of that** on eLife. The seven entity features are the expensive
 half of the module and the most novel part of it; the other 26 cost ~34 min per
 1000 eLife pairs. NER is not loaded at all unless M7 is active, so M1–M6 runs
-are unaffected — verified byte-identical. (M4's entity matching now also uses
-NER, on the sample.)
+are unaffected — verified byte-identical. M4's entity matching also uses NER, on
+the sample; entity results are cached per text, so with M7 enabled M4 reuses
+them instead of running NER again.
 
 ### Degradation
 

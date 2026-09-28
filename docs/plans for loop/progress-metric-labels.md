@@ -340,3 +340,18 @@ A `/code-review` pass over `main...feature/metric-labels-f` returned 10 findings
 - **`label_tables.py` crash (PR #12)**: `_join([])` raised `IndexError` whenever no domain was single-task, and an empty results set crashed in the footnote. It now renders without the single-task sentence, `render({})` raises a clear `ValueError`, and the CLI exits 2 with a message. The committed RESULTS.md block is unchanged (`--check` exits 0).
 - **Result:** pass. Full `pytest -q` green with HF forced offline. Two smoke runs byte-identical.
 - **Open from the review, not fixed (awaiting a decision):** WordRank re-parses sentences; M4 NER is uncached and duplicated with M7; the document-level SummaC model is duplicated; abstractivity recomputes `1 − coverage`; model downloads have no opt-out flag; topic similarity uses English stop words; M5 duplicates the abstract rule.
+
+
+## 2026-09-28 — Review loop, pass 1: follow-up fixes (items 4–10)
+
+Started by `/loop`: fix the analysed review findings, then re-review until no major bugs remain. Applied on `feature/metric-labels-f` (the top of the stack).
+
+- **#4 WordRank re-parse:** per-sentence tokens now use `words_fast` (the same tokens, no parse per sentence). Redundancy had the same pattern and got the same fix.
+- **#5 NER uncached / duplicated:** `SpacyProcessor.entities` caches results per text, across `release()`, and `ner_available()` remembers its answer. Each text now goes through NER once, and M4 reuses M7's entities. Test uses a fake NER pipe (one NER call for the text, no rebuild).
+- **#6 duplicate SummaC model:** `scorers.summac_conv_model(device)` builds one cached instance, which both the sentence-level scorer and document-level SummaC use (on cpu, the existing scorer's device). Test: one `SummaCConv` built for both loaders.
+- **#7 abstractivity recomputation:** M2 runs the greedy fragment match once per pair and derives coverage, density and abstractivity from it. The edit features reuse the already-tokenised words.
+- **#8 no opt-out for model downloads:** new `run.model_metrics` (default `true`, so existing configs behave as before; no config file changed). `false` skips M3d and rhetorical roles with a note and null keys, loading nothing. Test blocks `transformers` and asserts that nothing is loaded. Documented in `docs/modules/README.md`. This is a Config schema addition beyond the PRD's letter (it forbade config *file* changes); the review flagged the missing opt-out.
+- **#9 topic similarity:** a source or target with no in-vocabulary word now gets `None` instead of a score against LDA's prior. The "non-English corpus" half of the finding is moot: `parse_config` rejects any language but English (found while writing the test), so no language branch was added.
+- **#10 duplicated abstract rule:** new `Pair.abstract()`, used by M2 and M5. The `Pair` docstring now names both modules.
+- **Result:** pass. Full `pytest -q` green with HF offline. Two smoke runs byte-identical (the no-regression test confirms baseline leaves unchanged). `label_tables.py --check RESULTS.md` exits 0.
+- **Next:** re-run `/code-review` on `main...feature/metric-labels-f`.

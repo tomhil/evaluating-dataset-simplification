@@ -188,7 +188,11 @@ def fake_summac(monkeypatch):
     pkg.model_summac = mod
     monkeypatch.setitem(sys.modules, "summac", pkg)
     monkeypatch.setitem(sys.modules, "summac.model_summac", mod)
-    return calls
+    from profiler.scorers import summac_conv_model
+
+    summac_conv_model.cache_clear()
+    yield calls
+    summac_conv_model.cache_clear()
 
 
 def test_sentence_summac_loads_released_weights(fake_summac):
@@ -204,3 +208,36 @@ def test_document_summac_loads_released_weights(fake_summac):
     score = mm.load_summac_doc("cpu")
     assert score("source text", "target text") == 0.5
     assert fake_summac[-1]["start_file"] == "default"
+
+
+def test_both_summac_loaders_share_one_model(fake_summac):
+    from profiler.scorers import _load_summac
+
+    _load_summac()
+    mm.load_summac_doc("auto")
+    assert len(fake_summac) == 1  # one SummaCConv built, not two
+
+
+# --------------------------------------------------------------------------
+# run.model_metrics: false skips the model-based metrics without loading them
+# --------------------------------------------------------------------------
+def test_model_metrics_flag_disables_m3d_and_roles(monkeypatch):
+    monkeypatch.setitem(sys.modules, "transformers", None)  # would fail if loaded
+    ctx = _ctx(nli_backend="nli", sample_size=4, model_metrics=False)
+    res3 = m3_readability.compute(_pairs(6), ctx)
+    block = res3.corpus["m3d_model_based"]
+    assert block["models_run"] == [] and block["sle_gain"]["median"] is None
+    assert any("run.model_metrics is false" in n for n in res3.notes)
+    assert not any("unavailable" in n for n in res3.notes)
+
+    import profiler.modules.m5_elaboration as m5
+    from profiler.scorers import LexicalGrounding
+
+    monkeypatch.setattr(m5, "get_primary_scorer", lambda config, cache: LexicalGrounding())
+    res5 = _m5([Pair("a", TEXT_A, TEXT_B)], ctx)
+    assert res5.corpus["rhetorical_roles"]["models_run"] == []
+    assert any("rhetorical_roles not computed: run.model_metrics is false" in n for n in res5.notes)
+
+
+def test_model_metrics_defaults_on():
+    assert _ctx().config.run.model_metrics is True

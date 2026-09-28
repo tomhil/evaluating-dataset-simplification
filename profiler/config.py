@@ -99,6 +99,11 @@ class RunConfig:
     alignscore: bool = False
     summac: bool = False
     heuristic_only: bool = False
+    # Model-based literature metrics that load their own checkpoints: M3's
+    # m3d_model_based block (SLE, BERT coherence) and M5's rhetorical roles.
+    # On by default; false skips them with a note and null keys (no download).
+    # SummaC has its own switch above.
+    model_metrics: bool = True
     # Names used to construct the run directory / report titles.
     dataset_label: str = "dataset"
 
@@ -238,6 +243,7 @@ def parse_config(raw: dict) -> Config:
         alignscore=bool(run_raw.get("alignscore", False)),
         summac=bool(run_raw.get("summac", False)),
         heuristic_only=bool(run_raw.get("heuristic_only", False)),
+        model_metrics=bool(run_raw.get("model_metrics", True)),
         dataset_label=str(
             run_raw.get("dataset_label")
             or dataset.name

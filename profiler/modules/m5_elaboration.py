@@ -252,7 +252,10 @@ def _rhetorical_roles(
     from .. import model_metrics as mm
 
     notes: list[str] = []
-    if mm.use_stand_ins(ctx.config):
+    if not ctx.config.run.model_metrics:
+        classify, models_run = None, []
+        notes.append(mm.disabled_note("rhetorical_roles"))
+    elif mm.use_stand_ins(ctx.config):
         classify, models_run = mm.rct_stand_in, ["pubmed_rct:stand-in"]
         notes.append(
             "rhetorical_roles uses an offline keyword stand-in (nli_backend=lexical); "
@@ -271,8 +274,8 @@ def _rhetorical_roles(
     for p in progress.track(list(pairs), "M5 rhetorical roles"):
         row: dict = {}
         texts = {"target": tgt_sents_by_id.get(p.id, [])}
-        abstract = p.meta.get("abstract") if p.meta else None
-        texts["abstract"] = proc.sentences(abstract) if isinstance(abstract, str) and abstract.strip() else []
+        abstract = p.abstract()
+        texts["abstract"] = proc.sentences(abstract) if abstract is not None else []
         for side, sents in texts.items():
             shares = mm.role_shares(classify(sents)) if (classify and sents) else dict.fromkeys(mm.RCT_LABELS)
             row.update({f"role_{side}_{lab}": v for lab, v in shares.items()})
