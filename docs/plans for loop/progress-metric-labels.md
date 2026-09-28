@@ -141,3 +141,11 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Phase C gate:** passed. Fetcher and adapter tests green; the abstract metrics are `None` on the smoke corpus with a note. Pushed and opened the Phase C PR.
 - **Next item:** Phase D, move `sample_pairs` into `profiler/sampling.py` and re-export it from `run.py`.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase D, item 1: `sample_pairs` → `profiler/sampling.py`
+
+- **Branch:** `feature/metric-labels-d` (stacked on `feature/metric-labels-c`)
+- **Item:** `sample_pairs` moved unchanged into `profiler/sampling.py` and re-exported from `profiler/run.py`. This is the one code move the PRD allows; M3's `m3d_model_based` block can now draw the pipeline sample without a circular import. `tests/test_sampling.py` checks the re-export and a stable seeded draw.
+- **Result:** pass. `pytest -q`: 442 passed. Two smoke runs byte-identical.
+- **Next item:** survey the optional-model packages (SLE, BERT NSP, SummaC, QAFactEval, PubMed-RCT classifier, BLANC, SUPERT, SummaQA) in a scratch virtualenv, then implement each or mark it DEFERRED.
+- **DEFERRED:** none.

@@ -36,6 +36,7 @@ from .modules import (
     m8_similarity,
 )
 from .modules.base import Context
+from .sampling import sample_pairs  # noqa: F401  (re-exported; moved unchanged)
 from .nlp import get_processor
 from .types import Pair
 
@@ -174,15 +175,6 @@ def validate_corpus(pairs: Sequence[Pair], config: Config) -> list[str]:
                 "Set the correct language (non-English corpora get M1/M2/M4 only)."
             )
     return warnings_list
-
-
-def sample_pairs(pairs: list[Pair], config: Config) -> list[Pair]:
-    n = config.run.sample_size
-    if n is None or n >= len(pairs):
-        return pairs
-    rng = np.random.default_rng(config.run.seed)
-    idx = sorted(rng.choice(len(pairs), size=n, replace=False).tolist())
-    return [pairs[i] for i in idx]
 
 
 def run(config: Config, output_dir: str | Path | None = None) -> Path:
