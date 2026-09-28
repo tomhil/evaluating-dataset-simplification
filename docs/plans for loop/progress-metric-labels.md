@@ -17,3 +17,11 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 297 passed. Two smoke runs byte-identical.
 - **Next item:** `profiler/metric_registry.py` with `tests/test_metric_registry.py`.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase A, item 3: metric registry
+
+- **Branch:** `feature/metric-labels-a`
+- **Item:** `profiler/metric_registry.py` (Paper, MetricLabel, ALLOWED_PAPER_URLS, REGISTRY, BOOKKEEPING, `label_for`, plus a `metric_paths` walker) and `tests/test_metric_registry.py`. 91 entries: Section 4 rows 1–11 (15 keys) and 76 project-specific ones. Rows 12–31 get entries when their metrics land. `*` matches one dict key, including decimal τ keys such as `0.40`. M5's `per_scorer.nli` (seen in `results/`, not in smoke) is project-specific. Coverage is checked on the smoke run and on every `results/*.json`, because the smoke config does not run M7/M8.
+- **Result:** pass. `pytest -q` full suite green. Two smoke runs byte-identical.
+- **Next item:** `metric_labels` block in `metrics.json`.
+- **DEFERRED:** none.
