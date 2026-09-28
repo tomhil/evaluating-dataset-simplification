@@ -889,3 +889,224 @@ needs it.
 **Implementation notes.** Reuses the `Processor`'s cached NER pipe (the one M7
 uses). Without an NER model every value is `None` and a note says so, never
 zero.
+
+## M5 — Content addition (elaboration)
+
+### `elaboration.per_scorer.nli`, `elaboration.per_scorer.lexical_grounding` — NLI and lexical grounding scores
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M5 — Content addition](modules/m5-elaboration.md)
+
+**What it does.** How well each target sentence is supported by its source, and
+the share of target sentences that are not.
+
+**How it works.** Each scorer maps a target sentence to a groundedness score in
+[0, 1]:
+
+- **`nli`** (`TransformersNLI`, default `microsoft/deberta-large-mnli`) — the
+  entailment probability of the target sentence given each source sentence,
+  **max-aggregated** across source sentences. A sentence counts as grounded if
+  *any* source sentence entails it.
+- **`lexical_grounding`** (`LexicalGrounding`) — fraction of the target
+  sentence's content words present anywhere in the source. Deterministic,
+  offline, no model. Used for tests, smoke runs, and `heuristic_only` mode.
+
+For each scorer the block holds `score` (the usual Summary), `score_histogram`
+(20 bins), and `not_entailed_rate` = `{n, rate, threshold}`, the fraction of
+target sentences scoring **below `nli_threshold`** (default 0.5), pooled over
+sentences.
+
+**How to read it.** **`not_entailed_rate` is the headline number** — and it is an
+**upper bound on real elaboration**, not an estimate of it. A sentence lands
+below threshold if it is added content, *or* if M4 misaligned it, *or* if the
+entailment model is simply wrong on this domain. Entailment models degrade badly
+off-domain, and these corpora are medical and scientific text. The module emits
+this caveat as a note whenever it scores fewer than 2,000 sentences. A score
+histogram split into two clumps means the threshold is doing real work; one
+smear means it is cutting arbitrarily.
+
+**Implementation notes.** Scores are cached by content hash of (model, source
+sentences, target sentence).
+
+### `elaboration.per_scorer.summac_conv` — SummaC-Conv, sentence level
+
+**Label:** SUM, PLS, DS · **Evidence:** validated · **Needs:** source+target · **Module:** [M5 — Content addition](modules/m5-elaboration.md)
+
+**What it does.** A factual-consistency score for each target sentence against
+its source.
+
+**How it works.** SummaC-Conv (Laban et al. 2022) with the `vitc` NLI model and
+percentile bins, scoring each target sentence against the whole source; the
+block has the same shape as the other scorers (`score`, `score_histogram`,
+`not_entailed_rate`).
+
+**How to read it.** Higher = better supported. As a second scorer it also feeds
+`pairwise_agreement`, which is where its value as a cross-check shows.
+
+**Papers.** [Laban et al. 2022 (SummaC)](https://aclanthology.org/2022.tacl-1.10/); [BioLaySumm 2024](https://arxiv.org/pdf/2408.08566); [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626); [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/); [Devaraj et al. 2022](https://aclanthology.org/2022.acl-long.506).
+
+**Implementation notes.** Optional: loaded lazily when `run.summac` is set and
+**skipped gracefully** if absent, with a note; a skipped scorer gets no
+`per_scorer` entry, and `scorers_run` records what actually ran. The key is
+`summac_conv`, the scorer's name in the code; the PRD's inventory called it
+`per_scorer.summac`. The `summac` package pins `transformers==4.35.2`.
+
+### `elaboration.per_scorer.alignscore` — AlignScore, sentence level
+
+**Label:** SUM, PLS · **Evidence:** validated · **Needs:** source+target · **Module:** [M5 — Content addition](modules/m5-elaboration.md)
+
+**What it does.** An alignment-based factual-consistency score for each target
+sentence.
+
+**How it works.** AlignScore (Zha et al. 2023), `roberta-base`, `nli_sp` mode,
+with the whole source as context; same block shape as the other scorers.
+
+**How to read it.** Higher = better supported.
+
+**Papers.** [Zha et al. 2023 (AlignScore)](https://aclanthology.org/2023.acl-long.634); [BioLaySumm 2024](https://arxiv.org/pdf/2408.08566). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626); [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
+
+**Implementation notes.** Optional, loaded when `run.alignscore` is set; skipped
+with a note and no `per_scorer` entry when absent.
+
+### `elaboration.not_entailed_rate_by_document` — Not-entailed rate by document
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M5 — Content addition](modules/m5-elaboration.md)
+
+**What it does.** The primary scorer's not-entailed rate, averaged over
+documents rather than pooled over sentences.
+
+**How it works.** A `Summary` of each document's own not-entailed rate.
+
+**How to read it.** The pooled rate weights each document by its sentence count,
+so one long document can carry the corpus figure: a vandalised revision in
+SWiPE's annotated subset held 32% of the sentence pool and moved the rate from
+0.301 to 0.526. This is reported alongside, never instead — the pooled rate
+answers "what share of sentences are unsupported", this one "what does a
+typical document look like".
+
+**Implementation notes.** None.
+
+### `elaboration.pairwise_agreement` — Scorer agreement
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M5 — Content addition](modules/m5-elaboration.md)
+
+**What it does.** How far two scorers agree on this corpus.
+
+**How it works.** For each scorer pair: `label_agreement` (fraction agreeing on
+the above/below-threshold label) and `pearson` (correlation of raw scores,
+`None` when either has no variance).
+
+**How to read it.** **Disagreement is the point, not a defect.** Two scorers
+diverging on your corpus is direct evidence that the automatic rate is
+unreliable there. With only one scorer configured this block is empty — which is
+itself worth noticing, because you then have no cross-check at all.
+
+**Implementation notes.** Keyed `<a>_vs_<b>`.
+
+### `elaboration.not_entailed_pattern_breakdown` — Pattern breakdown of unsupported sentences
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M5 — Content addition](modules/m5-elaboration.md)
+
+**What it does.** Surface cues about what the unsupported sentences are doing.
+
+**How it works.** Counts over not-entailed sentences — **regex and set
+membership, no classifier**:
+
+| Key | Rule |
+|---|---|
+| `definitional` | matches `is/are/was/were a/an/the`, `, which`, `which means`, `refers to`, `known as` |
+| `example_marker` | matches `for example`, `such as`, `e.g.`, `for instance`, `including` |
+| `candidate_gloss` | shares ≥1 content word with the source |
+| `candidate_new_background` | shares **no** content word with the source |
+
+`definitional` and `example_marker` are independent flags and can both fire on
+one sentence; `candidate_gloss` and `candidate_new_background` are mutually
+exclusive and partition the set. `n_not_entailed` is the count they are over.
+
+**How to read it.** These are **surface cues for triage**, not labels — the
+names say "candidate" for that reason.
+
+**Implementation notes.** None.
+
+### `elaboration.corrected_not_entailed_rate` — Corrected not-entailed rate
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M5 — Content addition](modules/m5-elaboration.md)
+
+**What it does.** The not-entailed rate after hand-labelling a sample, with
+alignment errors removed.
+
+**How it works.** Filled by `ingest-annotations` from the annotated
+`annotation_sample.csv` (see the module page). Only grounded elaboration and
+hallucination count as genuine content addition — alignment errors are
+excluded, since they were never additions:
+
+```
+corrected_not_entailed_rate = automatic_rate × (P(grounded_elaboration) + P(hallucination))
+```
+
+**How to read it.** **The trustworthy version**; null until annotations are
+ingested. Until then, treat the automatic rate as a ceiling.
+
+**Implementation notes.** Per-category estimated rates are written back too.
+
+### `elaboration.document_level.summac_precision`, `elaboration.document_level.qafacteval_precision` — Document-level faithfulness, precision
+
+**Label:** SUM, DS · **Evidence:** validated · **Needs:** source+target · **Module:** [M5 — Content addition](modules/m5-elaboration.md)
+
+**What it does.** How well the whole target is supported by the whole source.
+
+**How it works.** SummaC-Conv scores (source → target) as one document pair.
+QAFactEval generates questions from the target and answers them against the
+source.
+
+**How to read it.** Higher = the target makes fewer unsupported claims.
+
+**Papers.** [Laban et al. 2022 (SummaC)](https://aclanthology.org/2022.tacl-1.10/); [Fabbri et al. 2022 (QAFactEval)](https://aclanthology.org/2022.naacl-main.187); [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626); [Devaraj et al. 2022](https://aclanthology.org/2022.acl-long.506).
+
+**Implementation notes.** SummaC runs when `run.summac` is set, with the same
+configuration as the sentence-level scorer; under the smoke settings an offline
+content-word stand-in is used and flagged in `document_level.scorers_run` and
+`notes`. **QAFactEval is deferred**: its package fails to build against the core
+dependencies, so its keys are null with a note in every run.
+
+### `elaboration.document_level.summac_recall`, `elaboration.document_level.qafacteval_recall` — Document-level faithfulness, recall
+
+**Label:** DS · **Evidence:** validated · **Needs:** source+target · **Module:** [M5 — Content addition](modules/m5-elaboration.md)
+
+**What it does.** How much of the source's content the target keeps.
+
+**How it works.** Cripwell et al. (2024) compute recall-oriented versions by
+swapping the roles: SummaC scores (target → source), so every source sentence
+is checked against the target; QAFactEval generates the questions from the
+source instead of the output.
+
+**How to read it.** Higher = more of the source is recoverable from the target.
+Expected to be low under heavy compression, so read it next to M1.
+
+**Papers.** [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278). **Caveats.** [Devaraj et al. 2022](https://aclanthology.org/2022.acl-long.506).
+
+**Implementation notes.** As for precision; QAFactEval deferred.
+
+### `elaboration.rhetorical_roles` — Rhetorical role distribution
+
+**Label:** PLS · **Evidence:** introduced · **Needs:** target · **Module:** [M5 — Content addition](modules/m5-elaboration.md)
+
+**What it does.** What kind of sentences the target is made of: background,
+objective, methods, results or conclusions.
+
+**How it works.** A PubMed-RCT sentence classifier labels every target sentence,
+and every abstract sentence where `meta["abstract"]` exists; the block reports,
+per label, the `Summary` of per-pair shares, under `target` and `abstract`.
+
+**How to read it.** Goldsack et al. find a much greater share of lay-summary
+sentences explaining background than abstract sentences, at the expense of
+results and, to a lesser extent, methods. A shift toward
+background is one form of elaboration, which is why this lives in M5.
+
+**Papers.** [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/). **Caveats.** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
+
+**Implementation notes.** `gubartz/cls_scibert_pubmed_rct` with the
+`allenai/scibert_scivocab_uncased` tokenizer, which labels each sentence on its
+own. Goldsack et al. trained Cohan et al.'s (2019) sequential classifier on
+PubMed RCT, which also sees neighbouring sentences. It is trained on biomedical abstracts and is off-domain for news,
+Wikipedia and legal text; the module says so in `notes`. Offline keyword
+stand-in under the smoke settings, flagged.

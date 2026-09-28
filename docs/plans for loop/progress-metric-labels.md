@@ -240,3 +240,14 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
 - **Next item:** M5 sections and M5 page.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 5: M5 docs (+ registry gap)
+
+- **Branch:** `feature/metric-labels-e`
+- **Registry gap fixed:** M5's `pairwise_agreement` is filled only when two or more scorers run. It is empty in every archived and smoke run, so it had no label, and a real run with SummaC or AlignScore enabled would have emitted unlabelled paths. It now has a project-specific entry, and `test_pairwise_agreement_is_labelled` covers a filled block.
+- **Item:** 10 M5 sections covering all 13 M5 registry keys. `docs/modules/m5-elaboration.md` restructured per §6.2; `DOCUMENTED` includes M5.
+- **Moved paragraphs (M5 page → metrics.md):** the `nli` and `lexical_grounding` scorer bullets and "`per_scorer[name]`" (block shape, "`not_entailed_rate` is the headline number… upper bound") → NLI and lexical grounding scores. The AlignScore/SummaC bullet → their own sections (the optional-load sentence stays on the page too). "`pairwise_agreement`" → scorer agreement. "`not_entailed_pattern_breakdown`" (table, flag semantics) → pattern breakdown. The corrected-rate formula paragraph → corrected not-entailed rate. The `score_histogram` reading from the glossary is repeated in the scorer section. Scorer overview, cost, annotation loop (procedure), `heuristic_only` and the glossary stay on the page, the glossary now linked.
+- **Paper check:** Goldsack 2022 §4.2 finds "a much greater portion of lay summary sentences is dedicated to … Background", at the expense of Results and, less so, Methods. They trained Cohan et al.'s (2019) sequential classifier, and the rhetorical-roles section now says ours labels sentences independently.
+- **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
+- **Next item:** M6 sections and M6 page.
+- **DEFERRED:** none.
