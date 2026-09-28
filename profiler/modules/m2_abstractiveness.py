@@ -26,6 +26,11 @@ _LCS_CELL_CAP = 4_000_000
 # Bommasani & Cardie (2020) s3: "We set p = 1." Only that p is emitted.
 ABSTRACTIVITY_P = 1
 
+# Bommasani & Cardie (2020) s3: LDA with k = 20 topics fit on the documents
+# (T = D); TS = 1 - Jensen-Shannon distance of the inferred topic mixtures.
+LDA_TOPICS = 20
+LDA_SEED = 13
+
 # Literature metrics added after the original eleven, summarised after them.
 NEW_METRIC_COLS = [
     "abstractivity_p1",
@@ -34,6 +39,7 @@ NEW_METRIC_COLS = [
     "additions_proportion",
     "deletions_proportion",
     "redundancy",
+    "topic_similarity",
 ]
 
 
@@ -172,6 +178,34 @@ def _redundancy(tgt_sent_tokens: list[list[str]]) -> float | None:
     return sum(scores) / len(scores) if scores else None
 
 
+def _topic_similarity(sources: list[str], targets: list[str]) -> tuple[list[float | None], str | None]:
+    """Per-pair TS = 1 - JS distance (base 2, so in [0, 1]) between the LDA
+    topic mixtures of source and target, under one seeded model fit on the
+    corpus's sources. Returns (values, note); values are None if no model fits.
+    """
+
+    import numpy as np
+    from scipy.spatial.distance import jensenshannon
+    from sklearn.decomposition import LatentDirichletAllocation
+    from sklearn.feature_extraction.text import CountVectorizer
+
+    vectorizer = CountVectorizer(lowercase=True, stop_words="english")
+    try:
+        x_src = vectorizer.fit_transform(sources)
+    except ValueError:  # empty vocabulary, e.g. a corpus of stopwords
+        return [None] * len(sources), "topic_similarity skipped: no vocabulary left to fit LDA on."
+    lda = LatentDirichletAllocation(
+        n_components=LDA_TOPICS, random_state=LDA_SEED, learning_method="batch"
+    )
+    theta_src = lda.fit_transform(x_src)
+    theta_tgt = lda.transform(vectorizer.transform(targets))
+    values: list[float | None] = []
+    for a, b in zip(theta_src, theta_tgt):
+        d = float(jensenshannon(a, b, base=2))
+        values.append(None if np.isnan(d) else 1.0 - d)
+    return values, None
+
+
 def _edit_features(source: str, target: str, src_sents: list[str], tgt_sents: list[str],
                    src_words: list[str], tgt_words: list[str]) -> dict:
     """EASSE / tseval edit features, applied to whole documents.
@@ -243,6 +277,10 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             }
         )
 
+    topic_sim, topic_note = _topic_similarity([p.source for p in pairs], [p.target for p in pairs])
+    for row, value in zip(per_pair, topic_sim):
+        row["topic_similarity"] = value
+
     def col(name: str) -> list[float]:
         return [r[name] for r in per_pair if r[name] is not None]
 
@@ -275,10 +313,21 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             f"cap; those contribute no rougeL_recall value."
         )
 
+    if topic_note:
+        notes.append(topic_note)
+
     params = {
         "rouge_orientation": "recall(candidate=target, reference=source) = overlap / |source n-grams|",
         "lcs_cell_cap": _LCS_CELL_CAP,
         "abstractivity_p": ABSTRACTIVITY_P,
+        "topic_similarity": {
+            "model": "sklearn LatentDirichletAllocation (batch)",
+            "n_topics": LDA_TOPICS,
+            "seed": LDA_SEED,
+            "fit_on": "sources",
+            "vectorizer": "CountVectorizer(lowercase, English stop words)",
+            "distance": "Jensen-Shannon distance, base 2",
+        },
         "edit_features": (
             "EASSE/tseval features on whole documents: Levenshtein = rapidfuzz "
             "fuzz.ratio(source, target)/100 on raw text; additions/deletions over "

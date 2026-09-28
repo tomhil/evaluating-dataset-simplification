@@ -77,3 +77,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 422 passed. Two smoke runs byte-identical.
 - **Next item:** M2 `topic_similarity` (LDA).
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase B, item 5: M2 `topic_similarity`
+
+- **Branch:** `feature/metric-labels-b`
+- **Item:** `abstractiveness.topic_similarity` = 1 − Jensen–Shannon distance (base 2) between the source and target topic mixtures under one sklearn LDA model, fit on the corpus's sources with k = 20 and seed 13. All settings are recorded in `params.topic_similarity`. If the vocabulary is empty, every value is `None` and a note is added. Registry row 26 (SUM). Test: identity pairs give 1.0, an unrelated pair scores lower, and reruns are deterministic.
+- **Paper check:** Bommasani & Cardie §3 and appendix A.2 specify k = 20, T = D (the documents) and JS *distance*. The PRD said "divergence", but the paper wins, so this uses distance (noted for the PR). The paper used gensim and gives no log base or preprocessing. Base 2 keeps the value in [0, 1] as the paper states every metric is; English stop words are removed. Both are implementation choices, noted in params.
+- **Result:** pass. `pytest -q`: 424 passed. Two smoke runs byte-identical.
+- **Next item:** M3 `wordrank`.
+- **DEFERRED:** none.

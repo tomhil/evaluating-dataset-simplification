@@ -153,3 +153,23 @@ def test_redundancy(ctx):
     assert _run(m2_abstractiveness, [Pair("id", IDENTITY_TEXT, disjoint)], ctx).per_pair[0]["redundancy"] == 0.0
     one = "Just one sentence here."
     assert _run(m2_abstractiveness, [Pair("id", IDENTITY_TEXT, one)], ctx).per_pair[0]["redundancy"] is None
+
+
+def test_topic_similarity(ctx):
+    """1 - JS distance of LDA topic mixtures: identity gives 1.0; values lie in [0, 1]."""
+    other = (
+        "Parliament passed the budget after a long debate. "
+        "The finance minister defended the tax changes in a televised speech."
+    )
+    pairs = [
+        Pair("a", IDENTITY_TEXT, IDENTITY_TEXT),
+        Pair("b", SOURCE_LONG, other),
+        Pair("c", other, other),
+    ]
+    res = _run(m2_abstractiveness, pairs, ctx)
+    ts = {r["id"]: r["topic_similarity"] for r in res.per_pair}
+    assert abs(ts["a"] - 1.0) < 1e-9 and abs(ts["c"] - 1.0) < 1e-9
+    assert 0.0 <= ts["b"] < ts["a"]
+    assert res.params["topic_similarity"]["n_topics"] == 20
+    again = _run(m2_abstractiveness, pairs, ctx)
+    assert [r["topic_similarity"] for r in again.per_pair] == list(ts.values())
