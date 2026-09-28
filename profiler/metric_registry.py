@@ -220,6 +220,13 @@ _LITERATURE: tuple[MetricLabel, ...] = (
     # Row 27: PubMed-RCT roles of target (and abstract) sentences.
     _lit("elaboration.rhetorical_roles", {"PLS"}, (GOLDSACK_2022,), needs="target",
          direction="↑ more background sentences", headline=("target.background.median",)),
+    # Rows 28-30: reference-free summary quality in M8 (all DEFERRED; null keys).
+    _lit("pair_similarity.blanc", {"SUM"}, (VASILYEV_2020,), evidence="validated",
+         direction="↑ more helpful summary"),
+    _lit("pair_similarity.supert", {"SUM"}, (GAO_2020,), evidence="validated",
+         direction="↑ better summary"),
+    _lit("pair_similarity.summaqa", {"SUM"}, (SCIALOM_2019,), evidence="validated",
+         direction="↑ better summary"),
     # Row 9
     _lit("pair_similarity.bleu", {"DS"}, (CRIPWELL_2024,),
          direction="↑ closer to source wording", headline=()),

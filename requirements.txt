@@ -34,7 +34,17 @@ torch>=2.0
 # Optional M5 scorers — install only if you want them; the module skips
 # gracefully when absent (see profiler/modules/m5_elaboration.py):
 #   alignscore
-#   summac
+#   summac      (also M5 document-level SummaC; pins transformers==4.35.2)
+# Optional model-based literature metrics (profiler/model_metrics.py). Each is
+# skipped with a note when it cannot load; none is installed by this file.
+#   SLE:        checkpoint liamcripwell/sle-base, loaded via transformers (no package;
+#               NOT the unrelated PyPI package named `sle`)
+#   Coherence:  bert-base-uncased next-sentence prediction, via transformers
+#   PubMed-RCT: gubartz/cls_scibert_pubmed_rct + allenai/scibert_scivocab_uncased
+#   qafacteval  DEFERRED: fails to build on this stack
+#   blanc       DEFERRED: requires torch<2.0, numpy<2.0
+#   SUPERT      DEFERRED: github.com/yg211/acl20-ref-free-eval, not a package; pins torch==1.5.0
+#   SummaQA     DEFERRED: github.com/recitalAI/summa-qa requires transformers==2.1.1
 # M8 pair_similarity: BLEU and BERTScore.
 sacrebleu>=2.4
 bert-score>=0.3.12

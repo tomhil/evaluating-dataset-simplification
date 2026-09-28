@@ -147,3 +147,19 @@ def test_rhetorical_roles_skip_when_model_cannot_load(monkeypatch):
     assert rr["models_run"] == []
     assert all(s["median"] is None for s in rr["target"].values())
     assert any("PubMed-RCT classifier unavailable" in n for n in res.notes)
+
+
+# --------------------------------------------------------------------------
+# M8 BLANC / SUPERT / SummaQA (DEFERRED)
+# --------------------------------------------------------------------------
+def test_m8_deferred_metrics_are_null_with_reasons():
+    pytest.importorskip("sacrebleu")
+    from profiler.modules import m8_similarity as m8
+
+    res = m8.compute([Pair("a", TEXT_A, TEXT_B)], _ctx())
+    assert res.corpus["models_run"] == []
+    for key in ("blanc", "supert", "summaqa"):
+        assert res.corpus[key]["n"] == 0 and res.corpus[key]["median"] is None
+    joined = " ".join(res.notes)
+    for name in ("BLANC is DEFERRED", "SUPERT is DEFERRED", "SummaQA is DEFERRED"):
+        assert name in joined

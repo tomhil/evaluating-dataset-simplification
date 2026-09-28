@@ -233,3 +233,21 @@ def role_shares(labels: list[str]) -> dict[str, float | None]:
     if not labels:
         return dict.fromkeys(RCT_LABELS)
     return {lab: sum(1 for x in labels if x == lab) / len(labels) for lab in RCT_LABELS}
+
+
+# --------------------------------------------------------------------------
+# Reference-free summary quality (M8): BLANC, SUPERT, SummaQA -- all DEFERRED
+# --------------------------------------------------------------------------
+# None of the three installs against the core pins (torch>=2.0,
+# transformers>=4.35, Python 3.13); the reasons are recorded in the progress log
+# and the phase D PR. The PRD forbids reimplementing SummaQA and moving a core
+# pin, so their keys are emitted as None with this note until a human installs
+# them on the real-run machine.
+M8_DEFERRED = {
+    "blanc": "BLANC is DEFERRED: blanc 0.3.4 requires torch<2.0 and numpy<2.0, "
+             "against the core pin torch>=2.0.",
+    "supert": "SUPERT is DEFERRED: the official repository is not an installable "
+              "package and pins torch==1.5.0 and pytorch-transformers==1.2.0.",
+    "summaqa": "SummaQA is DEFERRED: the official repository requires "
+               "transformers==2.1.1, against the core pin transformers>=4.35.",
+}

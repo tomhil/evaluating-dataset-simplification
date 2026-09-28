@@ -182,3 +182,14 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 458 passed. Two smoke runs byte-identical.
 - **Next item:** M8 BLANC, SUPERT, SummaQA.
 - **DEFERRED:** none in this item.
+
+## 2026-09-28 — Phase D, item 5: M8 BLANC, SUPERT, SummaQA
+
+- **Branch:** `feature/metric-labels-d`
+- **Item:** `pair_similarity.{blanc, supert, summaqa}` are emitted as empty Summaries (`n = 0`, `None`), with `models_run: []` and one note per metric giving the install reason. Registry rows 28–30 (SUM, validated). The optional packages are documented as comments in `requirements.txt` (beside alignscore/summac) and `pyproject.toml`. Test: `test_m8_deferred_metrics_are_null_with_reasons`.
+- **DEFERRED — BLANC:** `blanc 0.3.4` declares `torch<2.0` and `numpy<2.0` (core pin `torch>=2.0`). `pip install blanc` then fails building numpy 1.26.4 from source on Python 3.13 ("'type_traits' file not found").
+- **DEFERRED — SUPERT:** the official repo (github.com/yg211/acl20-ref-free-eval) has no setup.py and pins torch==1.5.0, pytorch-transformers==1.2.0, numpy==1.18.4.
+- **DEFERRED — SummaQA:** the official repo (github.com/recitalAI/summa-qa) requires `transformers==2.1.1` (core pin ≥4.35). Per the default, it was not reimplemented.
+- **Result:** pass. `pytest -q`: 462 passed. Two smoke runs byte-identical.
+- **Next item:** inventory test that runs the smoke corpus with M7/M8 enabled in-test and checks every Section 4 key appears (Section 7 "Inventory complete").
+- **DEFERRED:** BLANC, SUPERT, SummaQA (above).
