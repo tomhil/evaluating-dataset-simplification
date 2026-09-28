@@ -235,6 +235,69 @@ def _abstract(p: Pair) -> str | None:
     return text if isinstance(text, str) and text.strip() else None
 
 
+# Goldsack et al. (2022) s4.3: content words are nouns, proper nouns, verbs and
+# numbers, bucketed by how many abstracts in the corpus contain the word.
+CONTENT_POS = {"NOUN": "noun", "PROPN": "propn", "VERB": "verb", "NUM": "num"}
+ABSTRACT_COUNT_BUCKETS = (("1", 1, 1), ("2-10", 2, 10), ("11-100", 11, 100), ("100+", 101, None))
+
+
+def _bucket(count: int) -> str:
+    for name, lo, hi in ABSTRACT_COUNT_BUCKETS:
+        if count >= lo and (hi is None or count <= hi):
+            return name
+    raise ValueError(count)
+
+
+def _abstract_content_overlap(pairs: Sequence[Pair], proc) -> tuple[list[dict], str | None]:
+    """Per pair: the share of the abstract's distinct content words that also
+    appear in the target -- overall, per abstract-count bucket, and per word
+    type. Needs a POS tagger; without one every value is None and a note says so.
+    """
+
+    empty = {"all": None, **{f"bucket_{b[0]}": None for b in ABSTRACT_COUNT_BUCKETS},
+             **{f"type_{t}": None for t in CONTENT_POS.values()}}
+    if not getattr(proc, "has_parser", False):
+        return [dict(empty) for _ in pairs], (
+            "abstract_content_overlap not computed: the processor has no POS "
+            "tagger to find nouns, proper nouns, verbs and numbers."
+        )
+
+    # word -> word type, per pair with an abstract. A word tagged with more than
+    # one type in an abstract keeps its first.
+    content: list[dict[str, str] | None] = []
+    doc_freq: Counter = Counter()
+    for p in pairs:
+        abstract = _abstract(p)
+        if abstract is None:
+            content.append(None)
+            continue
+        words: dict[str, str] = {}
+        for sent in proc.sentences(abstract):
+            for tok in proc.analyze_sentence(sent):
+                kind = CONTENT_POS.get(tok.pos)
+                if kind:
+                    words.setdefault(tok.text.lower(), kind)
+        content.append(words)
+        doc_freq.update(words.keys())
+
+    rows: list[dict] = []
+    for p, words in zip(pairs, content):
+        row = dict(empty)
+        if words:
+            target = {t.lower() for t in proc.words(p.target)}
+
+            def share(ws: list[str]) -> float | None:
+                return (sum(1 for w in ws if w in target) / len(ws)) if ws else None
+
+            row["all"] = share(list(words))
+            for name, _, _ in ABSTRACT_COUNT_BUCKETS:
+                row[f"bucket_{name}"] = share([w for w in words if _bucket(doc_freq[w]) == name])
+            for kind in CONTENT_POS.values():
+                row[f"type_{kind}"] = share([w for w, k in words.items() if k == kind])
+        rows.append(row)
+    return rows, None
+
+
 def _edit_features(source: str, target: str, src_sents: list[str], tgt_sents: list[str],
                    src_words: list[str], tgt_words: list[str]) -> dict:
     """EASSE / tseval edit features, applied to whole documents.
@@ -313,6 +376,10 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             }
         )
 
+    overlap_rows, overlap_note = _abstract_content_overlap(pairs, proc)
+    for row, overlap in zip(per_pair, overlap_rows):
+        row.update({f"abstract_overlap_{k}": v for k, v in overlap.items()})
+
     topic_sim, topic_note = _topic_similarity([p.source for p in pairs], [p.target for p in pairs])
     for row, value in zip(per_pair, topic_sim):
         row["topic_similarity"] = value
@@ -344,6 +411,15 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         k: summarize(col(f"abstract_target_{k}"), seed=ctx.seed, resamples=ctx.resamples).to_dict()
         for k in ROUGE_F1_KEYS
     }
+    # Goldsack et al. (2022) s4.3, with spaCy standing in for ScispaCy.
+    def summ(name: str) -> dict:
+        return summarize(col(f"abstract_overlap_{name}"), seed=ctx.seed, resamples=ctx.resamples).to_dict()
+
+    corpus["abstract_content_overlap"] = {
+        "all": summ("all"),
+        "by_abstract_count": {b[0]: summ(f"bucket_{b[0]}") for b in ABSTRACT_COUNT_BUCKETS},
+        "by_type": {t: summ(f"type_{t}") for t in CONTENT_POS.values()},
+    }
     corpus["density_histogram"] = histogram(col("density"))
     corpus["novel_1gram_histogram"] = histogram(col("novel_1gram"))
 
@@ -357,6 +433,8 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
 
     if topic_note:
         notes.append(topic_note)
+    if overlap_note:
+        notes.append(overlap_note)
     n_no_abstract = sum(1 for p in pairs if _abstract(p) is None)
     if n_no_abstract:
         notes.append(
@@ -376,6 +454,11 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             "vectorizer": "CountVectorizer(lowercase, English stop words)",
             "distance": "Jensen-Shannon distance, base 2",
         },
+        "abstract_content_overlap": (
+            "share of the abstract's distinct nouns, proper nouns, verbs and numbers "
+            "(spaCy POS, standing in for ScispaCy) found among the target's words; "
+            "buckets by how many abstracts in this corpus contain the word"
+        ),
         "edit_features": (
             "EASSE/tseval features on whole documents: Levenshtein = rapidfuzz "
             "fuzz.ratio(source, target)/100 on raw text; additions/deletions over "

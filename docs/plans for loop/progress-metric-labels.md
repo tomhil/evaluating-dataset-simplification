@@ -131,3 +131,13 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 438 passed. Two smoke runs byte-identical.
 - **Next item:** M2 `abstract_content_overlap`.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase C, item 4: M2 `abstract_content_overlap`
+
+- **Branch:** `feature/metric-labels-c`
+- **Item:** `abstractiveness.abstract_content_overlap` = {`all`, `by_abstract_count` {1, 2-10, 11-100, 100+}, `by_type` {noun, propn, verb, num}}. Each is the per-pair share of the abstract's distinct content words (spaCy POS NOUN/PROPN/VERB/NUM, lowercased) that appear among the target's words. Buckets count how many abstracts in the corpus contain the word, which is why this lives in a full-corpus module. Registry row 14 (PLS; needs `abstract`; headline `all.median`). Without an abstract a pair is null (the existing abstract note counts them). Without a POS tagger (`has_parser` False) every value is null and a note is added. Tests use an offline POS stand-in: partial overlap, bucket and type splits, identity = 1.0, and the no-tagger fallback.
+- **Paper check:** Goldsack et al. 2022 §4.3 treats "nouns, proper nouns, verbs, and numbers as content words", extracted with ScispaCy (`en_core_sci_scibert`), and buckets by number of abstract occurrences. Deviation: spaCy `en_core_web_sm` stands in for ScispaCy (per the PRD). The paper plots shared/not-shared percentages over all words of a type pooled across the corpus. Here each pair gets a share and the corpus reports the Summary of those shares.
+- **Result:** pass. `pytest -q`: 440 passed. Two smoke runs byte-identical.
+- **Phase C gate:** passed. Fetcher and adapter tests green; the abstract metrics are `None` on the smoke corpus with a note. Pushed and opened the Phase C PR.
+- **Next item:** Phase D, move `sample_pairs` into `profiler/sampling.py` and re-export it from `run.py`.
+- **DEFERRED:** none.
