@@ -278,3 +278,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. Doc tests green; docs-only change.
 - **Next item:** index table at the top of `docs/metrics.md`, README and `docs/modules/README.md` links, and removal of the `DOCUMENTED` scaffold.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 9: index, README links, gate
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** `docs/metrics.md` gains its Index (key · name · label · evidence · module, 118 rows sorted by module, each linked to its section). It was generated once from the registry and section anchors, and `test_index_lists_every_key_with_its_label_and_anchor` keeps it in sync. The README's "Per-module reference" paragraph and `docs/modules/README.md` each gained a line linking to `docs/metrics.md`. The `DOCUMENTED` scaffold is removed; `tests/test_metrics_doc.py` now covers every registry key and all eight module pages.
+- **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
+- **Phase E gate:** passed. `test_metrics_doc.py` passes, and every moved paragraph is listed in the item 1–8 entries above and in the PR. Pushed and opened the Phase E PR.
+- **Next item:** Phase F, `DOMAIN` dict in `scripts/compare_runs.py`.
+- **DEFERRED:** none.

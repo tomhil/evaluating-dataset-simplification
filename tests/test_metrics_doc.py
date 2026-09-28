@@ -69,10 +69,7 @@ def _sections(text: str) -> list[dict]:
 
 SECTIONS = _sections(METRICS_MD.read_text()) if METRICS_MD.exists() else []
 SECTION_OF = {k: s for s in SECTIONS for k in s["keys"]}
-# Phase E documents one module per commit; this set grows to all eight and is
-# then removed.
-DOCUMENTED = {"M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8"}
-ENTRIES = [m for m in REGISTRY if m.module in DOCUMENTED]
+ENTRIES = list(REGISTRY)
 
 
 @pytest.mark.parametrize("m", ENTRIES, ids=lambda m: m.key)
@@ -96,7 +93,7 @@ def test_section_links_back_to_its_module_page(m):
     assert f"(modules/{MODULE_PAGES[m.module]})" in SECTION_OF[m.key]["body"], m.key
 
 
-@pytest.mark.parametrize("module", sorted(DOCUMENTED))
+@pytest.mark.parametrize("module", sorted(MODULE_PAGES))
 def test_module_page_links_each_key(module):
     page = (DOCS / "modules" / MODULE_PAGES[module]).read_text()
     anchors = set(re.findall(r"\(\.\./metrics\.md#([^)]+)\)", page))
@@ -118,3 +115,17 @@ def test_external_urls_are_allowed(path):
 def test_slug_helper_matches_github():
     assert github_slug("`length.compression_ratio` — Compression ratio") == "lengthcompression_ratio--compression-ratio"
     assert github_slug("The mean vs. the corpus-level ratio") == "the-mean-vs-the-corpus-level-ratio"
+
+
+def test_index_lists_every_key_with_its_label_and_anchor():
+    text = METRICS_MD.read_text()
+    index = text[text.index("## Index"):text.index("## M1")]
+    rows = re.findall(r"^\| \[`([^`]+)`\]\(#([^)]+)\) \| (.+?) \| (.+?) \| (.+?) \| (M\d) \|$", index, flags=re.M)
+    by_key = {r[0]: r for r in rows}
+    assert set(by_key) == set(REGISTRY_KEYS)
+    for key, (k, anchor, _name, label, evidence, module) in by_key.items():
+        m = REGISTRY_KEYS[key]
+        assert anchor == SECTION_OF[key]["anchor"], key
+        assert (label, evidence, module) == (label_text(m), m.evidence, m.module), key
+    modules = [r[5] for r in rows]
+    assert modules == sorted(modules), "index must be sorted by module"

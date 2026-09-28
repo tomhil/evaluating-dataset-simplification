@@ -1,7 +1,8 @@
 # Metric module reference
 
-One document per metric module, describing every metric it emits, how that
-metric is computed, and how to read it.
+One document per metric module, explaining what the module measures and linking
+each of its metrics to [the per-metric reference](../metrics.md), which holds
+every metric's definition, task label and papers.
 
 | Module | File | Runs on | Measures |
 |---|---|---|---|

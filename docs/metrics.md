@@ -20,7 +20,128 @@ target only, or an abstract) and the module that emits it. Keys are paths under
 `modules.<module>.corpus` in `metrics.json`; `*` stands for one parametrised
 key, such as a τ value.
 
-<!-- INDEX -->
+## Index
+
+| Key | Name | Label | Evidence | Module |
+|---|---|---|---|---|
+| [`length.compression_ratio`](#lengthcompression_ratio--compression-ratio-tokens) | Compression ratio (tokens) | SUM, DS | introduced | M1 |
+| [`length.char_compression_ratio`](#lengthchar_compression_ratio--compression-ratio-characters) | Compression ratio (characters) | DS | introduced | M1 |
+| [`length.sentence_ratio`](#lengthsentence_ratio--sentence-split-ratio) | Sentence split ratio | DS | introduced | M1 |
+| [`length.src_tokens`](#lengthsrc_tokens-lengthtgt_tokens--length) | Length | DS | introduced | M1 |
+| [`length.tgt_tokens`](#lengthsrc_tokens-lengthtgt_tokens--length) | Length | DS | introduced | M1 |
+| [`length.mean_src_sent_len`](#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) | Mean sentence length | project-specific | project-specific | M1 |
+| [`length.mean_tgt_sent_len`](#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) | Mean sentence length | project-specific | project-specific | M1 |
+| [`length.expansion_rate`](#lengthexpansion_rate--expansion-rate) | Expansion rate | project-specific | project-specific | M1 |
+| [`length.compression_bimodality`](#lengthcompression_bimodality--compression-bimodality) | Compression bimodality | project-specific | project-specific | M1 |
+| [`abstractiveness.coverage`](#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) | Coverage and density | SUM | introduced | M2 |
+| [`abstractiveness.density`](#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) | Coverage and density | SUM | introduced | M2 |
+| [`abstractiveness.novel_1gram`](#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) | Novel n-grams | SUM, PLS | introduced | M2 |
+| [`abstractiveness.novel_2gram`](#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) | Novel n-grams | SUM, PLS | introduced | M2 |
+| [`abstractiveness.novel_3gram`](#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) | Novel n-grams | SUM, PLS | introduced | M2 |
+| [`abstractiveness.novel_4gram`](#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) | Novel n-grams | SUM, PLS | introduced | M2 |
+| [`abstractiveness.novel_content_1gram`](#abstractivenessnovel_content_1gram--novel-content-words) | Novel content words | project-specific | project-specific | M2 |
+| [`abstractiveness.abstractivity_p1`](#abstractivenessabstractivity_p1--abstractivity) | Abstractivity | SUM | introduced | M2 |
+| [`abstractiveness.redundancy`](#abstractivenessredundancy--redundancy) | Redundancy | SUM | introduced | M2 |
+| [`abstractiveness.topic_similarity`](#abstractivenesstopic_similarity--topic-similarity) | Topic similarity | SUM | introduced | M2 |
+| [`abstractiveness.levenshtein_similarity`](#abstractivenesslevenshtein_similarity--levenshtein-similarity) | Levenshtein similarity | DS | introduced | M2 |
+| [`abstractiveness.exact_copies`](#abstractivenessexact_copies--exact-copies) | Exact copies | DS | introduced | M2 |
+| [`abstractiveness.additions_proportion`](#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) | Addition and deletion proportions | DS | introduced | M2 |
+| [`abstractiveness.deletions_proportion`](#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) | Addition and deletion proportions | DS | introduced | M2 |
+| [`abstractiveness.rouge_abstract_target`](#abstractivenessrouge_abstract_target--rougeabstract-target) | ROUGE(abstract, target) | PLS | introduced | M2 |
+| [`abstractiveness.abstract_content_overlap`](#abstractivenessabstract_content_overlap--abstract-content-word-overlap-by-rarity) | Abstract content-word overlap by rarity | PLS | introduced | M2 |
+| [`abstractiveness.rouge1_recall`](#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) | ROUGE recall of the source | project-specific | project-specific | M2 |
+| [`abstractiveness.rouge2_recall`](#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) | ROUGE recall of the source | project-specific | project-specific | M2 |
+| [`abstractiveness.rougeL_recall`](#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) | ROUGE recall of the source | project-specific | project-specific | M2 |
+| [`abstractiveness.content_type_overlap`](#abstractivenesscontent_type_overlap--content-type-overlap) | Content-type overlap | project-specific | project-specific | M2 |
+| [`readability.m3a_surface.fkgl`](#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) | Flesch–Kincaid Grade Level | PLS, DS | introduced | M3 |
+| [`readability.m3a_surface.fre`](#readabilitym3a_surfacefre--flesch-reading-ease) | Flesch Reading Ease | DS | introduced | M3 |
+| [`readability.m3a_surface.cli`](#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) | Coleman–Liau Index and Dale–Chall Readability Score | PLS | introduced | M3 |
+| [`readability.m3a_surface.dcrs`](#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) | Coleman–Liau Index and Dale–Chall Readability Score | PLS | introduced | M3 |
+| [`readability.m3a_surface.ari`](#readabilitym3a_surfaceari-readabilitym3a_surfacesmog--automated-readability-index-and-smog) | Automated Readability Index and SMOG | project-specific | project-specific | M3 |
+| [`readability.m3a_surface.smog`](#readabilitym3a_surfaceari-readabilitym3a_surfacesmog--automated-readability-index-and-smog) | Automated Readability Index and SMOG | project-specific | project-specific | M3 |
+| [`readability.m3b_length_invariant.jargon_rate`](#readabilitym3b_length_invariantmean_zipf-and-related--lexical-length-invariant-measures) | Lexical length-invariant measures | project-specific | project-specific | M3 |
+| [`readability.m3b_length_invariant.mean_zipf`](#readabilitym3b_length_invariantmean_zipf-and-related--lexical-length-invariant-measures) | Lexical length-invariant measures | project-specific | project-specific | M3 |
+| [`readability.m3b_length_invariant.mtld`](#readabilitym3b_length_invariantmean_zipf-and-related--lexical-length-invariant-measures) | Lexical length-invariant measures | project-specific | project-specific | M3 |
+| [`readability.m3b_length_invariant.rare_word_rate`](#readabilitym3b_length_invariantmean_zipf-and-related--lexical-length-invariant-measures) | Lexical length-invariant measures | project-specific | project-specific | M3 |
+| [`readability.m3b_length_invariant.syllables_per_word`](#readabilitym3b_length_invariantmean_zipf-and-related--lexical-length-invariant-measures) | Lexical length-invariant measures | project-specific | project-specific | M3 |
+| [`readability.m3b_length_invariant.mean_dependency_distance`](#readabilitym3b_length_invariantmean_dependency_distance-and-related--syntactic-length-invariant-measures) | Syntactic length-invariant measures | project-specific | project-specific | M3 |
+| [`readability.m3b_length_invariant.mean_parse_depth`](#readabilitym3b_length_invariantmean_dependency_distance-and-related--syntactic-length-invariant-measures) | Syntactic length-invariant measures | project-specific | project-specific | M3 |
+| [`readability.m3b_length_invariant.passive_rate`](#readabilitym3b_length_invariantmean_dependency_distance-and-related--syntactic-length-invariant-measures) | Syntactic length-invariant measures | project-specific | project-specific | M3 |
+| [`readability.m3b_length_invariant.subordinate_clause_ratio`](#readabilitym3b_length_invariantmean_dependency_distance-and-related--syntactic-length-invariant-measures) | Syntactic length-invariant measures | project-specific | project-specific | M3 |
+| [`readability.m3b_length_invariant.wordrank`](#readabilitym3b_length_invariantwordrank--wordrank) | WordRank | PLS | introduced | M3 |
+| [`readability.m3b_length_invariant.lexical_complexity`](#readabilitym3b_length_invariantlexical_complexity--lexical-complexity) | Lexical complexity | DS | introduced | M3 |
+| [`readability.m3c_decomposition.*`](#readabilitym3c_decomposition--length-matched-decomposition) | Length-matched decomposition | project-specific | project-specific | M3 |
+| [`readability.m3d_model_based.sle_doc`](#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain) | SLE, document level, and its gain | DS | validated | M3 |
+| [`readability.m3d_model_based.sle_gain`](#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain) | SLE, document level, and its gain | DS | validated | M3 |
+| [`readability.m3d_model_based.semantic_coherence`](#readabilitym3d_model_basedsemantic_coherence--semantic-coherence) | Semantic coherence | SUM | introduced | M3 |
+| [`alignment.by_tau.*.source_coverage`](#alignmentby_tausource_coverage--source-coverage) | Source coverage | project-specific | project-specific | M4 |
+| [`alignment.by_tau.*.target_groundedness`](#alignmentby_tautarget_groundedness--target-groundedness) | Target groundedness | project-specific | project-specific | M4 |
+| [`alignment.by_tau.*.kendall_tau`](#alignmentby_taukendall_tau--kendalls-tau-reordering) | Kendall's tau (reordering) | project-specific | project-specific | M4 |
+| [`alignment.by_tau.*.alignment_type_counts.n_1_1`](#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Alignment type counts and distribution | project-specific | project-specific | M4 |
+| [`alignment.by_tau.*.alignment_type_counts.n_1_n_split`](#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Alignment type counts and distribution | project-specific | project-specific | M4 |
+| [`alignment.by_tau.*.alignment_type_counts.n_n_1_merge`](#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Alignment type counts and distribution | project-specific | project-specific | M4 |
+| [`alignment.by_tau.*.alignment_type_counts.n_1_0_deletion`](#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Alignment type counts and distribution | project-specific | project-specific | M4 |
+| [`alignment.by_tau.*.alignment_type_counts.n_0_1_insertion`](#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Alignment type counts and distribution | project-specific | project-specific | M4 |
+| [`alignment.by_tau.*.alignment_type_distribution.n_1_1`](#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Alignment type counts and distribution | project-specific | project-specific | M4 |
+| [`alignment.by_tau.*.alignment_type_distribution.n_1_n_split`](#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Alignment type counts and distribution | project-specific | project-specific | M4 |
+| [`alignment.by_tau.*.alignment_type_distribution.n_n_1_merge`](#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Alignment type counts and distribution | project-specific | project-specific | M4 |
+| [`alignment.by_tau.*.alignment_type_distribution.n_1_0_deletion`](#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Alignment type counts and distribution | project-specific | project-specific | M4 |
+| [`alignment.by_tau.*.alignment_type_distribution.n_0_1_insertion`](#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Alignment type counts and distribution | project-specific | project-specific | M4 |
+| [`alignment.entity_preservation.entity_precision`](#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching) | Entity matching | DS | introduced | M4 |
+| [`alignment.entity_preservation.entity_recall`](#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching) | Entity matching | DS | introduced | M4 |
+| [`alignment.entity_preservation.entity_f1`](#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching) | Entity matching | DS | introduced | M4 |
+| [`elaboration.per_scorer.lexical_grounding`](#elaborationper_scorernli-elaborationper_scorerlexical_grounding--nli-and-lexical-grounding-scores) | NLI and lexical grounding scores | project-specific | project-specific | M5 |
+| [`elaboration.per_scorer.nli`](#elaborationper_scorernli-elaborationper_scorerlexical_grounding--nli-and-lexical-grounding-scores) | NLI and lexical grounding scores | project-specific | project-specific | M5 |
+| [`elaboration.per_scorer.summac_conv`](#elaborationper_scorersummac_conv--summac-conv-sentence-level) | SummaC-Conv, sentence level | SUM, PLS, DS | validated | M5 |
+| [`elaboration.per_scorer.alignscore`](#elaborationper_scoreralignscore--alignscore-sentence-level) | AlignScore, sentence level | SUM, PLS | validated | M5 |
+| [`elaboration.not_entailed_rate_by_document`](#elaborationnot_entailed_rate_by_document--not-entailed-rate-by-document) | Not-entailed rate by document | project-specific | project-specific | M5 |
+| [`elaboration.pairwise_agreement`](#elaborationpairwise_agreement--scorer-agreement) | Scorer agreement | project-specific | project-specific | M5 |
+| [`elaboration.not_entailed_pattern_breakdown`](#elaborationnot_entailed_pattern_breakdown--pattern-breakdown-of-unsupported-sentences) | Pattern breakdown of unsupported sentences | project-specific | project-specific | M5 |
+| [`elaboration.corrected_not_entailed_rate`](#elaborationcorrected_not_entailed_rate--corrected-not-entailed-rate) | Corrected not-entailed rate | project-specific | project-specific | M5 |
+| [`elaboration.document_level.summac_precision`](#elaborationdocument_levelsummac_precision-elaborationdocument_levelqafacteval_precision--document-level-faithfulness-precision) | Document-level faithfulness, precision | SUM, DS | validated | M5 |
+| [`elaboration.document_level.qafacteval_precision`](#elaborationdocument_levelsummac_precision-elaborationdocument_levelqafacteval_precision--document-level-faithfulness-precision) | Document-level faithfulness, precision | SUM, DS | validated | M5 |
+| [`elaboration.document_level.summac_recall`](#elaborationdocument_levelsummac_recall-elaborationdocument_levelqafacteval_recall--document-level-faithfulness-recall) | Document-level faithfulness, recall | DS | validated | M5 |
+| [`elaboration.document_level.qafacteval_recall`](#elaborationdocument_levelsummac_recall-elaborationdocument_levelqafacteval_recall--document-level-faithfulness-recall) | Document-level faithfulness, recall | DS | validated | M5 |
+| [`elaboration.rhetorical_roles`](#elaborationrhetorical_roles--rhetorical-role-distribution) | Rhetorical role distribution | PLS | introduced | M5 |
+| [`deletion_profile.features.*`](#deletion_profilefeatures--deleted-versus-retained-feature-effects) | Deleted-versus-retained feature effects | project-specific | project-specific | M6 |
+| [`linguistic_features.avg_word_length`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
+| [`linguistic_features.content_words_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
+| [`linguistic_features.infrequent_words_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
+| [`linguistic_features.lexical_richness`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
+| [`linguistic_features.long_words_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
+| [`linguistic_features.modifiers_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
+| [`linguistic_features.negations_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
+| [`linguistic_features.syllables_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
+| [`linguistic_features.words_over_8_chars`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
+| [`linguistic_features.appositions_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.conditional_clauses_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.conjunctions_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.noun_phrases_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.passive_voice_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.past_perfect_verbs`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.past_tense_verbs`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.punctuation_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.relative_clauses_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.sentences_number`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.short_sentences_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.syntactic_tree_depth`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.third_person_pronouns_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.words_before_main_verb`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.words_per_sentence`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
+| [`linguistic_features.avg_same_entity_distance`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
+| [`linguistic_features.consecutive_entity_distance`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
+| [`linguistic_features.entity_to_token_ratio`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
+| [`linguistic_features.max_same_entity_distances`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
+| [`linguistic_features.unique_entities`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
+| [`linguistic_features.unique_entities_average`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
+| [`linguistic_features.unique_entities_to_total_entities`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
+| [`linguistic_features.flesch_kincaid_grade`](#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | Flesch readability, M7 copies | project-specific | project-specific | M7 |
+| [`linguistic_features.flesch_reading_ease`](#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | Flesch readability, M7 copies | project-specific | project-specific | M7 |
+| [`pair_similarity.bleu`](#pair_similaritybleu--bleutarget-source) | BLEU(target, source) | DS | introduced | M8 |
+| [`pair_similarity.bertscore_f1`](#pair_similaritybertscore_f1--bertscore-f1) | BERTScore F1 | project-specific | project-specific | M8 |
+| [`pair_similarity.blanc`](#pair_similarityblanc--blanc) | BLANC | SUM | validated | M8 |
+| [`pair_similarity.supert`](#pair_similaritysupert--supert) | SUPERT | SUM | validated | M8 |
+| [`pair_similarity.summaqa`](#pair_similaritysummaqa--summaqa) | SummaQA | SUM | validated | M8 |
 
 ## M1 — Length and compression
 

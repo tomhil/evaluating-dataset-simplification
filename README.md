@@ -35,6 +35,8 @@ axis against their published values.
 each module emits — how it is computed, what it ranges over, how to read it, and
 where it misleads. Start with [the index](docs/modules/README.md) for the shared
 statistics contract and the two traps common to all six modules.
+[`docs/metrics.md`](docs/metrics.md) is the per-metric reference: every metric's
+definition, task label (SUM, PLS, DS or project-specific) and papers.
 
 ## Install
 
