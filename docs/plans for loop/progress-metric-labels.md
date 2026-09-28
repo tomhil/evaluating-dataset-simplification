@@ -260,3 +260,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. Doc tests green; docs-only change (no code touched since the last full check).
 - **Next item:** M7 sections and M7 page.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 7: M7 docs
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** 4 M7 family sections (lexical 9, syntactic/sentence 15, entity coherence 7, Flesch 2) covering all 33 M7 keys through `**Keys:**` lines; each cites the M7 source repository, the only paper M7 may carry. `docs/modules/m7-linguistic-features.md` restructured per §6.2; the glossary's 33 feature rows now link to their family sections (generated from the old table, so the wording is unchanged apart from "see above" → "see the reference"). `DOCUMENTED` includes M7.
+- **Moved paragraphs (M7 page → metrics.md):** "Two features that are not what their names suggest" (`words_per_sentence`; `past_tense_verbs`/`passive_voice_ratio` > 1) → syntactic and sentence features. "Three entity features are document-length proxies" (ρ table, Cochrane numbers, XSum single-sentence caveat, `consecutive_entity_distance`, the failure-mode paragraph) → entity coherence features. The six deviations, individually → the implementation notes of the families they affect; the page keeps a one-paragraph summary. The NER-zero degradation sentence is repeated in the entity section. Why it was added, sign convention, the self-contained table, cost, degradation and the glossary stay on the page.
+- **Result:** pass. Doc tests green; docs-only change.
+- **Next item:** M8 sections and M8 page.
+- **DEFERRED:** none.

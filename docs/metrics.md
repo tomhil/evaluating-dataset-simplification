@@ -1183,3 +1183,201 @@ the z-scores was tried first and abandoned: the guards were per document while
 the z-scores were per feature over non-null values, so a document could pass
 every check while one feature inside it had two non-null values (saturated) or
 no contrast at all.
+
+## M7 — Adopted linguistic feature set
+
+All 33 features are reproduced from `linguistic_features.py` in the
+[NLU-BGU source repository](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification).
+Each is reported as `source`, `target` and a paired `delta` = **target −
+source**, the opposite sign to that project's tables (see the module page).
+
+### `linguistic_features.lexical_richness` and related — Lexical features
+
+**Keys:** `linguistic_features.lexical_richness`, `linguistic_features.infrequent_words_ratio`, `linguistic_features.long_words_ratio`, `linguistic_features.words_over_8_chars`, `linguistic_features.avg_word_length`, `linguistic_features.syllables_ratio`, `linguistic_features.content_words_ratio`, `linguistic_features.modifiers_ratio`, `linguistic_features.negations_ratio`
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M7 — Adopted linguistic feature set](modules/m7-linguistic-features.md)
+
+**What it does.** Nine word-level features: vocabulary variety, rarity, length
+and word class.
+
+**How it works.**
+
+| Feature | Definition |
+|---|---|
+| `lexical_richness` | Share of the words that are distinct (type-token ratio). |
+| `infrequent_words_ratio` | Share of words with no recorded usage anywhere — typically names, codes and typos. |
+| `long_words_ratio` | Share of words over 9 characters. |
+| `words_over_8_chars` | Share of words over 8 characters. Overlaps the previous row almost entirely. |
+| `avg_word_length` | Average word length in characters. |
+| `syllables_ratio` | Average syllables per word. |
+| `content_words_ratio` | Share of words that are nouns, verbs, adjectives or adverbs, rather than grammatical glue. |
+| `modifiers_ratio` | Share of adjectives and adverbs. |
+| `negations_ratio` | Share of negation words ("not", "never", "didn't"). Negation is harder to read than the positive form. |
+
+**How to read it.** `lexical_richness` is type-token ratio, which is
+length-sensitive — it falls on longer texts regardless of style, so compare only
+at similar lengths; M3b `mtld` is not length-sensitive. `infrequent_words_ratio`
+is "unattested in any corpus", unlike M3b `rare_word_rate` ("outside the top
+3000"). `syllables_ratio` is **the same value** as M3b `syllables_per_word`.
+
+**Papers.** [NLU-BGU, Simplicity is Not Simple (repository)](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification).
+
+**Implementation notes.** Two deviations from the source implementation, both
+in `params.deviations_from_paper`. **`syllables_ratio` counts vowel groups, not
+`pyphen` hyphens.** Same quantity, different algorithm, one fewer dependency —
+and it makes the field exactly equal to M3b's, which the test suite pins.
+**`infrequent_words_ratio` asks `wordfreq` for zero corpus frequency**, where
+the source tests membership of `nltk.corpus.words`. Both measure unrecognised
+vocabulary but they do not agree token for token: a real technical term has
+usage but no dictionary entry.
+
+### `linguistic_features.syntactic_tree_depth` and related — Syntactic and sentence features
+
+**Keys:** `linguistic_features.syntactic_tree_depth`, `linguistic_features.noun_phrases_ratio`, `linguistic_features.words_before_main_verb`, `linguistic_features.words_per_sentence`, `linguistic_features.punctuation_ratio`, `linguistic_features.relative_clauses_ratio`, `linguistic_features.short_sentences_ratio`, `linguistic_features.sentences_number`, `linguistic_features.conditional_clauses_ratio`, `linguistic_features.conjunctions_ratio`, `linguistic_features.passive_voice_ratio`, `linguistic_features.appositions_ratio`, `linguistic_features.past_tense_verbs`, `linguistic_features.past_perfect_verbs`, `linguistic_features.third_person_pronouns_ratio`
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M7 — Adopted linguistic feature set](modules/m7-linguistic-features.md)
+
+**What it does.** Fifteen sentence- and clause-level features: structure,
+embedding, voice, tense and reference.
+
+**How it works.**
+
+| Feature | Definition |
+|---|---|
+| `syntactic_tree_depth` | The deepest single chain of grammatical dependencies anywhere in the document. One monstrous sentence sets this. |
+| `noun_phrases_ratio` | Noun phrases per word. |
+| `words_before_main_verb` | How many words the reader waits through before the sentence's main verb arrives. Long waits strain memory. |
+| `words_per_sentence` | `mean(tokens per sentence) / len(clean_tokens)` — see below. |
+| `punctuation_ratio` | Share of all tokens that are punctuation. |
+| `relative_clauses_ratio` | Share of relative pronouns ("which", "that", "who"), a proxy for embedded clauses. |
+| `short_sentences_ratio` | Share of sentences of 10 words or fewer. |
+| `sentences_number` | How many sentences the document has. |
+| `conditional_clauses_ratio` | Share of "if"/"unless"/"whether", which set up hypotheticals. |
+| `conjunctions_ratio` | Share of joining words ("and", "because"). |
+| `passive_voice_ratio` | Passive sentences per verb. |
+| `appositions_ratio` | Share of appositive phrases — the "a sceptical group" in "the press, a sceptical group, dissected it". |
+| `past_tense_verbs` | Past-tense verb tags per verb. |
+| `past_perfect_verbs` | "had done" constructions as a share of past-tense verbs. |
+| `third_person_pronouns_ratio` | Share of he/she/it/they pronouns. Heavy pronoun use means the reader must track who is meant. |
+
+**How to read it.** Two features are not what their names suggest.
+
+**`words_per_sentence` is approximately `1 / n_sentences`.** The source computes
+`mean(tokens per sentence) / len(clean_tokens)`. Dividing a per-sentence mean by
+the document's own token count cancels the length, leaving the reciprocal of the
+sentence count — despite the source's docstring saying "Average number of words
+per sentence". It is reproduced exactly as written, and a test pins it so nobody
+"fixes" it into a plain mean. **Use M1's `mean_src_sent_len`** if you want mean
+sentence length.
+
+**`past_tense_verbs` and `passive_voice_ratio` can exceed 1.0.** Their
+numerators count VBD/VBN *tags* and passive *sentences* respectively, while both
+denominators count only `pos == VERB` tokens — which excludes auxiliaries. A
+source containing "had written" and "was praised" scores 1.75. Faithful, and not
+a bug here.
+
+Relationships to other modules: `sentences_number` is **the same value** as M1
+`src_sents` / `tgt_sents`; `syntactic_tree_depth` is a **max** over the
+document, where M3b `mean_parse_depth` is a mean over sentences;
+`passive_voice_ratio`'s denominator is verb tokens, where M3b `passive_rate`
+uses sentences.
+
+**Papers.** [NLU-BGU, Simplicity is Not Simple (repository)](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification).
+
+**Implementation notes.** Deviations, in `params.deviations_from_paper`:
+**`past_tense_verbs` / `past_perfect_verbs` read spaCy's `tag_`**, not
+`nltk.pos_tag` — same Penn tagset, one fewer dependency.
+**`sentences_number` / `short_sentences_ratio` use our segmenter**, not
+`nltk.sent_tokenize`. **`punctuation_ratio` uses one tokenizer for both
+halves.** The source counts spaCy's `is_punct` over an NLTK `word_tokenize`
+total, mixing two tokenizations in a single fraction.
+
+### `linguistic_features.unique_entities` and related — Entity coherence features
+
+**Keys:** `linguistic_features.unique_entities`, `linguistic_features.max_same_entity_distances`, `linguistic_features.avg_same_entity_distance`, `linguistic_features.consecutive_entity_distance`, `linguistic_features.unique_entities_average`, `linguistic_features.entity_to_token_ratio`, `linguistic_features.unique_entities_to_total_entities`
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M7 — Adopted linguistic feature set](modules/m7-linguistic-features.md)
+
+**What it does.** How named referents are introduced, repeated and spaced — a
+discourse-level property the rest of the pipeline has no equivalent for.
+
+**How it works.**
+
+| Feature | Definition |
+|---|---|
+| `unique_entities` | How many distinct named things the document mentions. |
+| `max_same_entity_distances` | The widest gap, in words, between the first and last mention of any one entity. |
+| `avg_same_entity_distance` | For entities mentioned more than once, the typical gap between repeats. |
+| `consecutive_entity_distance` | Average words between one named mention and the next. |
+| `unique_entities_average` | Distinct entities per sentence. |
+| `entity_to_token_ratio` | Share of words that belong to a named entity. |
+| `unique_entities_to_total_entities` | Distinct entities as a share of all mentions. 1.0 = nothing is repeated; low = the same few things recur. |
+
+**How to read it.** Three entity features are document-length proxies.
+Measured on the Cochrane run (n=1000), Spearman correlation of each source-side
+entity feature against the source's token count:
+
+| feature | ρ vs source length | usable as a style measure? |
+|---|---|---|
+| `max_same_entity_distances` | **+0.824** | no — substantially a length measure |
+| `unique_entities` | **+0.751** | no |
+| `avg_same_entity_distance` | **+0.632** | no |
+| `unique_entities_to_total_entities` | −0.424 | with care |
+| `unique_entities_average` | +0.248 | yes — **except on single-sentence targets** (see below) |
+| `entity_to_token_ratio` | +0.235 | yes |
+| `consecutive_entity_distance` | −0.088 | yes |
+
+The three flagged features are counts and token distances, so they scale with
+the document. On Cochrane, `unique_entities` falls 26.6 → 8.2 and
+`max_same_entity_distances` falls 264 → 90 — but the target is only 60% as long,
+so most of that is compression rather than a change in how referents are
+handled. **Read the three normalised features instead**: `entity_to_token_ratio`,
+`unique_entities_average` and `unique_entities_to_total_entities` are all
+per-token or per-sentence and do not carry the length.
+
+**`unique_entities_average` stops being a rate when targets are one sentence.**
+It divides by the sentence count, and 99.8% of XSum targets have exactly one
+sentence (mean 1.002), so on that corpus it equals `unique_entities` — a raw
+count — to within 0.003 (2.809 against 2.812). For any corpus with
+single-sentence targets, treat it as length-scaling alongside the three flagged
+above, and read `entity_to_token_ratio` instead.
+
+`consecutive_entity_distance` is the interesting one precisely because it is not
+length-correlated (ρ = −0.088) and moves *against* compression: 12.5 → 19.6 on
+Cochrane, meaning named mentions are further apart in a target that is shorter
+overall. That is a genuine discourse change, not an artifact.
+
+This is the same failure mode the pipeline has hit three times before — M6's
+pooled `textrank` (ρ = −0.92 with its document's sentence count), M6's `fkgl`
+double-counting sentence length, and M4's deletion-count correlation with human
+labels. See [the index](modules/README.md#document-length-confounds-anything-pooled-across-documents).
+
+**Papers.** [NLU-BGU, Simplicity is Not Simple (repository)](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification).
+
+**Implementation notes.** NER is built lazily on first use and cached. If NER is
+unavailable but a parser is present, these seven read `0.0`, which is
+indistinguishable from "this text genuinely has no entities"; a note fires when
+*no* source in the corpus has any entity, and the NER failure also warns on
+stderr. M4's entity matching reuses the same NER.
+
+### `linguistic_features.flesch_reading_ease`, `linguistic_features.flesch_kincaid_grade` — Flesch readability, M7 copies
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M7 — Adopted linguistic feature set](modules/m7-linguistic-features.md)
+
+**What it does.** The two Flesch scores, as the source feature set includes them.
+
+**How it works.** `readability.surface_scores`, the same computation as M3a.
+
+**How to read it.** **The same value** as M3a `fre` and `fkgl`; FRE is
+**higher = easier**, unlike every grade-level metric here. Do not count them as
+extra evidence.
+
+**Papers.** [NLU-BGU, Simplicity is Not Simple (repository)](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification).
+
+**Implementation notes.** **`flesch_*` use our corrected segmentation.** The
+source calls `textstat.flesch_kincaid_grade(text)` directly, which takes
+textstat's own sentence splitting — the defect that made Cochrane's FKGL delta
+read **+2.33 against a published −1.5**, because textstat treats every decimal
+point as a sentence end. Reproducing it faithfully would put a known-inverted
+number back into the pipeline, so M7 goes through
+[`readability.surface_scores`](../profiler/readability.py) instead.

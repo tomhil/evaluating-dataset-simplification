@@ -71,7 +71,7 @@ SECTIONS = _sections(METRICS_MD.read_text()) if METRICS_MD.exists() else []
 SECTION_OF = {k: s for s in SECTIONS for k in s["keys"]}
 # Phase E documents one module per commit; this set grows to all eight and is
 # then removed.
-DOCUMENTED = {"M1", "M2", "M3", "M4", "M5", "M6"}
+DOCUMENTED = {"M1", "M2", "M3", "M4", "M5", "M6", "M7"}
 ENTRIES = [m for m in REGISTRY if m.module in DOCUMENTED]
 
 
