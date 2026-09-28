@@ -59,3 +59,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. `pytest -q`: 415 passed. Two smoke runs byte-identical.
 - **Next item:** M2 edit features (`levenshtein_similarity`, `exact_copies`, `additions_proportion`, `deletions_proportion`); adds `rapidfuzz`.
 - **DEFERRED:** `abstractivity_p2`. The paper fixes p = 1 (Section 10 default), pending open question 1.
+
+## 2026-09-28 — Phase B, item 3: M2 edit features
+
+- **Branch:** `feature/metric-labels-b`
+- **Item:** `levenshtein_similarity`, `exact_copies`, `additions_proportion`, `deletions_proportion` in M2 (registry rows 15, 16, 21; DS). Checked against the EASSE/tseval reference code (`tseval/feature_extraction.py`). Levenshtein uses `rapidfuzz.fuzz.ratio/100` on raw text, the InDel ratio that `Levenshtein.ratio` computes. Additions and deletions are the multiset word difference over max(|src|, |tgt|) words. Exact copies is the share of source sentences found verbatim among target sentences, the PRD's document-level analogue of `is_exact_match`. Core deps `rapidfuzz>=3.0` and `scikit-learn>=1.3` were added to both `requirements.txt` and `pyproject.toml` and installed in `venv`.
+- **Deviations (for the PR):** EASSE normalises with the sacrebleu 13a tokenizer and works per sentence pair. Here the features run on whole documents, with the profiler's word tokenizer for additions and deletions. Values are not comparable with sentence-level numbers in the literature.
+- **Result:** pass. `pytest -q`: 420 passed (includes `test_declared_dependencies`). Two smoke runs byte-identical.
+- **Next item:** M2 `redundancy`.
+- **DEFERRED:** none.

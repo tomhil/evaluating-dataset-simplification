@@ -150,6 +150,15 @@ _LITERATURE: tuple[MetricLabel, ...] = (
     _lit("abstractiveness.density", {"SUM"}, (GRUSKY_2018,), direction="↑ longer copied spans"),
     # Row 19. The paper fixes p = 1, so abstractivity_p2 is not emitted.
     _lit("abstractiveness.abstractivity_p1", {"SUM"}, (BOMMASANI_2020,), direction="↑ more abstractive"),
+    # Rows 15, 16, 21: EASSE edit features, at document level.
+    _lit("abstractiveness.exact_copies", {"DS"}, (MARTIN_2018, EASSE_2019),
+         direction="↑ more source sentences kept verbatim"),
+    _lit("abstractiveness.additions_proportion", {"DS"}, (MARTIN_2018, EASSE_2019, ASSET_2020),
+         direction="↑ more words added"),
+    _lit("abstractiveness.deletions_proportion", {"DS"}, (MARTIN_2018, EASSE_2019, ASSET_2020),
+         direction="↑ more words deleted"),
+    _lit("abstractiveness.levenshtein_similarity", {"DS"}, (MARTIN_2018, ASSET_2020),
+         direction="↑ closer to source text"),
     # Row 5
     *(
         _lit(f"abstractiveness.novel_{n}gram", {"SUM", "PLS"}, (NARAYAN_2018, GOLDSACK_2022),

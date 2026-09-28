@@ -7,7 +7,10 @@ recall, and content-word type overlap.
 
 from __future__ import annotations
 
+from collections import Counter
 from typing import Sequence
+
+from rapidfuzz import fuzz
 
 from ..stats import histogram, summarize
 from .. import progress
@@ -24,7 +27,13 @@ _LCS_CELL_CAP = 4_000_000
 ABSTRACTIVITY_P = 1
 
 # Literature metrics added after the original eleven, summarised after them.
-NEW_METRIC_COLS = ["abstractivity_p1"]
+NEW_METRIC_COLS = [
+    "abstractivity_p1",
+    "levenshtein_similarity",
+    "exact_copies",
+    "additions_proportion",
+    "deletions_proportion",
+]
 
 
 def _ngrams(tokens: list[str], n: int) -> list[tuple[str, ...]]:
@@ -144,6 +153,29 @@ def _rouge_recall(tgt_tokens: list[str], src_tokens: list[str]) -> dict:
     return {"rouge1": n_recall(1), "rouge2": n_recall(2), "rougeL": rouge_l}
 
 
+def _edit_features(source: str, target: str, src_sents: list[str], tgt_sents: list[str],
+                   src_words: list[str], tgt_words: list[str]) -> dict:
+    """EASSE / tseval edit features, applied to whole documents.
+
+    Levenshtein similarity is the InDel ratio that ``Levenshtein.ratio`` computes
+    in the reference code. Additions and deletions follow tseval: the multiset
+    difference of words over the longer of the two word counts. Exact copies is
+    the document-level analogue of tseval's ``is_exact_match``: the share of
+    source sentences reproduced verbatim as a target sentence.
+    """
+
+    longest = max(len(src_words), len(tgt_words))
+    src_counts, tgt_counts = Counter(src_words), Counter(tgt_words)
+    src_set = [s.strip() for s in src_sents if s.strip()]
+    tgt_set = {s.strip() for s in tgt_sents if s.strip()}
+    return {
+        "levenshtein_similarity": fuzz.ratio(source, target) / 100.0,
+        "exact_copies": (sum(1 for s in src_set if s in tgt_set) / len(src_set)) if src_set else None,
+        "additions_proportion": (sum((tgt_counts - src_counts).values()) / longest) if longest else None,
+        "deletions_proportion": (sum((src_counts - tgt_counts).values()) / longest) if longest else None,
+    }
+
+
 def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     proc = ctx.processor
     per_pair: list[dict] = []
@@ -156,6 +188,10 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         tgt_content_types = set(tgt_content)
 
         coverage, density = _coverage_density(src_tokens, tgt_tokens)
+        edits = _edit_features(
+            p.source, p.target, proc.sentences(p.source), proc.sentences(p.target),
+            proc.words(p.source), proc.words(p.target),
+        )
         rouge = _rouge_recall(tgt_tokens, src_tokens)
 
         content_novel = None
@@ -181,6 +217,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
                 "rougeL_recall": rouge["rougeL"],
                 "content_type_overlap": type_overlap,
                 "abstractivity_p1": _abstractivity(src_tokens, tgt_tokens, ABSTRACTIVITY_P),
+                **edits,
             }
         )
 
@@ -220,5 +257,11 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         "rouge_orientation": "recall(candidate=target, reference=source) = overlap / |source n-grams|",
         "lcs_cell_cap": _LCS_CELL_CAP,
         "abstractivity_p": ABSTRACTIVITY_P,
+        "edit_features": (
+            "EASSE/tseval features on whole documents: Levenshtein = rapidfuzz "
+            "fuzz.ratio(source, target)/100 on raw text; additions/deletions over "
+            "case-preserving profiler word tokens; exact copies = share of source "
+            "sentences found verbatim among target sentences"
+        ),
     }
     return ModuleResult(name=NAME, per_pair=per_pair, corpus=corpus, params=params, notes=notes)

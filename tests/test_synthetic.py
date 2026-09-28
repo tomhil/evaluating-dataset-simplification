@@ -116,3 +116,30 @@ def test_abstractivity(ctx):
     half = _run(m2_abstractiveness, [Pair("id", "alpha beta gamma", "alpha beta delta epsilon")], ctx)
     assert half.per_pair[0]["abstractivity_p1"] == 0.5
     assert same.params["abstractivity_p"] == 1
+
+
+def test_edit_features(ctx):
+    """EASSE edit features: identity is Levenshtein 1, all copied, nothing added or deleted."""
+    same = _run(m2_abstractiveness, [Pair("id", IDENTITY_TEXT, IDENTITY_TEXT)], ctx).per_pair[0]
+    assert same["levenshtein_similarity"] == 1.0
+    assert same["exact_copies"] == 1.0
+    assert same["additions_proportion"] == 0.0
+    assert same["deletions_proportion"] == 0.0
+
+    # Truncation: first two of five source sentences kept verbatim.
+    target = (
+        "The scientists discovered a new species of frog in the rainforest. "
+        "The frog has bright blue skin and lives near streams."
+    )
+    trunc = _run(m2_abstractiveness, [Pair("id", SOURCE_LONG, target)], ctx).per_pair[0]
+    assert trunc["exact_copies"] == 2 / 5
+    assert trunc["additions_proportion"] == 0.0
+    assert 0.0 < trunc["deletions_proportion"] < 1.0
+
+    # InDel ratio, as Levenshtein.ratio computes it: 2*matches / (len_a + len_b).
+    swap = _run(m2_abstractiveness, [Pair("id", "abcd", "abce")], ctx).per_pair[0]
+    assert swap["levenshtein_similarity"] == 0.75
+    # Word multisets: one word replaced out of four.
+    words = _run(m2_abstractiveness, [Pair("id", "a b c d", "a b c e")], ctx).per_pair[0]
+    assert words["additions_proportion"] == 0.25
+    assert words["deletions_proportion"] == 0.25
