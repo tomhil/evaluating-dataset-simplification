@@ -1381,3 +1381,143 @@ read **+2.33 against a published −1.5**, because textstat treats every decimal
 point as a sentence end. Reproducing it faithfully would put a known-inverted
 number back into the pipeline, so M7 goes through
 [`readability.surface_scores`](../profiler/readability.py) instead.
+
+## M8 — Pair similarity
+
+### `pair_similarity.bleu` — BLEU(target, source)
+
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M8 — Pair similarity](modules/m8-pair-similarity.md)
+
+**What it does.** How much of the target's wording appears in the source, as
+overlapping word sequences.
+
+**How it works.** Corpus-level BLEU of target against source, via `sacrebleu`
+with the `13a` tokenizer. Corpus-level, not the mean of per-pair scores: BLEU's
+brevity penalty and n-gram precisions are defined over a corpus, and averaging
+sentence BLEU is a different and much noisier quantity. Consequently **it is a
+single scalar with no confidence interval** — the only corpus metric in the
+pipeline that is not a `Summary`.
+
+**How to read it.** Note the direction: target against source, with no external
+reference. There is no human translation here, only the pair, so this is a
+*similarity* measure, not a quality one. A low BLEU means the target is worded
+differently from the source, which for a simplification corpus is expected
+rather than bad. BLEU is in the same n-gram-overlap family as M2's ROUGE recall,
+so it is not independent evidence.
+
+*BLEU is structurally uninformative on a compressing corpus.* BLEU carries a
+**brevity penalty**, because it was designed for translation where the
+hypothesis and reference should be about the same length. Here the "hypothesis"
+is the target and the "reference" is the source, and a simplification or
+summarisation target is *deliberately* much shorter. The penalty then dominates
+everything else.
+
+Measured on XSum (n=250): the n-gram precisions are healthy — **63.4 / 15.3 /
+3.7 / 1.2** for 1- to 4-grams — but `BP = 0.000` at a length ratio of 0.052, so
+the reported BLEU is **0.00**. There is plenty of overlap; the metric throws it
+away.
+
+The penalty is `exp(1 − 1/ratio)`, and the ratio is M1's compression, so the
+collapse is entirely predictable from a number the pipeline already publishes:
+
+| corpus | compression | brevity penalty | BLEU usable? |
+|---|---|---|---|
+| SWiPE | 0.999 | 9.99e-01 | yes |
+| Cochrane | 0.603 | 5.18e-01 | yes |
+| D-Wikipedia | 0.553 | 4.46e-01 | yes |
+| CNN/DailyMail | 0.074 | 3.68e-06 | **no — collapses to ~0** |
+| XSum | 0.056 | 4.78e-08 | **no** |
+| eLife | 0.040 | 3.78e-11 | **no** |
+| PLOS | 0.030 | 9.07e-15 | **no** |
+
+**Read `bleu` only for corpora compressing above roughly 0.2.** Below that it
+reports the compression ratio, not the wording overlap. M2's `rouge1_recall`
+and `coverage` measure the same overlap without a length penalty and are the
+right instruments for the heavily-compressing corpora.
+
+**Papers.** [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278).
+
+**Implementation notes.** BLEU via `sacrebleu`, not the M7/M8 source project's
+`easse.bleu`. EASSE is unmaintained and does not expose its tokenisation, and an
+unspecified BLEU tokenizer is not reproducible across versions. `sacrebleu`
+names it, and the name is recorded in `params.bleu_tokenizer`.
+
+### `pair_similarity.bertscore_f1` — BERTScore F1
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M8 — Pair similarity](modules/m8-pair-similarity.md)
+
+**What it does.** How close the target's meaning is to the source's, judged by a
+language model rather than by shared words.
+
+**How it works.** `bert-score` with `lang="en"` and
+`rescale_with_baseline=True`, F1, computed per pair and then summarised with the
+usual n/mean/median/IQR/CI contract. Scores are cached on
+`content_hash(model, source, target)` — the same mechanism `CachedEmbedder` uses
+for SBERT embeddings — so a rerun of the same config recomputes nothing and the
+run stays deterministic.
+
+**How to read it.** Rescaled so ~0 is the score of unrelated text. It is in the
+same embedding-similarity family as M4's `target_groundedness`, so read it
+alongside M4 and M5, not as a second opinion. Long sources are truncated at the
+model's token limit; `bertscore_n_source_truncated` counts them, and on
+long-document corpora the score then describes the opening of the source.
+
+**Implementation notes.** From the M7/M8 source project's `automatic_metrics.py`.
+
+### `pair_similarity.blanc` — BLANC
+
+**Label:** SUM · **Evidence:** validated · **Needs:** source+target · **Module:** [M8 — Pair similarity](modules/m8-pair-similarity.md)
+
+**What it does.** How much the target helps a language model understand its
+source, as a reference-free measure of summary quality.
+
+**How it works.** BLANC (Vasilyev et al. 2020) measures the performance boost a
+pre-trained language model gains on a language-understanding task over the
+source's text (reconstructing masked tokens) when it has access to the target,
+treated as the summary. BLANC-help is the default variant.
+
+**How to read it.** Higher = a more helpful summary. **Currently always null**
+(see below).
+
+**Papers.** [Vasilyev et al. 2020 (BLANC)](https://aclanthology.org/2020.eval4nlp-1.2). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
+
+**Implementation notes.** **Deferred.** `blanc` 0.3.4 requires `torch<2.0` and
+`numpy<2.0`, against the core pin `torch>=2.0`; its numpy build also fails on
+Python 3.13. The key is emitted as an empty `Summary` with a note.
+
+### `pair_similarity.supert` — SUPERT
+
+**Label:** SUM · **Evidence:** validated · **Needs:** source+target · **Module:** [M8 — Pair similarity](modules/m8-pair-similarity.md)
+
+**What it does.** A reference-free summary-quality score built from a
+pseudo-reference of salient source sentences.
+
+**How it works.** SUPERT (Gao et al. 2020) extracts salient sentences from the
+source as a pseudo-reference and scores the target against it with contextual
+embeddings.
+
+**How to read it.** Higher = a better summary. **Currently always null.**
+
+**Papers.** [Gao et al. 2020 (SUPERT)](https://aclanthology.org/2020.acl-main.124). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
+
+**Implementation notes.** **Deferred.** The official repository is not an
+installable package and pins `torch==1.5.0` and `pytorch-transformers==1.2.0`.
+
+### `pair_similarity.summaqa` — SummaQA
+
+**Label:** SUM · **Evidence:** validated · **Needs:** source+target · **Module:** [M8 — Pair similarity](modules/m8-pair-similarity.md)
+
+**What it does.** A question-answering score of how much of the source a summary
+lets a reader recover.
+
+**How it works.** SummaQA (Scialom et al. 2019) masks entities in source
+sentences to make cloze questions and answers them from the target, reporting
+answer F1 and confidence.
+
+**How to read it.** Higher = a better summary. **Currently always null.**
+
+**Papers.** [Scialom et al. 2019 (SummaQA)](https://aclanthology.org/D19-1320/). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
+
+**Implementation notes.** **Deferred.** The official repository requires
+`transformers==2.1.1`, against the core pin `transformers>=4.35`; per the PRD it
+is not reimplemented.

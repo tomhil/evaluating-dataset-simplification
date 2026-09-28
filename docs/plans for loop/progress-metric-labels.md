@@ -269,3 +269,12 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Result:** pass. Doc tests green; docs-only change.
 - **Next item:** M8 sections and M8 page.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 8: M8 docs
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** 5 M8 sections (BLEU, BERTScore, BLANC, SUPERT, SummaQA) covering all 5 M8 keys. `docs/modules/m8-pair-similarity.md` restructured per §6.2. `DOCUMENTED` now covers all eight modules.
+- **Moved paragraphs (M8 page → metrics.md):** "What is computed — `bleu`" and "BLEU is structurally uninformative on a compressing corpus" (XSum precisions, brevity-penalty table, the 0.2 rule) → `pair_similarity.bleu`; "Deviation from the source implementation" (sacrebleu vs easse) → its implementation notes. "What is computed — `bertscore_f1`" (settings, caching) → `pair_similarity.bertscore_f1`. "Neither metric is independent evidence", "Not applicable…" and the glossary stay on the page, the glossary now linked. BLANC, SUPERT and SummaQA descriptions were checked against their paper abstracts (BLANC, SUPERT) and the SummaQA README.
+- **Result:** pass. Doc tests green; docs-only change.
+- **Next item:** index table at the top of `docs/metrics.md`, README and `docs/modules/README.md` links, and removal of the `DOCUMENTED` scaffold.
+- **DEFERRED:** none.
