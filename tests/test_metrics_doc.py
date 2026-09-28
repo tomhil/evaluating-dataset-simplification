@@ -18,6 +18,7 @@ from pathlib import Path
 import pytest
 
 from profiler.metric_registry import ALLOWED_PAPER_URLS, REGISTRY
+from scripts.metric_docs import github_slug, sections
 
 REPO = Path(__file__).resolve().parents[1]
 DOCS = REPO / "docs"
@@ -36,35 +37,12 @@ TASK_ORDER = ("SUM", "PLS", "DS")
 REGISTRY_KEYS = {m.key: m for m in REGISTRY}
 
 
-def github_slug(heading: str) -> str:
-    """GitHub's heading anchor: lowercase; drop everything but letters, digits,
-    spaces, hyphens and underscores; spaces become hyphens."""
-
-    text = heading.strip().lower()
-    text = re.sub(r"[^\w\- ]", "", text)
-    return text.replace(" ", "-")
-
-
 def label_text(m) -> str:
     return ", ".join(t for t in TASK_ORDER if t in m.tasks) if m.tasks else "project-specific"
 
 
 def _sections(text: str) -> list[dict]:
-    """Level-3 sections: heading, anchor, body, and the registry keys they cover."""
-
-    out = []
-    parts = re.split(r"^### (.+)$", text, flags=re.M)
-    for heading, body in zip(parts[1::2], parts[2::2]):
-        body = re.split(r"^## ", body, flags=re.M)[0]
-        keys_line = re.search(r"^\*\*Keys:\*\*(.+)$", body, flags=re.M)
-        named = re.findall(r"`([^`]+)`", heading + (keys_line.group(1) if keys_line else ""))
-        out.append({
-            "heading": heading,
-            "anchor": github_slug(heading),
-            "body": body,
-            "keys": [k for k in named if k in REGISTRY_KEYS],
-        })
-    return out
+    return sections(text, REGISTRY_KEYS)
 
 
 SECTIONS = _sections(METRICS_MD.read_text()) if METRICS_MD.exists() else []
