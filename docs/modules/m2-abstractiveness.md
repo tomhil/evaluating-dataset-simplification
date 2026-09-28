@@ -2,107 +2,59 @@
 
 `profiler/modules/m2_abstractiveness.py` · runs on the **full corpus**
 
+## Overview
+
 How much of the target is lifted from the source versus genuinely rewritten.
 Compression (M1) tells you how much was dropped; this tells you whether what
 survived was *copied or reworded*. A corpus can compress heavily while copying
 verbatim (extractive summarization) or barely compress while rewriting
 everything (simplification).
 
+M2 runs on every ingested pair and depends on no other module. Two of its
+metrics are fit on the whole corpus — the topic model behind topic similarity,
+and the abstract counts behind the content-overlap buckets — which is why they
+live in a full-corpus module. The abstract-based metrics read
+`meta["abstract"]` and are null without it.
+
+## Metrics in this module
+
+Each name links to its full entry in [the metric reference](../metrics.md).
+
+- [**Coverage and density**](../metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) (SUM) — how much of the target is copied, and in how long runs.
+- [**Novel n-grams**](../metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) (SUM, PLS) — the share of target 1- to 4-grams absent from the source.
+- [**Novel content words**](../metrics.md#abstractivenessnovel_content_1gram--novel-content-words) (project-specific) — novel unigrams among content words only.
+- [**Abstractivity**](../metrics.md#abstractivenessabstractivity_p1--abstractivity) (SUM) — one minus the share of the target covered by copied fragments.
+- [**Redundancy**](../metrics.md#abstractivenessredundancy--redundancy) (SUM) — how much the target's sentences repeat each other.
+- [**Topic similarity**](../metrics.md#abstractivenesstopic_similarity--topic-similarity) (SUM) — how close the target's topic mix is to the source's.
+- [**Levenshtein similarity**](../metrics.md#abstractivenesslevenshtein_similarity--levenshtein-similarity) (DS) — character-level edit similarity of the pair.
+- [**Exact copies**](../metrics.md#abstractivenessexact_copies--exact-copies) (DS) — the share of source sentences kept verbatim.
+- [**Addition and deletion proportions**](../metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) (DS) — words added and words deleted.
+- [**ROUGE(abstract, target)**](../metrics.md#abstractivenessrouge_abstract_target--rougeabstract-target) (PLS) — how close the target is to the source's abstract.
+- [**Abstract content-word overlap by rarity**](../metrics.md#abstractivenessabstract_content_overlap--abstract-content-word-overlap-by-rarity) (PLS) — which abstract terms reach the target, by how common they are.
+- [**ROUGE recall of the source**](../metrics.md#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) (project-specific) — how much of the source's n-grams survive; tracks compression.
+- [**Content-type overlap**](../metrics.md#abstractivenesscontent_type_overlap--content-type-overlap) (project-specific) — the share of the target's content vocabulary found in the source.
+
+## Module-level material
+
+### Tokens
+
 All tokens are **lowercased** before comparison, so this module is
-case-insensitive throughout. Content words come from the shared `Processor`
+case-insensitive throughout — except the addition and deletion proportions,
+which keep case as EASSE does. Content words come from the shared `Processor`
 (stopwords and pure digits removed).
 
-## Novel n-gram rates
-
-`novel_1gram`, `novel_2gram`, `novel_3gram`, `novel_4gram`
-
-Fraction of the target's n-grams that appear nowhere in the source:
-
-```
-novel_n = |{target n-grams not in source}| / |target n-grams|
-```
-
-`None` when the target is shorter than n tokens. Range 0–1; **higher = more
-abstractive**. The rate climbs steeply with n in any corpus — a target can reuse
-every word while recombining them into new phrases — so compare like with like.
-XSum's reported 36% novel unigrams is the usual reference point for a highly
-abstractive corpus.
-
-`novel_content_1gram` restricts this to content words, removing the function-word
-floor that makes raw unigram novelty look low even in heavy rewriting. For
-simplification corpora this is usually the more informative of the two.
-
-## Grusky extractive fragments
-
-`coverage`, `density` — Grusky et al. (2018), computed by greedy longest-match
-extension of target positions into the source.
-
-- **`coverage`** = `Σ fragment_lengths / |target|` — the fraction of the target
-  covered by text copied from the source. Range 0–1. High = the target is
-  largely assembled from source spans.
-- **`density`** = `Σ fragment_length² / |target|` — mean squared fragment length,
-  normalised by target length. **Unbounded, not a proportion.** The square is the
-  point: coverage cannot distinguish a target made of many single copied words
-  from one made of a few long copied passages, and density can. Density ≈ 1 with
-  high coverage means word-level reuse scattered through a rewrite; density in
-  the tens means long verbatim spans.
-
-Read these two together — that's what they're designed for. High coverage with
-low density is the profile of genuine rewriting that reuses vocabulary.
-
-## ROUGE recall
-
-`rouge1_recall`, `rouge2_recall`, `rougeL_recall`
-
-**Note the orientation, which is unusual.** These are computed with
-**candidate = target, reference = source**:
-
-```
-rouge_n = clipped_overlap(target, source) / |source n-grams|
-```
-
-so the denominator is the *source*. This is recall **of the source**: how much of
-the source's n-grams survive into the target. It is not the summarization-eval
-convention (candidate = system output, reference = gold summary), and it is
-recorded verbatim in `params.rouge_orientation` to keep that unambiguous.
-
-The consequence: **these values covary strongly with compression by
-construction.** A target that is 3% of its source's length cannot have high
-source-recall no matter how faithfully it copies. Do not read a low ROUGE recall
-on PLOS or eLife as evidence of rewriting — read it as evidence of compression,
-and get the rewriting signal from `density` and the novel n-gram rates instead.
-The module's own docstring flags this as descriptive-only.
-
-Unigram and bigram counts are **clipped** (`min(candidate_count,
-reference_count)`), the standard ROUGE treatment of repeats.
-
-`rougeL_recall` uses the LCS length over the source length. LCS is O(n·m), so
-pairs where `|target| × |source|` exceeds `_LCS_CELL_CAP` (4,000,000 cells) are
-**skipped and recorded as `None`**, with a note stating how many. This keeps a
-handful of very long documents from dominating the full-corpus pass. On
-long-document corpora expect a substantial share of nulls here — check the note
-and the metric's `n` before quoting it.
-
-## `content_type_overlap`
-
-```
-|target content types ∩ source content types| / |target content types|
-```
-
-Type-level (unique words), not token-level, and content words only. The fraction
-of the target's distinct content vocabulary that also occurs in the source.
-
-Low values mean the target introduces vocabulary the source never used — which
-is either genuine elaboration or paraphrase into simpler words. **This metric
-cannot tell those apart**; M5 is what separates added content from reworded
-content.
-
-## Histograms
+### Histograms
 
 `density_histogram` and `novel_1gram_histogram` (30 bins). As with M1, a bimodal
 shape here means a mixed corpus and makes the means unsafe to quote.
 
-## Reading it
+### Notes the module emits
+
+- how many pairs had ROUGE-L skipped by the LCS size cap;
+- how many pairs have no abstract, so the abstract-based metrics are null;
+- when topic similarity or the abstract content overlap could not be computed.
+
+### Reading it
 
 | Pattern | Reading |
 |---|---|
@@ -115,18 +67,26 @@ shape here means a mixed corpus and makes the means unsafe to quote.
 
 ## Metric glossary — what each number means
 
-Plain-language meaning for every metric this module emits. The sections above
-give the formulas; this is the one-line version to keep beside a results table.
+Plain-language meaning for every metric this module emits. The linked reference
+gives the formulas; this is the one-line version to keep beside a results table.
 
 | Metric | In plain words | Higher means |
 |---|---|---|
-| `novel_1gram` | Share of the target's words that never appear in the source. | More new wording |
-| `novel_2gram` / `novel_3gram` / `novel_4gram` | Same, for 2-, 3- and 4-word sequences. These rise steeply with length even in light rewriting. | More rephrasing |
-| `novel_content_1gram` | Novel words counting only meaningful words, ignoring "the", "of" and friends. Usually the more honest of the novelty measures. | More genuinely new vocabulary |
-| `coverage` | How much of the target is text copied straight out of the source. | More copying |
-| `density` | Whether that copying is scattered single words or long verbatim passages. Around 1 = word-level reuse; tens = long lifted spans. | Longer copied runs |
-| `rouge1_recall` | How much of the source's vocabulary survives into the target. **Falls automatically when the target is short**, so it mostly tracks compression. | More of the source retained |
-| `rouge2_recall` | Same for two-word sequences — survival of phrasing, not just words. | More phrasing retained |
-| `rougeL_recall` | Same idea using the longest common word sequence. Skipped (null) on very long documents. | More of the source's order retained |
-| `content_type_overlap` | Of the distinct meaningful words in the target, what share also appear in the source. | Less new vocabulary introduced |
+| [`novel_1gram`](../metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) | Share of the target's words that never appear in the source. | More new wording |
+| [`novel_2gram` / `novel_3gram` / `novel_4gram`](../metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) | Same, for 2-, 3- and 4-word sequences. These rise steeply with length even in light rewriting. | More rephrasing |
+| [`novel_content_1gram`](../metrics.md#abstractivenessnovel_content_1gram--novel-content-words) | Novel words counting only meaningful words, ignoring "the", "of" and friends. Usually the more honest of the novelty measures. | More genuinely new vocabulary |
+| [`coverage`](../metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) | How much of the target is text copied straight out of the source. | More copying |
+| [`density`](../metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) | Whether that copying is scattered single words or long verbatim passages. Around 1 = word-level reuse; tens = long lifted spans. | Longer copied runs |
+| [`abstractivity_p1`](../metrics.md#abstractivenessabstractivity_p1--abstractivity) | How much of the target is *not* copied spans. | More abstractive |
+| [`redundancy`](../metrics.md#abstractivenessredundancy--redundancy) | How much the target's sentences repeat each other. | More repetition |
+| [`topic_similarity`](../metrics.md#abstractivenesstopic_similarity--topic-similarity) | How close the target's topics are to the source's. | Closer topics |
+| [`levenshtein_similarity`](../metrics.md#abstractivenesslevenshtein_similarity--levenshtein-similarity) | How little character editing separates target from source. | Fewer edits |
+| [`exact_copies`](../metrics.md#abstractivenessexact_copies--exact-copies) | Share of source sentences that appear unchanged in the target. | More kept verbatim |
+| [`additions_proportion` / `deletions_proportion`](../metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) | Words added to, and removed from, the source. | More added / more removed |
+| [`rouge_abstract_target`](../metrics.md#abstractivenessrouge_abstract_target--rougeabstract-target) | How much the target resembles the paper's abstract. Needs an abstract. | Closer to the abstract |
+| [`abstract_content_overlap`](../metrics.md#abstractivenessabstract_content_overlap--abstract-content-word-overlap-by-rarity) | Share of the abstract's key terms that reach the target. Needs an abstract. | More terms kept |
+| [`rouge1_recall`](../metrics.md#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) | How much of the source's vocabulary survives into the target. **Falls automatically when the target is short**, so it mostly tracks compression. | More of the source retained |
+| [`rouge2_recall`](../metrics.md#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) | Same for two-word sequences — survival of phrasing, not just words. | More phrasing retained |
+| [`rougeL_recall`](../metrics.md#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) | Same idea using the longest common word sequence. Skipped (null) on very long documents. | More of the source's order retained |
+| [`content_type_overlap`](../metrics.md#abstractivenesscontent_type_overlap--content-type-overlap) | Of the distinct meaningful words in the target, what share also appear in the source. | Less new vocabulary introduced |
 | `density_histogram` / `novel_1gram_histogram` | The shape of those two distributions across documents. | (shape, not a value) |

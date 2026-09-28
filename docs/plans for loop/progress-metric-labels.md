@@ -202,3 +202,88 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Phase D gate:** passed. Each optional model is either implemented with a passing skip test (SLE, coherence, document-level SummaC, rhetorical roles) or DEFERRED with its install error recorded (QAFactEval, BLANC, SUPERT, SummaQA). Pushed and opened the Phase D PR.
 - **Next item:** Phase E, `docs/metrics.md` and the eight module pages, plus `tests/test_metrics_doc.py`.
 - **DEFERRED:** none new.
+
+## 2026-09-28 — Phase E, item 1: `docs/metrics.md` (M1) + M1 page + doc test
+
+- **Branch:** `feature/metric-labels-e` (stacked on `feature/metric-labels-d`)
+- **Item:** new `docs/metrics.md` (opening, M1 sections; the index is added in the last Phase E item). `docs/modules/m1-length.md` restructured per §6.2: Overview, Metrics in this module (linked), Module-level material, and the glossary with links. New `tests/test_metrics_doc.py` checks every §6.3 rule and has a shared `github_slug()` helper. It runs over a `DOCUMENTED` module set that grows each item and is removed once all eight are done.
+- **Moved paragraphs (M1 page → metrics.md):** `compression_ratio` description → `length.compression_ratio`. "The mean vs. the corpus-level ratio" (D-Wikipedia table and discussion) → `length.compression_ratio` "How to read it"; a short pointer section with the same heading stays on the M1 page, because `RESULTS.md:319` links to that anchor and RESULTS.md may not be edited. `sentence_ratio` → `length.sentence_ratio`. `mean_src/tgt_sent_len` → `length.mean_…_sent_len`. `src/tgt_tokens` → `length.src_tokens, length.tgt_tokens`. `expansion_rate` → `length.expansion_rate`. `compression_dip_statistic` → `length.compression_bimodality`, "Implementation notes". Per-pair columns, `compression_histogram` and "Reading it" stay on the module page.
+- **Corrections (not deletions):** the M1 page documented `compression_dip_statistic` (ECDF gap, 0.1 threshold), but the code emits `compression_bimodality` (Sarle's coefficient, 0.555). The new section documents the code and keeps the old description as a note. `docs/modules/README.md` claimed M1 publishes a corpus-level ratio-of-sums; it does not (as the PRD notes), and the sentence now says so. Its stale M1 anchor link now points to metrics.md.
+- **Result:** pass. `pytest -q`: 544 passed, 2 skipped. Two smoke runs byte-identical.
+- **Next item:** M2 sections and M2 page.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 2: M2 docs
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** 13 M2 sections in `docs/metrics.md` covering all 22 M2 registry keys. `docs/modules/m2-abstractiveness.md` restructured per §6.2; `DOCUMENTED` now includes M2.
+- **Moved paragraphs (M2 page → metrics.md):** "Novel n-gram rates" (formula, range, XSum reference) → `abstractiveness.novel_1gram…novel_4gram`; its `novel_content_1gram` paragraph → `abstractiveness.novel_content_1gram`. "Grusky extractive fragments" (coverage and density bullets, "read these two together") → `abstractiveness.coverage, abstractiveness.density`. "ROUGE recall" (orientation, clipping, LCS cap, compression covariance) → `abstractiveness.rouge1_recall…rougeL_recall`. "`content_type_overlap`" → `abstractiveness.content_type_overlap`. The tokenisation note, histograms, "Reading it" and the glossary stay on the page, the glossary now linked. No incoming links to the removed M2 anchors exist in the repo.
+- **Result:** pass. `pytest -q` full suite green. Two smoke runs byte-identical.
+- **Next item:** M3 sections and M3 page.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 3: M3 docs
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** 11 M3 sections covering all 24 M3 registry keys; M3b's lexical and syntactic features each share one section, with a `**Keys:**` line. `docs/modules/m3-readability.md` restructured per §6.2, including the new M3d block. `DOCUMENTED` includes M3.
+- **Moved paragraphs (M3 page → metrics.md):** M3a table rows → the `fkgl`, `fre`, `cli`/`dcrs` and `ari`/`smog` sections. "SMOG's minimum length" → the `ari`/`smog` section. M3b "Lexical" bullets → lexical length-invariant measures; M3b "Syntactic" bullets and the "these four plus sentence_ratio" paragraph → syntactic length-invariant measures. The whole of "M3c — Length-matched decomposition", "How to read share_attributable", "Its instability…" and "share_attributable_corpus — the field to read" → `readability.m3c_decomposition.*`. "These are weak instruments", the textstat pin, "Notes this module emits", "Reading it" and the glossary stay on the page, the glossary now linked.
+- **Correction (not a deletion):** the moved M3c paragraph said "This is the same distinction M1 draws between its per-pair compression mean and its corpus-level ratio". M1 has no corpus-level ratio in code, so that clause was dropped from the moved text (the M1 section says so explicitly).
+- **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
+- **Next item:** M4 sections and M4 page.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 4: M4 docs
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** 5 M4 sections covering all 16 M4 registry keys; the ten alignment-type keys share one section, with a `**Keys:**` line. `docs/modules/m4-alignment.md` restructured per §6.2; `DOCUMENTED` includes M4.
+- **Moved paragraphs (M4 page → metrics.md):** "Metrics, per τ" — `source_coverage`, `target_groundedness` and `kendall_tau` → their sections; `alignment_type_counts / alignment_type_distribution` (table, "not the same unit", interpretation) → alignment type counts and distribution. "How the alignment works", "The τ sweep", "What it hands to M5 and M6", the self-caveat and the glossary stay on the page, the glossary now linked. No incoming links to the removed anchors.
+- **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
+- **Next item:** M5 sections and M5 page.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 5: M5 docs (+ registry gap)
+
+- **Branch:** `feature/metric-labels-e`
+- **Registry gap fixed:** M5's `pairwise_agreement` is filled only when two or more scorers run. It is empty in every archived and smoke run, so it had no label, and a real run with SummaC or AlignScore enabled would have emitted unlabelled paths. It now has a project-specific entry, and `test_pairwise_agreement_is_labelled` covers a filled block.
+- **Item:** 10 M5 sections covering all 13 M5 registry keys. `docs/modules/m5-elaboration.md` restructured per §6.2; `DOCUMENTED` includes M5.
+- **Moved paragraphs (M5 page → metrics.md):** the `nli` and `lexical_grounding` scorer bullets and "`per_scorer[name]`" (block shape, "`not_entailed_rate` is the headline number… upper bound") → NLI and lexical grounding scores. The AlignScore/SummaC bullet → their own sections (the optional-load sentence stays on the page too). "`pairwise_agreement`" → scorer agreement. "`not_entailed_pattern_breakdown`" (table, flag semantics) → pattern breakdown. The corrected-rate formula paragraph → corrected not-entailed rate. The `score_histogram` reading from the glossary is repeated in the scorer section. Scorer overview, cost, annotation loop (procedure), `heuristic_only` and the glossary stay on the page, the glossary now linked.
+- **Paper check:** Goldsack 2022 §4.2 finds "a much greater portion of lay summary sentences is dedicated to … Background", at the expense of Results and, less so, Methods. They trained Cohan et al.'s (2019) sequential classifier, and the rhetorical-roles section now says ours labels sentences independently.
+- **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
+- **Next item:** M6 sections and M6 page.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 6: M6 docs
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** one M6 section, `deletion_profile.features.*`, the only M6 registry key. `docs/modules/m6-deletion-profile.md` restructured per §6.2; `DOCUMENTED` includes M6.
+- **Moved paragraphs (M6 page → metrics.md):** "Features" (salience, difficulty and redundancy tables) and "Statistics, per feature" ("`stratified_effect` — the one to read"; "pooled, confounded", including the textrank ρ = −0.92 evidence and the abandoned z-score approach) → `deletion_profile.features.*`. The design decision, "What counts as deleted" (with the validation table), plot data, corpus/per-pair fields and the unit-shift caveat, "Reading it", the removed feature, notes and the glossary stay on the page, the glossary now linked. The glossary gained the `syllables_per_word` row, which was missing (the feature exists in code and the moved table).
+- **Result:** pass. Doc tests green; docs-only change (no code touched since the last full check).
+- **Next item:** M7 sections and M7 page.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 7: M7 docs
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** 4 M7 family sections (lexical 9, syntactic/sentence 15, entity coherence 7, Flesch 2) covering all 33 M7 keys through `**Keys:**` lines; each cites the M7 source repository, the only paper M7 may carry. `docs/modules/m7-linguistic-features.md` restructured per §6.2; the glossary's 33 feature rows now link to their family sections (generated from the old table, so the wording is unchanged apart from "see above" → "see the reference"). `DOCUMENTED` includes M7.
+- **Moved paragraphs (M7 page → metrics.md):** "Two features that are not what their names suggest" (`words_per_sentence`; `past_tense_verbs`/`passive_voice_ratio` > 1) → syntactic and sentence features. "Three entity features are document-length proxies" (ρ table, Cochrane numbers, XSum single-sentence caveat, `consecutive_entity_distance`, the failure-mode paragraph) → entity coherence features. The six deviations, individually → the implementation notes of the families they affect; the page keeps a one-paragraph summary. The NER-zero degradation sentence is repeated in the entity section. Why it was added, sign convention, the self-contained table, cost, degradation and the glossary stay on the page.
+- **Result:** pass. Doc tests green; docs-only change.
+- **Next item:** M8 sections and M8 page.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 8: M8 docs
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** 5 M8 sections (BLEU, BERTScore, BLANC, SUPERT, SummaQA) covering all 5 M8 keys. `docs/modules/m8-pair-similarity.md` restructured per §6.2. `DOCUMENTED` now covers all eight modules.
+- **Moved paragraphs (M8 page → metrics.md):** "What is computed — `bleu`" and "BLEU is structurally uninformative on a compressing corpus" (XSum precisions, brevity-penalty table, the 0.2 rule) → `pair_similarity.bleu`; "Deviation from the source implementation" (sacrebleu vs easse) → its implementation notes. "What is computed — `bertscore_f1`" (settings, caching) → `pair_similarity.bertscore_f1`. "Neither metric is independent evidence", "Not applicable…" and the glossary stay on the page, the glossary now linked. BLANC, SUPERT and SummaQA descriptions were checked against their paper abstracts (BLANC, SUPERT) and the SummaQA README.
+- **Result:** pass. Doc tests green; docs-only change.
+- **Next item:** index table at the top of `docs/metrics.md`, README and `docs/modules/README.md` links, and removal of the `DOCUMENTED` scaffold.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase E, item 9: index, README links, gate
+
+- **Branch:** `feature/metric-labels-e`
+- **Item:** `docs/metrics.md` gains its Index (key · name · label · evidence · module, 118 rows sorted by module, each linked to its section). It was generated once from the registry and section anchors, and `test_index_lists_every_key_with_its_label_and_anchor` keeps it in sync. The README's "Per-module reference" paragraph and `docs/modules/README.md` each gained a line linking to `docs/metrics.md`. The `DOCUMENTED` scaffold is removed; `tests/test_metrics_doc.py` now covers every registry key and all eight module pages.
+- **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
+- **Phase E gate:** passed. `test_metrics_doc.py` passes, and every moved paragraph is listed in the item 1–8 entries above and in the PR. Pushed and opened the Phase E PR.
+- **Next item:** Phase F, `DOMAIN` dict in `scripts/compare_runs.py`.
+- **DEFERRED:** none.

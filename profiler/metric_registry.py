@@ -290,6 +290,8 @@ _PROJECT: tuple[MetricLabel, ...] = (
     _proj("elaboration.not_entailed_pattern_breakdown", headline=()),
     _proj("elaboration.per_scorer.lexical_grounding", headline=("score.median",)),
     _proj("elaboration.per_scorer.nli", headline=("score.median",)),
+    # Filled only when two or more scorers run (never in the archived runs).
+    _proj("elaboration.pairwise_agreement", headline=()),
     # M6
     _proj("deletion_profile.features.*", headline=("stratified_effect.effect",)),
     # M7: project-specific, carrying the source repository its module doc cites

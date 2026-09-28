@@ -1,14 +1,33 @@
 # M8 — Pair similarity
 
+`profiler/modules/m8_similarity.py` · runs on the **sample**
+
+## Overview
+
 The two applicable metrics from `automatic_metrics.py` in
-[NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification).
+[NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification),
+plus three reference-free summary-quality metrics from the summarization
+literature, each treating the target as the summary of its source.
 
-Tier: **expensive** — runs on the seeded M4–M6 sample, not the full corpus.
+Tier: **expensive** — runs on the seeded M4–M8 sample, not the full corpus. It
+depends on no other module.
 
-## Neither metric is independent evidence
+## Metrics in this module
+
+Each name links to its full entry in [the metric reference](../metrics.md).
+
+- [**BLEU(target, source)**](../metrics.md#pair_similaritybleu--bleutarget-source) (DS) — corpus-level n-gram overlap of the target with its source; collapses under heavy compression.
+- [**BERTScore F1**](../metrics.md#pair_similaritybertscore_f1--bertscore-f1) (project-specific) — embedding similarity of the pair.
+- [**BLANC**](../metrics.md#pair_similarityblanc--blanc) (SUM) — how much the target helps a language model understand the source. Deferred; always null.
+- [**SUPERT**](../metrics.md#pair_similaritysupert--supert) (SUM) — similarity to a pseudo-reference of salient source sentences. Deferred; always null.
+- [**SummaQA**](../metrics.md#pair_similaritysummaqa--summaqa) (SUM) — cloze questions from the source, answered from the target. Deferred; always null.
+
+## Module-level material
+
+### Neither similarity metric is independent evidence
 
 This is the most important thing to know about M8. The pipeline already
-measures both things these metrics measure:
+measures both things BLEU and BERTScore measure:
 
 | M8 metric | already covered by |
 |---|---|
@@ -20,65 +39,14 @@ cosine alignment. They were added because the feature set was adopted whole.
 **Read them alongside M2/M4/M5, not as a second opinion on meaning
 preservation.** The module says so in its own `notes`.
 
-## What is computed
+### Reference-free summary quality: deferred
 
-### `bleu`
+BLANC, SUPERT and SummaQA could not be installed against the core pins
+(`torch>=2.0`, `transformers>=4.35`, Python 3.13). Their keys are emitted as
+null `Summary`s, `models_run` is empty, and one note per metric gives the
+reason. They are ready to wire in on a machine where the packages install.
 
-Corpus-level BLEU of target against source, via `sacrebleu` with the `13a`
-tokenizer.
-
-Corpus-level, not the mean of per-pair scores: BLEU's brevity penalty and
-n-gram precisions are defined over a corpus, and averaging sentence BLEU is a
-different and much noisier quantity. Consequently **it is a single scalar with
-no confidence interval** — the only corpus metric in the pipeline that is not a
-`Summary`.
-
-Note the direction: target against source, with no external reference. There is
-no human translation here, only the pair, so this is a *similarity* measure, not
-a quality one. A low BLEU means the target is worded differently from the
-source, which for a simplification corpus is expected rather than bad.
-
-### `bertscore_f1`
-
-`bert-score` with `lang="en"` and `rescale_with_baseline=True`, F1, computed per
-pair and then summarised with the usual n/mean/median/IQR/CI contract.
-
-Scores are cached on `content_hash(model, source, target)` — the same mechanism
-`CachedEmbedder` uses for SBERT embeddings — so a rerun of the same config
-recomputes nothing and the run stays deterministic.
-
-## BLEU is structurally uninformative on a compressing corpus
-
-BLEU carries a **brevity penalty**, because it was designed for translation
-where the hypothesis and reference should be about the same length. Here the
-"hypothesis" is the target and the "reference" is the source, and a
-simplification or summarisation target is *deliberately* much shorter. The
-penalty then dominates everything else.
-
-Measured on XSum (n=250): the n-gram precisions are healthy — **63.4 / 15.3 /
-3.7 / 1.2** for 1- to 4-grams — but `BP = 0.000` at a length ratio of 0.052, so
-the reported BLEU is **0.00**. There is plenty of overlap; the metric throws it
-away.
-
-The penalty is `exp(1 − 1/ratio)`, and the ratio is M1's compression, so the
-collapse is entirely predictable from a number the pipeline already publishes:
-
-| corpus | compression | brevity penalty | BLEU usable? |
-|---|---|---|---|
-| SWiPE | 0.999 | 9.99e-01 | yes |
-| Cochrane | 0.603 | 5.18e-01 | yes |
-| D-Wikipedia | 0.553 | 4.46e-01 | yes |
-| CNN/DailyMail | 0.074 | 3.68e-06 | **no — collapses to ~0** |
-| XSum | 0.056 | 4.78e-08 | **no** |
-| eLife | 0.040 | 3.78e-11 | **no** |
-| PLOS | 0.030 | 9.07e-15 | **no** |
-
-**Read `bleu` only for corpora compressing above roughly 0.2.** Below that it
-reports the compression ratio, not the wording overlap. M2's `rouge1_recall`
-and `coverage` measure the same overlap without a length penalty and are the
-right instruments for the heavily-compressing corpora.
-
-## Not applicable to an English-only corpus
+### Not applicable to an English-only corpus
 
 Three of the source project's five metrics are cross-lingual or French-only.
 They are **recorded in `params.not_applicable` with the reason** rather than
@@ -91,17 +59,14 @@ rate gets.
 | `simplification_mbert_fr` | cross-lingual mBERT F1 between a French target and an English source; no French side exists in any corpus here |
 | `simplification_mbert_en` | the same, in the other direction |
 
-## Deviation from the source implementation
+---
 
-BLEU via `sacrebleu`, not the source's `easse.bleu`. EASSE is unmaintained and
-does not expose its tokenisation, and an unspecified BLEU tokenizer is not
-reproducible across versions. `sacrebleu` names it, and the name is recorded in
-`params.bleu_tokenizer`.
-
-## What each metric means
+## Metric glossary — what each metric means
 
 | Metric | In plain words | Higher means |
 |---|---|---|
-| `bleu` | How much of the target's wording appears verbatim in the source, as overlapping word sequences. 100 = identical; near 0 = rewritten from scratch. | More copying |
-| `bertscore_f1` | How close the target's meaning is to the source's, judged by a language model rather than by shared words. Rescaled so ~0 is the score of unrelated text. | Closer in meaning |
+| [`bleu`](../metrics.md#pair_similaritybleu--bleutarget-source) | How much of the target's wording appears verbatim in the source, as overlapping word sequences. 100 = identical; near 0 = rewritten from scratch. | More copying |
+| [`bertscore_f1`](../metrics.md#pair_similaritybertscore_f1--bertscore-f1) | How close the target's meaning is to the source's, judged by a language model rather than by shared words. Rescaled so ~0 is the score of unrelated text. | Closer in meaning |
+| `bertscore_n_source_truncated` | How many sources were cut at the model's token limit. | Less of the source compared |
+| [`blanc`](../metrics.md#pair_similarityblanc--blanc) / [`supert`](../metrics.md#pair_similaritysupert--supert) / [`summaqa`](../metrics.md#pair_similaritysummaqa--summaqa) | Reference-free summary quality. Deferred: always null for now. | Better summary |
 | `n` | How many pairs this statistic is based on. | More data behind the number |
