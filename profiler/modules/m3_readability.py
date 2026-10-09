@@ -325,7 +325,9 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             ("src", p.source, src_sents_for_scores),
             ("tgt", p.target, tgt_sents_for_scores),
         ):
-            row[f"{side}_wordrank"] = rd.wordrank([proc.words(s) for s in sents])
+            # words_fast: the same tokens as words(), without a parse per
+            # sentence (the Doc cache cannot hold a long document's sentences).
+            row[f"{side}_wordrank"] = rd.wordrank([proc.words_fast(s) for s in sents])
             row[f"{side}_lexical_complexity"] = rd.lexical_complexity(proc.content_words(text))
         for k, v in li_src.items():
             row[f"src_{k}"] = v
@@ -410,11 +412,14 @@ def _model_based(pairs: Sequence[Pair], ctx: Context) -> tuple[dict, list[dict],
     notes: list[str] = []
     models_run: list[str] = []
 
-    if mm.use_stand_ins(ctx.config):
+    if not ctx.config.run.model_metrics:
+        sle, is_next, models_run = None, None, []
+        notes.append(mm.disabled_note("m3d_model_based (SLE, coherence)"))
+    elif mm.use_stand_ins(ctx.config):
         sle, is_next = mm.sle_stand_in, mm.nsp_stand_in
         models_run = ["sle:stand-in", "coherence:stand-in"]
         notes.append(
-            "m3d_model_based uses offline stand-ins (nli_backend=lexical): SLE is a "
+            f"m3d_model_based uses offline stand-ins ({mm.stand_in_reason(ctx.config)}): SLE is a "
             "sentence-length proxy and coherence a content-word-overlap proxy. These "
             "are not the published metrics."
         )

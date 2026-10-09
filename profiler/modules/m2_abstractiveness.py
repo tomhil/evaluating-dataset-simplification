@@ -11,6 +11,7 @@ from collections import Counter
 from typing import Sequence
 
 from rapidfuzz import fuzz
+from rapidfuzz.distance import LCSseq
 
 from ..stats import histogram, summarize
 from .. import progress
@@ -94,30 +95,22 @@ def _fragments(src_tokens: list[str], tgt_tokens: list[str]) -> list[int]:
     return fragments
 
 
-def _coverage_density(src_tokens: list[str], tgt_tokens: list[str]) -> tuple[float | None, float | None]:
-    """Grusky et al. (2018) extractive fragments via greedy matching.
+def _coverage_density_from(fragments: list[int], n_tgt: int) -> tuple[float | None, float | None]:
+    """Coverage and density from already-matched fragments."""
 
-    coverage = fraction of target tokens covered by extractive fragments.
-    density  = mean squared fragment length, normalised by target length.
-    """
-
-    if not tgt_tokens:
+    if not n_tgt:
         return None, None
-    fragments = _fragments(src_tokens, tgt_tokens)
-    n_tgt = len(tgt_tokens)
     coverage = sum(fragments) / n_tgt
     density = sum(f * f for f in fragments) / n_tgt
     return coverage, density
 
 
-def _abstractivity(src_tokens: list[str], tgt_tokens: list[str], p: int) -> float | None:
-    """Bommasani & Cardie (2020): ABS_p = 1 - sum(|f|^p) / |S|^p over the
-    Grusky fragments f of summary S. The paper sets p = 1."""
+def _abstractivity_from(fragments: list[int], n_tgt: int, p: int) -> float | None:
+    """ABS_p from already-matched fragments."""
 
-    if not tgt_tokens:
+    if not n_tgt:
         return None
-    fragments = _fragments(src_tokens, tgt_tokens)
-    return 1.0 - sum(f**p for f in fragments) / len(tgt_tokens) ** p
+    return 1.0 - sum(f**p for f in fragments) / n_tgt**p
 
 
 def _lcs_length(a: list[str], b: list[str]) -> int | None:
@@ -170,14 +163,14 @@ def _redundancy(tgt_sent_tokens: list[list[str]]) -> float | None:
     sents = [t for t in tgt_sent_tokens if t]
     if len(sents) < 2:
         return None
-    scores: list[float] = []
-    for i in range(len(sents)):
-        for j in range(i + 1, len(sents)):
-            lcs = _lcs_length(sents[i], sents[j])
-            if lcs is None:
-                continue
-            scores.append(2 * lcs / (len(sents[i]) + len(sents[j])))
-    return sum(scores) / len(scores) if scores else None
+    # rapidfuzz's LCSseq works on token lists in C++; the pairs are quadratic
+    # in the sentence count, so this runs no size cap.
+    scores = [
+        2 * LCSseq.similarity(sents[i], sents[j]) / (len(sents[i]) + len(sents[j]))
+        for i in range(len(sents))
+        for j in range(i + 1, len(sents))
+    ]
+    return sum(scores) / len(scores)
 
 
 def _topic_similarity(sources: list[str], targets: list[str]) -> tuple[list[float | None], str | None]:
@@ -191,6 +184,7 @@ def _topic_similarity(sources: list[str], targets: list[str]) -> tuple[list[floa
     from sklearn.decomposition import LatentDirichletAllocation
     from sklearn.feature_extraction.text import CountVectorizer
 
+    # English stop words: the config accepts only English corpora.
     vectorizer = CountVectorizer(lowercase=True, stop_words="english")
     try:
         x_src = vectorizer.fit_transform(sources)
@@ -200,9 +194,16 @@ def _topic_similarity(sources: list[str], targets: list[str]) -> tuple[list[floa
         n_components=LDA_TOPICS, random_state=LDA_SEED, learning_method="batch"
     )
     theta_src = lda.fit_transform(x_src)
-    theta_tgt = lda.transform(vectorizer.transform(targets))
+    x_tgt = vectorizer.transform(targets)
+    theta_tgt = lda.transform(x_tgt)
+    # A text with no in-vocabulary word gets LDA's prior, a near-uniform mix
+    # that describes nothing about it; such a pair has no topic similarity.
+    empty = (np.asarray(x_src.sum(axis=1)).ravel() == 0) | (np.asarray(x_tgt.sum(axis=1)).ravel() == 0)
     values: list[float | None] = []
-    for a, b in zip(theta_src, theta_tgt):
+    for a, b, skip in zip(theta_src, theta_tgt, empty):
+        if skip:
+            values.append(None)
+            continue
         d = float(jensenshannon(a, b, base=2))
         values.append(None if np.isnan(d) else 1.0 - d)
     return values, None
@@ -228,11 +229,6 @@ def _rouge_f1(cand: list[str], ref: list[str]) -> dict:
     }
 
 
-def _abstract(p: Pair) -> str | None:
-    """The pair's abstract, if its adapter supplied a non-empty one."""
-
-    text = p.meta.get("abstract") if p.meta else None
-    return text if isinstance(text, str) and text.strip() else None
 
 
 # Goldsack et al. (2022) s4.3: content words are nouns, proper nouns, verbs and
@@ -248,7 +244,9 @@ def _bucket(count: int) -> str:
     raise ValueError(count)
 
 
-def _abstract_content_overlap(pairs: Sequence[Pair], proc) -> tuple[list[dict], str | None]:
+def _abstract_content_overlap(
+    pairs: Sequence[Pair], proc, target_words: list[set[str]]
+) -> tuple[list[dict], str | None]:
     """Per pair: the share of the abstract's distinct content words that also
     appear in the target -- overall, per abstract-count bucket, and per word
     type. Needs a POS tagger; without one every value is None and a note says so.
@@ -267,24 +265,23 @@ def _abstract_content_overlap(pairs: Sequence[Pair], proc) -> tuple[list[dict], 
     content: list[dict[str, str] | None] = []
     doc_freq: Counter = Counter()
     for p in pairs:
-        abstract = _abstract(p)
+        abstract = p.abstract()
         if abstract is None:
             content.append(None)
             continue
         words: dict[str, str] = {}
-        for sent in proc.sentences(abstract):
-            for tok in proc.analyze_sentence(sent):
-                kind = CONTENT_POS.get(tok.pos)
-                if kind:
-                    words.setdefault(tok.text.lower(), kind)
+        # One parse of the whole abstract; its tokens carry the POS tags.
+        for tok in proc.analyze_sentence(abstract):
+            kind = CONTENT_POS.get(tok.pos)
+            if kind:
+                words.setdefault(tok.text.lower(), kind)
         content.append(words)
         doc_freq.update(words.keys())
 
     rows: list[dict] = []
-    for p, words in zip(pairs, content):
+    for words, target in zip(content, target_words):
         row = dict(empty)
         if words:
-            target = {t.lower() for t in proc.words(p.target)}
 
             def share(ws: list[str]) -> float | None:
                 return (sum(1 for w in ws if w in target) / len(ws)) if ws else None
@@ -325,25 +322,33 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     proc = ctx.processor
     per_pair: list[dict] = []
 
+    target_word_sets: list[set[str]] = []
     for p in progress.track(pairs, "M2 abstractiveness"):
-        src_tokens = [t.lower() for t in proc.words(p.source)]
-        tgt_tokens = [t.lower() for t in proc.words(p.target)]
+        src_words = proc.words(p.source)
+        tgt_words = proc.words(p.target)
+        src_tokens = [t.lower() for t in src_words]
+        tgt_tokens = [t.lower() for t in tgt_words]
+        target_word_sets.append(set(tgt_tokens))
         src_content = {t.lower() for t in proc.content_words(p.source)}
         tgt_content = [t.lower() for t in proc.content_words(p.target)]
         tgt_content_types = set(tgt_content)
 
-        coverage, density = _coverage_density(src_tokens, tgt_tokens)
-        abstract = _abstract(p)
+        # One greedy fragment match feeds coverage, density and abstractivity.
+        fragments = _fragments(src_tokens, tgt_tokens) if tgt_tokens else []
+        coverage, density = _coverage_density_from(fragments, len(tgt_tokens))
+        abstract = p.abstract()
         abstract_rouge = (
-            _rouge_f1([t.lower() for t in proc.words(abstract)], tgt_tokens)
+            # words_fast: the same tokens, no parse (the overlap metric below
+            # parses the abstract once, for POS tags).
+            _rouge_f1([t.lower() for t in proc.words_fast(abstract)], tgt_tokens)
             if abstract is not None
             else dict.fromkeys(ROUGE_F1_KEYS)
         )
         tgt_sents = proc.sentences(p.target)
-        redundancy = _redundancy([[t.lower() for t in proc.words(sent)] for sent in tgt_sents])
+        # words_fast per sentence: the same tokens as words(), no parse each.
+        redundancy = _redundancy([[t.lower() for t in proc.words_fast(sent)] for sent in tgt_sents])
         edits = _edit_features(
-            p.source, p.target, proc.sentences(p.source), tgt_sents,
-            proc.words(p.source), proc.words(p.target),
+            p.source, p.target, proc.sentences(p.source), tgt_sents, src_words, tgt_words,
         )
         rouge = _rouge_recall(tgt_tokens, src_tokens)
 
@@ -369,14 +374,14 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
                 "rouge2_recall": rouge["rouge2"],
                 "rougeL_recall": rouge["rougeL"],
                 "content_type_overlap": type_overlap,
-                "abstractivity_p1": _abstractivity(src_tokens, tgt_tokens, ABSTRACTIVITY_P),
+                "abstractivity_p1": _abstractivity_from(fragments, len(tgt_tokens), ABSTRACTIVITY_P),
                 **edits,
                 "redundancy": redundancy,
                 **{f"abstract_target_{k}": v for k, v in abstract_rouge.items()},
             }
         )
 
-    overlap_rows, overlap_note = _abstract_content_overlap(pairs, proc)
+    overlap_rows, overlap_note = _abstract_content_overlap(pairs, proc, target_word_sets)
     for row, overlap in zip(per_pair, overlap_rows):
         row.update({f"abstract_overlap_{k}": v for k, v in overlap.items()})
 
@@ -435,7 +440,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         notes.append(topic_note)
     if overlap_note:
         notes.append(overlap_note)
-    n_no_abstract = sum(1 for p in pairs if _abstract(p) is None)
+    n_no_abstract = sum(1 for p in pairs if p.abstract() is None)
     if n_no_abstract:
         notes.append(
             f"{n_no_abstract} of {len(pairs)} pair(s) have no abstract "

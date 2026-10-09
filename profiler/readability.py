@@ -8,8 +8,11 @@ formula libraries.
 
 from __future__ import annotations
 
+import math
 import re
 from functools import lru_cache
+
+import numpy as np
 
 _VOWEL_GROUP = re.compile(r"[aeiouy]+", re.IGNORECASE)
 
@@ -254,16 +257,12 @@ def _word_ranks() -> dict[str, int]:
 def log_rank(word: str) -> float:
     """Natural log of the word's frequency rank (lowercased)."""
 
-    import math
-
     return math.log(_word_ranks().get(word.lower(), RANK_VOCAB_SIZE + 1))
 
 
 def wordrank(sentence_words: list[list[str]]) -> float | None:
     """Martin et al. (2020) WordRank: per sentence, the third quartile of the
     log-ranks of all its words; the document value is the mean over sentences."""
-
-    import numpy as np
 
     per_sentence = [
         float(np.quantile([log_rank(w) for w in words], 0.75))

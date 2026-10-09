@@ -85,12 +85,27 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         # further down still left this path, which returns before reaching it --
         # the caveat moved rather than becoming unconditional, and a source-text
         # assertion did not notice.
+        # The newer blocks do not depend on target sentences being scored, so
+        # they are emitted here too (null where nothing can be computed) and
+        # the corpus keys are the same whatever the sample holds.
+        doc_block, doc_rows, doc_notes = _document_level(pairs, ctx)
+        role_block, role_rows, role_notes = _rhetorical_roles(pairs, ctx, tgt_sents_by_id)
         return ModuleResult(
             name=NAME,
-            corpus={"n_target_sentences": 0},
+            per_pair=[
+                {"id": p.id, "n_tgt_sents": 0, **doc_rows.get(p.id, {}), **role_rows.get(p.id, {})}
+                for p in pairs
+            ],
+            corpus={
+                "n_target_sentences": 0,
+                "document_level": doc_block,
+                "rhetorical_roles": role_block,
+            },
             notes=[
                 "No target sentences.",
                 upper_bound_note(ctx.config.run.heuristic_only),
+                *doc_notes,
+                *role_notes,
             ],
         )
 
@@ -170,6 +185,11 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     notes.extend(doc_notes)
     corpus["rhetorical_roles"], role_rows, role_notes = _rhetorical_roles(pairs, ctx, tgt_sents_by_id)
     notes.extend(role_notes)
+    # A sampled pair with no target sentences has no sentence-level row, but it
+    # has document-level and role values; give it a row so per_pair.parquet
+    # covers the same pairs as the corpus summaries.
+    have = {row["id"] for row in per_pair}
+    per_pair += [{"id": p.id, "n_tgt_sents": 0} for p in pairs if p.id not in have]
     for row in per_pair:
         row.update(doc_rows.get(row["id"], {}))
         row.update(role_rows.get(row["id"], {}))
@@ -202,19 +222,23 @@ def _document_level(pairs: Sequence[Pair], ctx: Context) -> tuple[dict, dict[str
     notes: list[str] = []
     scorers_run: list[str] = []
     summac = None
-    if mm.use_stand_ins(ctx.config):
-        summac = mm.summac_doc_stand_in
-        scorers_run.append("summac:stand-in")
-        notes.append(
-            "document_level SummaC uses an offline content-word stand-in "
-            "(nli_backend=lexical); it is not the published metric."
-        )
-    elif ctx.config.run.summac:
+    # Real SummaC whenever it is requested and M5 runs its optional scorers
+    # (i.e. not heuristic_only) -- the same condition that loads the
+    # sentence-level SummaC -- so a run never publishes the stand-in under the
+    # SummaC keys while the real model is loaded next to it.
+    if ctx.config.run.summac and not ctx.config.run.heuristic_only:
         summac, note = mm.try_load("SummaC (document level)", lambda: mm.load_summac_doc(ctx.config.run.device))
         if summac is not None:
             scorers_run.append("summac")
         else:
             notes.append(note)
+    elif mm.use_stand_ins(ctx.config):
+        summac = mm.summac_doc_stand_in
+        scorers_run.append("summac:stand-in")
+        notes.append(
+            "document_level SummaC uses an offline content-word stand-in "
+            f"({mm.stand_in_reason(ctx.config)}); it is not the published metric."
+        )
     else:
         notes.append("document_level SummaC not requested (run.summac is false); its keys are null.")
     notes.append(mm.QAFACTEVAL_DEFERRED)
@@ -252,10 +276,13 @@ def _rhetorical_roles(
     from .. import model_metrics as mm
 
     notes: list[str] = []
-    if mm.use_stand_ins(ctx.config):
+    if not ctx.config.run.model_metrics:
+        classify, models_run = None, []
+        notes.append(mm.disabled_note("rhetorical_roles"))
+    elif mm.use_stand_ins(ctx.config):
         classify, models_run = mm.rct_stand_in, ["pubmed_rct:stand-in"]
         notes.append(
-            "rhetorical_roles uses an offline keyword stand-in (nli_backend=lexical); "
+            f"rhetorical_roles uses an offline keyword stand-in ({mm.stand_in_reason(ctx.config)}); "
             "it is not the published classifier."
         )
     else:
@@ -271,8 +298,8 @@ def _rhetorical_roles(
     for p in progress.track(list(pairs), "M5 rhetorical roles"):
         row: dict = {}
         texts = {"target": tgt_sents_by_id.get(p.id, [])}
-        abstract = p.meta.get("abstract") if p.meta else None
-        texts["abstract"] = proc.sentences(abstract) if isinstance(abstract, str) and abstract.strip() else []
+        abstract = p.abstract()
+        texts["abstract"] = proc.sentences(abstract) if abstract is not None else []
         for side, sents in texts.items():
             shares = mm.role_shares(classify(sents)) if (classify and sents) else dict.fromkeys(mm.RCT_LABELS)
             row.update({f"role_{side}_{lab}": v for lab, v in shares.items()})

@@ -32,6 +32,16 @@ def use_stand_ins(config) -> bool:
     return config.run.nli_backend == "lexical" or bool(config.run.heuristic_only)
 
 
+def stand_in_reason(config) -> str:
+    """Which smoke setting selected the stand-ins, for the notes."""
+
+    return "heuristic_only" if config.run.heuristic_only else "nli_backend=lexical"
+
+
+def disabled_note(what: str) -> str:
+    return f"{what} not computed: run.model_metrics is false, so its model is not loaded; keys are null."
+
+
 def try_load(name: str, loader: Callable[[], object]) -> tuple[object | None, str | None]:
     """Load an optional model, returning ``(model, note)``.
 
@@ -145,18 +155,19 @@ QAFACTEVAL_DEFERRED = (
 )
 
 
-def load_summac_doc(device: str = "auto"):  # pragma: no cover - optional dep
+def load_summac_doc(device: str = "auto"):  # noqa: ARG001 - see below
     """SummaC-Conv as M5's sentence scorer configures it (released weights),
-    scoring whole documents:
-    ``score(originals, generateds)`` gives one score per (original, generated)."""
+    scoring whole documents: ``score(originals, generateds)`` gives one score
+    per (original, generated).
 
-    from summac.model_summac import SummaCConv  # type: ignore
+    It reuses the sentence scorer's instance, which runs on cpu, so the model
+    is loaded once per run; ``device`` is accepted for symmetry with the other
+    loaders and ignored.
+    """
 
-    from .embeddings import resolve_device
+    from .scorers import summac_conv_model
 
-    from .scorers import SUMMAC_CONV_KWARGS
-
-    model = SummaCConv(**SUMMAC_CONV_KWARGS, device=resolve_device(device))
+    model = summac_conv_model("cpu")
     return lambda original, generated: float(model.score([original], [generated])["scores"][0])
 
 
@@ -197,6 +208,11 @@ def load_rct(device: str = "auto"):  # pragma: no cover - model download
     tok = AutoTokenizer.from_pretrained(RCT_TOKENIZER)
     model = AutoModelForSequenceClassification.from_pretrained(RCT_MODEL).to(dev).eval()
     id2label = {int(k): v.lower() for k, v in model.config.id2label.items()}
+    # A checkpoint with other label names (LABEL_0.., singular forms) would
+    # count every sentence as none of the five roles and publish zeros; refuse
+    # it here, so try_load skips the metric with a note instead.
+    if set(id2label.values()) != set(RCT_LABELS):
+        raise ValueError(f"{RCT_MODEL} labels {sorted(id2label.values())} are not {sorted(RCT_LABELS)}")
 
     def classify(sentences, batch_size: int = 16) -> list[str]:
         out: list[str] = []

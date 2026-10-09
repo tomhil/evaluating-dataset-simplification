@@ -14,6 +14,7 @@ score in [0, 1], where low = the target sentence is not supported by the source.
 
 from __future__ import annotations
 
+import functools
 import warnings
 
 import re
@@ -277,14 +278,23 @@ SUMMAC_CONV_KWARGS = {
 }
 
 
-def _load_summac() -> SentenceScorer:  # pragma: no cover - optional dep
+@functools.lru_cache(maxsize=None)
+def summac_conv_model(device: str = "cpu"):
+    """One SummaC-Conv instance per device, shared by M5's sentence-level
+    scorer and its document-level faithfulness, so the vitc model is loaded
+    once rather than twice."""
+
     from summac.model_summac import SummaCConv  # type: ignore
 
+    return SummaCConv(**SUMMAC_CONV_KWARGS, device=device)
+
+
+def _load_summac() -> SentenceScorer:
     class _SummaCScorer:
         name = "summac_conv"
 
         def __init__(self):
-            self._m = SummaCConv(**SUMMAC_CONV_KWARGS, device="cpu")
+            self._m = summac_conv_model("cpu")
 
         def score(self, target_sents, source_sents):
             doc = " ".join(source_sents)

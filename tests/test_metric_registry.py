@@ -125,3 +125,27 @@ def test_pairwise_agreement_is_labelled():
     modules = {"elaboration": {"corpus": {"pairwise_agreement": {
         "nli_vs_summac_conv": {"label_agreement": 0.8, "pearson": 0.5}}}}}
     assert all(label_for(p) is not None for p in metric_paths(modules))
+
+
+def test_sample_based_matches_the_run_populations():
+    from profiler.run import CHEAP, EXPENSIVE
+
+    sample_modules = {MODULE_IDS[name] for name in EXPENSIVE}
+    for m in REGISTRY:
+        if m.key.startswith("readability.m3d_model_based."):
+            assert m.sample_based, m.key  # the one sample block inside a cheap module
+        else:
+            assert m.sample_based == (m.module in sample_modules), m.key
+    assert "M7" not in sample_modules and "linguistic_features" in CHEAP
+
+
+def test_heuristic_only_run_is_fully_labelled(tmp_path):
+    raw = yaml.safe_load((REPO / "configs" / "smoke.yaml").read_text())
+    raw["dataset"]["path"] = str(REPO / raw["dataset"]["path"])
+    raw["run"]["cache_dir"] = str(tmp_path / "cache")
+    raw["run"]["heuristic_only"] = True
+    out = run(parse_config(raw), output_dir=tmp_path / "run")
+    metrics = json.loads((out / "metrics.json").read_text())
+    assert "heuristic_grounding" in metrics["modules"]["elaboration"]["corpus"]["per_scorer"]
+    missing = _unlabelled(metrics["modules"])
+    assert not missing, missing

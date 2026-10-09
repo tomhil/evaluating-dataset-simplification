@@ -101,6 +101,11 @@ ALLOWED_PAPER_URLS: frozenset[str] = frozenset(
 
 PAIRED = ("target.median", "delta.median")
 
+# Modules run on the seeded sample (run.py's EXPENSIVE group). M7 is in the
+# cheap, full-corpus group. M3's m3d_model_based entries set sample_based
+# themselves: that block alone runs on the sample.
+SAMPLE_MODULES = frozenset({"M4", "M5", "M6", "M8"})
+
 
 def _caveats(tasks: frozenset[str], faithfulness: bool = False) -> tuple[Paper, ...]:
     out: list[Paper] = []
@@ -116,7 +121,7 @@ def _caveats(tasks: frozenset[str], faithfulness: bool = False) -> tuple[Paper, 
 def _lit(key: str, tasks: set[str], papers: tuple[Paper, ...], *, faithfulness: bool = False, **kw) -> MetricLabel:
     t = frozenset(tasks)
     module = MODULE_IDS[key.split(".", 1)[0]]
-    kw.setdefault("sample_based", module in {"M4", "M5", "M6", "M7", "M8"})
+    kw.setdefault("sample_based", module in SAMPLE_MODULES)
     return MetricLabel(
         key=key, module=module, tasks=t, papers=papers,
         caveats=_caveats(t, faithfulness), **kw,
@@ -125,7 +130,7 @@ def _lit(key: str, tasks: set[str], papers: tuple[Paper, ...], *, faithfulness: 
 
 def _proj(key: str, **kw) -> MetricLabel:
     module = MODULE_IDS[key.split(".", 1)[0]]
-    kw.setdefault("sample_based", module in {"M4", "M5", "M6", "M7", "M8"})
+    kw.setdefault("sample_based", module in SAMPLE_MODULES)
     return MetricLabel(
         key=key, module=module, tasks=frozenset(), papers=kw.pop("papers", ()),
         evidence="project-specific", **kw,
@@ -290,6 +295,8 @@ _PROJECT: tuple[MetricLabel, ...] = (
     _proj("elaboration.not_entailed_pattern_breakdown", headline=()),
     _proj("elaboration.per_scorer.lexical_grounding", headline=("score.median",)),
     _proj("elaboration.per_scorer.nli", headline=("score.median",)),
+    # The scorer heuristic_only mode runs instead of NLI.
+    _proj("elaboration.per_scorer.heuristic_grounding", headline=("score.median",)),
     # Filled only when two or more scorers run (never in the archived runs).
     _proj("elaboration.pairwise_agreement", headline=()),
     # M6
@@ -301,6 +308,38 @@ _PROJECT: tuple[MetricLabel, ...] = (
 )
 
 REGISTRY: tuple[MetricLabel, ...] = _LITERATURE + _PROJECT
+
+# Metrics with an offline stand-in: where a run records which model produced
+# them, and that model's name there. Under the smoke settings the stand-in's
+# value is written under the metric's own key (PRD s5.4) and recorded as
+# "<name>:stand-in"; metric_labels marks it, and the label tables hide it.
+STAND_IN_RECORDS: dict[str, tuple[str, str]] = {
+    "readability.m3d_model_based.sle_doc": ("readability.m3d_model_based.models_run", "sle"),
+    "readability.m3d_model_based.sle_gain": ("readability.m3d_model_based.models_run", "sle"),
+    "readability.m3d_model_based.semantic_coherence": ("readability.m3d_model_based.models_run", "coherence"),
+    "elaboration.document_level.summac_precision": ("elaboration.document_level.scorers_run", "summac"),
+    "elaboration.document_level.summac_recall": ("elaboration.document_level.scorers_run", "summac"),
+    "elaboration.rhetorical_roles": ("elaboration.rhetorical_roles.models_run", "pubmed_rct"),
+}
+
+
+def _node(modules: dict, key: str):
+    module, rest = key.split(".", 1)
+    node = modules.get(module, {}).get("corpus", {})
+    for part in rest.split("."):
+        if not isinstance(node, dict) or part not in node:
+            return None
+        node = node[part]
+    return node
+
+
+def from_stand_in(modules: dict, key: str) -> bool:
+    """Whether a run's value for ``key`` came from an offline stand-in."""
+
+    record = STAND_IN_RECORDS.get(key)
+    if record is None:
+        return False
+    return f"{record[1]}:stand-in" in (_node(modules, record[0]) or [])
 
 # Exact corpus key names that are counts, parameters or plot data, not metrics.
 BOOKKEEPING: frozenset[str] = frozenset(
@@ -400,4 +439,7 @@ def metric_labels(modules: dict) -> dict[str, dict]:
             "evidence": m.evidence,
             "module": m.module,
         }
+        if from_stand_in(modules, m.key):
+            # The value under this key is a placeholder, not the metric.
+            out[path]["stand_in"] = True
     return out

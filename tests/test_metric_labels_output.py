@@ -69,3 +69,25 @@ def test_report_ends_with_metric_labels_section(tmp_path):
     # A τ-parametrised metric is listed once, by its registry key.
     assert section.count("alignment.by_tau.*.source_coverage") == 1
     assert "| `abstractiveness.rouge1_recall` | project-specific | — |" in section
+
+
+def test_stand_in_values_are_marked_in_metric_labels(metrics):
+    labels = metrics["metric_labels"]
+    # The smoke settings select the stand-ins for these.
+    for key in ("readability.m3d_model_based.sle_doc", "readability.m3d_model_based.semantic_coherence",
+                "elaboration.document_level.summac_precision", "elaboration.rhetorical_roles"):
+        assert labels[key].get("stand_in") is True, key
+    # Real values carry no marker.
+    assert "stand_in" not in labels["readability.m3a_surface.fkgl"]
+
+
+def test_report_marks_stand_in_values(tmp_path):
+    raw = yaml.safe_load((REPO / "configs" / "smoke.yaml").read_text())
+    raw["dataset"]["path"] = str(REPO / raw["dataset"]["path"])
+    raw["run"]["cache_dir"] = str(tmp_path / "cache")
+    out = run(parse_config(raw), output_dir=tmp_path / "run")
+    section = (out / "report.md").read_text().split("## Metric labels")[1]
+    sle = next(l for l in section.splitlines() if "`readability.m3d_model_based.sle_doc`" in l)
+    assert "offline stand-in value" in sle
+    fkgl = next(l for l in section.splitlines() if "`readability.m3a_surface.fkgl`" in l)
+    assert "stand-in" not in fkgl

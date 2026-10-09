@@ -310,3 +310,92 @@ def test_abstract_content_overlap(ctx):
     plain = _run(m2_abstractiveness, pairs, ctx)
     assert plain.corpus["abstract_content_overlap"]["all"]["n"] == 0
     assert any("no POS" in n for n in plain.notes)
+
+
+def test_topic_similarity_edge_cases(ctx):
+    """A text with no in-vocabulary word gets LDA's prior, not a topic mix, so
+    its pair has no topic similarity."""
+    pairs = [
+        Pair("a", SOURCE_LONG, IDENTITY_TEXT),
+        Pair("b", IDENTITY_TEXT, "the and of"),  # stop words only
+    ]
+    res = _run(m2_abstractiveness, pairs, ctx)
+    rows = {r["id"]: r for r in res.per_pair}
+    assert rows["a"]["topic_similarity"] is not None
+    assert rows["b"]["topic_similarity"] is None
+    assert res.corpus["topic_similarity"]["n"] == 1
+
+
+def test_pair_abstract_helper():
+    assert Pair("a", "s", "t", meta={"abstract": "  An abstract. "}).abstract() == "  An abstract. "
+    assert Pair("a", "s", "t", meta={"abstract": "   "}).abstract() is None
+    assert Pair("a", "s", "t", meta={"abstract": 3}).abstract() is None
+    assert Pair("a", "s", "t").abstract() is None
+
+
+def test_entity_results_are_cached_across_release():
+    """M7 and M4 ask for the same texts: NER runs once per text, and asking
+    whether NER exists after release() does not rebuild the pipeline."""
+    spacy = __import__("pytest").importorskip("spacy")
+    from profiler.nlp import SpacyProcessor
+
+    try:
+        proc = SpacyProcessor()
+    except OSError:
+        __import__("pytest").skip("en_core_web_sm not installed")
+
+    calls = []
+
+    class _Ent:
+        def __init__(self, text, start):
+            self.text, self.start = text, start
+
+    class _Doc:
+        ents = [_Ent("Paris", 2)]
+
+    def fake_ner(text):
+        calls.append(text)
+        return _Doc()
+
+    builds = []
+
+    def fake_pipe():
+        builds.append(1)
+        return fake_ner
+
+    proc._ner_pipe = fake_pipe
+    assert proc.entities("Visitors to Paris.") == [("paris", 2)]
+    proc.release()
+    assert proc.ner_available() is True
+    assert proc.entities("Visitors to Paris.") == [("paris", 2)]
+    assert calls == ["Visitors to Paris."]  # NER ran once for the text
+    assert len(builds) == 2  # one entities() call and one ner_available(); no rebuild per text
+
+
+def test_redundancy_lcs_matches_the_reference_lcs():
+    """rapidfuzz's LCSseq gives the same LCS length as M2's own DP."""
+    import random
+
+    from rapidfuzz.distance import LCSseq
+
+    rng = random.Random(13)
+    vocab = ["a", "b", "c", "d", "e"]
+    for _ in range(200):
+        x = [rng.choice(vocab) for _ in range(rng.randint(1, 12))]
+        y = [rng.choice(vocab) for _ in range(rng.randint(1, 12))]
+        assert LCSseq.similarity(x, y) == m2_abstractiveness._lcs_length(x, y)
+
+
+def test_m5_emits_new_blocks_with_no_target_sentences(ctx):
+    """The early return for an empty sample still carries document_level and
+    rhetorical_roles (null), so the corpus keys never depend on the sample."""
+    from profiler.modules import m5_elaboration
+
+    p = Pair("id", SOURCE_LONG, "x")
+    _run(m4_alignment, [p], ctx)
+    ctx.shared["alignment"]["tgt_sents"] = {"id": []}
+    res = _run(m5_elaboration, [p], ctx)
+    assert res.corpus["n_target_sentences"] == 0
+    assert "summac_precision" in res.corpus["document_level"]
+    assert res.corpus["rhetorical_roles"]["target"]["background"]["median"] is None
+    assert any("QAFactEval is DEFERRED" in n for n in res.notes)

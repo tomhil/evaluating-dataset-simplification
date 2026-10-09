@@ -188,7 +188,11 @@ def fake_summac(monkeypatch):
     pkg.model_summac = mod
     monkeypatch.setitem(sys.modules, "summac", pkg)
     monkeypatch.setitem(sys.modules, "summac.model_summac", mod)
-    return calls
+    from profiler.scorers import summac_conv_model
+
+    summac_conv_model.cache_clear()
+    yield calls
+    summac_conv_model.cache_clear()
 
 
 def test_sentence_summac_loads_released_weights(fake_summac):
@@ -204,3 +208,87 @@ def test_document_summac_loads_released_weights(fake_summac):
     score = mm.load_summac_doc("cpu")
     assert score("source text", "target text") == 0.5
     assert fake_summac[-1]["start_file"] == "default"
+
+
+def test_both_summac_loaders_share_one_model(fake_summac):
+    from profiler.scorers import _load_summac
+
+    _load_summac()
+    mm.load_summac_doc("auto")
+    assert len(fake_summac) == 1  # one SummaCConv built, not two
+
+
+# --------------------------------------------------------------------------
+# run.model_metrics: false skips the model-based metrics without loading them
+# --------------------------------------------------------------------------
+def test_model_metrics_flag_disables_m3d_and_roles(monkeypatch):
+    monkeypatch.setitem(sys.modules, "transformers", None)  # would fail if loaded
+    ctx = _ctx(nli_backend="nli", sample_size=4, model_metrics=False)
+    res3 = m3_readability.compute(_pairs(6), ctx)
+    block = res3.corpus["m3d_model_based"]
+    assert block["models_run"] == [] and block["sle_gain"]["median"] is None
+    assert any("run.model_metrics is false" in n for n in res3.notes)
+    assert not any("unavailable" in n for n in res3.notes)
+
+    import profiler.modules.m5_elaboration as m5
+    from profiler.scorers import LexicalGrounding
+
+    monkeypatch.setattr(m5, "get_primary_scorer", lambda config, cache: LexicalGrounding())
+    res5 = _m5([Pair("a", TEXT_A, TEXT_B)], ctx)
+    assert res5.corpus["rhetorical_roles"]["models_run"] == []
+    assert any("rhetorical_roles not computed: run.model_metrics is false" in n for n in res5.notes)
+
+
+def test_model_metrics_defaults_on():
+    assert _ctx().config.run.model_metrics is True
+
+
+def test_requested_summac_wins_over_the_stand_in(fake_summac):
+    # nli_backend=lexical (stand-in settings) but SummaC requested and loadable:
+    # document level must use the real model, as the sentence scorer does.
+    res = _m5([Pair("a", TEXT_A, TEXT_B)], _ctx(summac=True))
+    assert res.corpus["document_level"]["scorers_run"] == ["summac"]
+    assert "summac_conv" in res.corpus["per_scorer"]
+    assert not any("document_level SummaC uses an offline" in n for n in res.notes)
+
+
+def test_stand_in_notes_name_the_setting_that_selected_them():
+    ctx = _ctx(heuristic_only=True, nli_backend="nli", sample_size=4)
+    res = m3_readability.compute(_pairs(6), ctx)
+    assert any("stand-ins (heuristic_only)" in n for n in res.notes)
+    assert not any("nli_backend=lexical" in n for n in res.notes)
+
+
+def test_m5_per_pair_covers_pairs_without_target_sentences():
+    from profiler.modules import m4_alignment, m5_elaboration
+
+    ctx = _ctx()
+    pairs = [Pair("a", TEXT_A, TEXT_B), Pair("b", TEXT_A, "x")]
+    m4_alignment.compute(pairs, ctx)
+    ctx.shared["alignment"]["tgt_sents"]["b"] = []
+    res = m5_elaboration.compute(pairs, ctx)
+    rows = {r["id"]: r for r in res.per_pair}
+    assert set(rows) == {"a", "b"}
+    assert rows["b"]["n_tgt_sents"] == 0 and "doc_summac_precision" in rows["b"]
+
+
+def test_rct_loader_refuses_unexpected_labels(monkeypatch):
+    import types
+
+    class _Model:
+        config = types.SimpleNamespace(id2label={0: "LABEL_0", 1: "LABEL_1"})
+
+        def to(self, dev):
+            return self
+
+        def eval(self):
+            return self
+
+    fake = types.ModuleType("transformers")
+    fake.AutoTokenizer = types.SimpleNamespace(from_pretrained=lambda name: object())
+    fake.AutoModelForSequenceClassification = types.SimpleNamespace(from_pretrained=lambda name: _Model())
+    monkeypatch.setitem(sys.modules, "transformers", fake)
+    with pytest.raises(ValueError, match="are not"):
+        mm.load_rct("cpu")
+    model, note = mm.try_load("PubMed-RCT classifier", lambda: mm.load_rct("cpu"))
+    assert model is None and "unavailable (ValueError)" in note

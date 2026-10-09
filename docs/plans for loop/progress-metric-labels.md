@@ -287,3 +287,118 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Phase E gate:** passed. `test_metrics_doc.py` passes, and every moved paragraph is listed in the item 1–8 entries above and in the PR. Pushed and opened the Phase E PR.
 - **Next item:** Phase F, `DOMAIN` dict in `scripts/compare_runs.py`.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase F, item 1: `DOMAIN` in `scripts/compare_runs.py`
+
+- **Branch:** `feature/metric-labels-f` (stacked on `feature/metric-labels-e`)
+- **Item:** `DOMAIN` added next to `TASK`, verbatim from §5.7; no other change to `compare_runs.py`. `tests/test_label_tables.py` starts with a test that every dataset in `ORDER` has a `DOMAIN` entry.
+- **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
+- **Next item:** `scripts/label_tables.py` with its layout, formatting and domain tests.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase F, item 2: `scripts/label_tables.py`
+
+- **Branch:** `feature/metric-labels-f`
+- **Item:** `scripts/label_tables.py` renders the "Datasets by metric label" block from `results/*.json`, `REGISTRY`, and `ORDER`/`TASK`/`DOMAIN` imported from `compare_runs.py`. Part 1 has one table per label group (metrics as rows; datasets in ORDER, sorted by their own task PLS→DS→SUM; a `*dataset task*` first row; row label = linked name + † if sample-based + direction; all-empty metrics collapsed into "Not yet computed for any dataset: …"). Part 2 has one table per domain with ≥2 task labels, grouped by bold sub-headers, and names the single-task domains in one sentence. Cells follow the registry `headline`: median, `target (Δ delta)` or a plain number. Formatting per §5.7 (3 significant figures, signed 2-decimal Δ, whole-number counts, `<0.001`, `—`, U+2212). The footnote sizes come from `n_full`/`n_sample`, and the script emits all the fixed text. `--write` and `--check` operate between the markers. Output is deterministic, with no timestamps. Row names for the literature metrics live in the script's `NAMES` (a test checks coverage).
+- **Shared helper:** `github_slug()` and the section parser moved into `scripts/metric_docs.py`, used by both this script and `tests/test_metrics_doc.py` (the PRD asks for one shared slug helper).
+- **Output check:** on the committed results the cells match the PRD's prototype exactly (Coverage 0.704/0.913/…/0.650/0.906; FKGL `12.6 (Δ −1.60)`, `14.6 (Δ +1.80)`, `20.7 (Δ 0.00)`; BLEU `11.9`, `0.00`, `0.0184`; legal `7.60 (Δ −6.15)`), as does the footnote text.
+- **Tests:** `tests/test_label_tables.py` covers the known formatting answers, the layout on inline results, a multi-label metric in each table, the fixed text, domain splitting, row-name coverage and `--check` detecting a stale block. My first domain assertion was wrong (the inline biomedical datasets are all PLS) and was corrected before commit.
+- **Result:** pass. Full `pytest -q` green. Two smoke runs byte-identical.
+- **Next item:** add the markers to `RESULTS.md` once, run `--write`, and add the committed-block staleness test.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase F, item 3: RESULTS.md block + gate + stop condition
+
+- **Branch:** `feature/metric-labels-f`
+- **Item:** the two markers were added to `RESULTS.md` once, immediately before `## M1 — Length and compression`, and the block between them was written by `python scripts/label_tables.py --write RESULTS.md`. `git diff` on RESULTS.md shows 123 insertions and 0 deletions; no other line was touched and no number was typed. New tests: the committed block equals the script's output (`--check` returns 0); the block sits right before M1 with one marker pair; and on the committed results, biomedical and legal get tables while encyclopedia (DS only) and news (SUM only) are named.
+- **Result:** pass. `pytest -q`: 907 passed, 2 skipped, including with `HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1`. `python scripts/label_tables.py --check RESULTS.md` exits 0. Two smoke runs byte-identical; the smoke run also completes with HF offline.
+- **Phase F gate:** passed. Pushed and opened the Phase F PR, which is the final PR.
+
+### Section 7 checklist (stop condition)
+- [x] **No regression**: `tests/test_no_regression.py` (baseline captured from `main` 5f69bec).
+- [x] **Registry coverage**: `tests/test_metric_registry.py`, on the smoke run and every `results/*.json`.
+- [x] **Label integrity**: same file; every labelled entry has ≥1 paper; URLs ⊆ `ALLOWED_PAPER_URLS`.
+- [x] **Inventory complete** (one key DEFERRED): `tests/test_inventory.py` runs all eight modules in-test. `abstractivity_p2` is DEFERRED (the paper fixes p = 1). QAFactEval, BLANC, SUPERT and SummaQA keys appear as `None` with notes. `per_scorer.summac_conv`/`alignscore` may be absent, as §7 allows.
+- [x] **Placement**: configs, `profiler/config.py` and the `run.py` module lists are unchanged vs `main` (checked with `git diff`). `sample_pairs` is in `profiler/sampling.py` and re-exported. M3d `n` = the sample size (`test_m3d_stand_ins_on_sample`, and the smoke run's `n = n_sample = 10`).
+- [x] **Outputs**: `metric_labels` in metrics.json; the report ends with "Metric labels"; smoke runs byte-identical; existing report tests pass.
+- [x] **Known answers**: `tests/test_synthetic.py` covers every new non-model metric; identity gives Levenshtein 1.0, exact copies 1.0, additions/deletions 0, abstractivity 0, char compression 1.0, entity P/R 1.0. The model-based metrics' checks live in `tests/test_model_metrics.py`, since their stand-in values are not the metrics.
+- [x] **Optional models**: skip tests (import blocked, then note + `*_run` record) for M3d (SLE, coherence), M5 document-level SummaC and rhetorical roles. DEFERRED: QAFactEval, BLANC, SUPERT, SummaQA, each with a null-plus-note test and its install error recorded.
+- [x] **Abstract field**: `tests/test_fetch_abstract.py` (inline parquet fixture) and `tests/test_adapters.py`.
+- [x] **Docs**: `docs/metrics.md` has a section for every metric, all eight module pages follow §6.2, `tests/test_metrics_doc.py` passes, and the moved paragraphs are listed in Phase E's entries and PR #11.
+- [x] **Label tables**: `scripts/label_tables.py`, `tests/test_label_tables.py`; `DOMAIN` covers `ORDER`; `--check RESULTS.md` exits 0.
+- [x] **Suite**: `pytest` passes fully offline, including `test_declared_dependencies`; `python -m profiler run --config configs/smoke.yaml` completes.
+
+**Stop condition met.** Every Section 7 box is checked or has its exceptions DEFERRED with reasons.
+
+
+## 2026-09-28 — Review fixes (after the stop condition)
+
+A `/code-review` pass over `main...feature/metric-labels-f` returned 10 findings. I verified three bugs against the code, and the user asked for all three to be fixed, including the pre-existing SummaC scorer. Each fix went into the branch that introduced the bug and was merged forward through the stack (B → C → D → E → F).
+
+- **SummaC-Conv random weights (PR #10; also on `main`)**: `SummaCConv(...)` without `start_file` keeps an untrained, randomly initialised convolution layer (checked in summac 0.0.4's source), so `per_scorer.summac_conv` (existing scorer, `scorers.py`) and `document_level.summac_*` were neither SummaC-Conv nor reproducible. Both loaders now share `SUMMAC_CONV_KWARGS` with `start_file="default"`, so summac fetches its released `summac_conv_vitc_sent_perc_e.bin` into the working directory; that file is gitignored. Tests with a fake `summac` module assert that both loaders request the released weights. No archived result used SummaC, so no published number changes. This is a deliberate change to an existing computation, approved by the user.
+- **`entity_f1` dropped the worst pairs (PR #8)**: a target keeping none of its source's entities had recall 0 but F1 `None`. F1 is now `2·shared / (|src| + |tgt|)`: 0 when either side has entities and none are shared, `None` only when neither side has any. Tests cover both cases; the docs were updated on the E branch.
+- **`label_tables.py` crash (PR #12)**: `_join([])` raised `IndexError` whenever no domain was single-task, and an empty results set crashed in the footnote. It now renders without the single-task sentence, `render({})` raises a clear `ValueError`, and the CLI exits 2 with a message. The committed RESULTS.md block is unchanged (`--check` exits 0).
+- **Result:** pass. Full `pytest -q` green with HF forced offline. Two smoke runs byte-identical.
+- **Open from the review, not fixed (awaiting a decision):** WordRank re-parses sentences; M4 NER is uncached and duplicated with M7; the document-level SummaC model is duplicated; abstractivity recomputes `1 − coverage`; model downloads have no opt-out flag; topic similarity uses English stop words; M5 duplicates the abstract rule.
+
+
+## 2026-09-28 — Review loop, pass 1: follow-up fixes (items 4–10)
+
+Started by `/loop`: fix the analysed review findings, then re-review until no major bugs remain. Applied on `feature/metric-labels-f` (the top of the stack).
+
+- **#4 WordRank re-parse:** per-sentence tokens now use `words_fast` (the same tokens, no parse per sentence). Redundancy had the same pattern and got the same fix.
+- **#5 NER uncached / duplicated:** `SpacyProcessor.entities` caches results per text, across `release()`, and `ner_available()` remembers its answer. Each text now goes through NER once, and M4 reuses M7's entities. Test uses a fake NER pipe (one NER call for the text, no rebuild).
+- **#6 duplicate SummaC model:** `scorers.summac_conv_model(device)` builds one cached instance, which both the sentence-level scorer and document-level SummaC use (on cpu, the existing scorer's device). Test: one `SummaCConv` built for both loaders.
+- **#7 abstractivity recomputation:** M2 runs the greedy fragment match once per pair and derives coverage, density and abstractivity from it. The edit features reuse the already-tokenised words.
+- **#8 no opt-out for model downloads:** new `run.model_metrics` (default `true`, so existing configs behave as before; no config file changed). `false` skips M3d and rhetorical roles with a note and null keys, loading nothing. Test blocks `transformers` and asserts that nothing is loaded. Documented in `docs/modules/README.md`. This is a Config schema addition beyond the PRD's letter (it forbade config *file* changes); the review flagged the missing opt-out.
+- **#9 topic similarity:** a source or target with no in-vocabulary word now gets `None` instead of a score against LDA's prior. The "non-English corpus" half of the finding is moot: `parse_config` rejects any language but English (found while writing the test), so no language branch was added.
+- **#10 duplicated abstract rule:** new `Pair.abstract()`, used by M2 and M5. The `Pair` docstring now names both modules.
+- **Result:** pass. Full `pytest -q` green with HF offline. Two smoke runs byte-identical (the no-regression test confirms baseline leaves unchanged). `label_tables.py --check RESULTS.md` exits 0.
+- **Next:** re-run `/code-review` on `main...feature/metric-labels-f`.
+
+
+## 2026-09-28 — Review loop, pass 2
+
+The re-review of `main...feature/metric-labels-f` returned 9 findings. Triage, checked against the code:
+
+- **Fixed (major).** Document-level SummaC used the stand-in whenever `nli_backend: lexical`, even with `summac: true` and the real model loaded for the sentence scorer. The real model now wins whenever it is requested and M5 runs optional scorers (not `heuristic_only`). Test uses a fake summac.
+- **Fixed (major).** `label_tables.py` rendered stand-in values as the published metrics. `STAND_IN_RECORDS` maps each stand-in-capable metric to its `*_run` record, and a `:stand-in` value is shown as `—`. Tests cover a stand-in run (dashes), a real run (values) and records ⊆ registry.
+- **Fixed (major).** The entity cache was an unbounded dict keyed by full text that survived across corpora in one process. It is now keyed by SHA-1 and bounded LRU (8,192 entries).
+- **Fixed (minor).** Abstract content overlap re-parsed each abstract per sentence and each target once more. It now makes one `analyze_sentence(abstract)` parse and reuses the main loop's target words.
+- **Fixed (minor, latent).** The registry marked M7 as sample-based, but M7 runs on the full corpus. `SAMPLE_MODULES` = {M4, M5, M6, M8}; M3d entries set it themselves. A test ties it to `run.EXPENSIVE`.
+- **Fixed (minor).** Stand-in notes always said "nli_backend=lexical". `stand_in_reason()` names `heuristic_only` when that is the cause. Tested.
+- **Not fixed; not bugs:** (5) document-level SummaC on cpu (it shares the existing scorer's cpu instance; moving the existing scorer's device would change an existing computation); (6) NSP coherence is not batched; (7) M3d sits in the full-corpus M3 module rather than the sample phase (a placement choice the PRD made: "M3 runs on the full corpus, but its new m3d_model_based block must run on the sample"). All three are performance or placement, recorded for follow-up.
+- **Result:** pass. Full `pytest -q`: 922 passed, 2 skipped, HF offline. Two smoke runs byte-identical. `label_tables.py --check` exits 0.
+- **Next:** review pass 3.
+
+
+## 2026-09-28 — Review loop, pass 3
+
+Review pass 3 returned 10 findings, mostly minor or performance. Triage, checked against the code:
+
+- **Fixed (correctness).** `heuristic_only` runs emit `elaboration.per_scorer.heuristic_grounding` (existing M5 behaviour), which had no registry label. It is now labelled project-specific and documented through a `**Keys:**` line plus an index row. New test: a heuristic_only smoke run is fully labelled.
+- **Fixed (correctness).** M5's existing no-target-sentences early return skipped the new `document_level` and `rhetorical_roles` blocks, so their keys vanished. The early return now emits both (null where nothing can be computed) and their notes. The existing test pins only `n_target_sentences`, so it is unchanged. New test added.
+- **Fixed (design).** Stand-in values carried no marker outside the label tables. `STAND_IN_RECORDS` and `from_stand_in()` moved into the registry, and `metric_labels` entries get `"stand_in": true` when the run used a stand-in; `label_tables.py` reuses the same function. Test: the smoke run's stand-in keys are marked and FKGL is not.
+- **Fixed (performance).** Abstract ROUGE tokens use `words_fast` (one parse per abstract, for POS only). Redundancy uses rapidfuzz's C++ `LCSseq` on token lists; a 200-case randomized test checks it equals M2's own LCS. The per-call `import math` / `import numpy` in the WordRank helpers moved to module level.
+- **Cleanup.** Removed the now-unused `_coverage_density` wrapper and my `_abstractivity` / `_abstract` wrappers, and fixed the misleading `noqa: F401` comment on run.py's `sample_pairs` import.
+- **Not fixed (design/performance, recorded):** M3d draws its own sample and `SAMPLE_MODULES` mirrors run.py's groups (a PRD-mandated placement; a test now ties `SAMPLE_MODULES` to `run.EXPENSIVE`); document-level SummaC on cpu (pass 2 decision); the stand-in duplicating LexicalGrounding (stand-in-only code).
+- **Result:** pass. Full `pytest -q`: 930 passed, 2 skipped, HF offline. Two smoke runs byte-identical. `label_tables.py --check` exits 0.
+- **Next:** review pass 4, to confirm no major bugs remain.
+
+
+## 2026-09-28 — Review loop, pass 4 (final)
+
+Pass 4's first attempt stopped at the session usage limit; the rerun returned 9 findings. None is a major bug (the reviewer: "none of them crashes the pipeline"), which meets the loop's stop condition. The cheap ones were fixed:
+
+- **Per-pair coverage.** M5 pairs with no target sentences got document-level and role values in the corpus summaries but no `per_pair` row, and the early-return path discarded the rows. Every sampled pair now gets a row. Test added.
+- **Classifier labels.** `load_rct` now refuses a checkpoint whose labels are not the five PubMed-RCT roles, so `try_load` skips with a note instead of publishing zeros. Test uses a fake `transformers`.
+- **Report.** The "Metric labels" table marks stand-in values ("offline stand-in value, not this metric"). Test: SLE marked, FKGL not. Its placement after the footer is what §5.2 asks for ("Append a final section").
+- **Entity cache.** Grown to 65,536 hashed entries (a few hundred bytes each), and the comment now states the real bound (M4 finds M7's entities for corpora up to 32,768 pairs).
+- **pyproject comment.** Now says SummaC installs separately (pinning transformers 4.35.2), consistent with requirements.txt.
+- **Recorded, not fixed (performance/placement, not bugs):**
+  - document-level SummaC runs on cpu (it shares the existing scorer's instance);
+  - the SummaC model stays cached for the process;
+  - LDA fits an unbounded vocabulary (capping it would change the metric's definition);
+  - M3d re-segments its sampled texts.
+- **Result:** pass. Full `pytest -q`: 933 passed, 2 skipped, HF offline. Two smoke runs byte-identical. `label_tables.py --check` exits 0.
+- **Loop stopped:** four review passes; the last found no major bugs.

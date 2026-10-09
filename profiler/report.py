@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Any
 
 from . import reference
-from .metric_registry import label_for, metric_paths
+from .metric_registry import from_stand_in, label_for, metric_paths
 from .modules.base import ModuleResult
 
 
@@ -126,6 +126,8 @@ def _metric_labels(results: dict[str, ModuleResult]) -> str:
             continue
         seen.add(m.key)
         label = ", ".join(sorted(m.tasks)) if m.tasks else "project-specific"
+        if from_stand_in(modules, m.key):
+            label += " (offline stand-in value, not this metric)"
         papers = "; ".join(f"[{p.title}]({p.url})" for p in m.papers)
         if m.contested_by:
             papers += "; contested: " + "; ".join(f"[{p.title}]({p.url})" for p in m.contested_by)
