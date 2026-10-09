@@ -24,6 +24,7 @@ from . import report as report_mod
 from .adapters import load_pairs
 from .cache import Cache
 from .config import Config
+from .metric_registry import metric_labels
 from .modules import (
     m1_length,
     m2_abstractiveness,
@@ -287,6 +288,7 @@ def _write_metrics(path: Path, config: Config, results: dict, meta: dict) -> Non
         "corpus_warnings": meta.get("corpus_warnings", []),
         "degenerate_pairs": meta.get("degenerate_pairs", []),
         "modules": modules_out,
+        "metric_labels": metric_labels(_to_jsonable(modules_out)),
     }
     text = json.dumps(_to_jsonable(payload), sort_keys=True, indent=2, ensure_ascii=True)
     path.write_text(text + "\n", encoding="utf-8")
