@@ -19,6 +19,7 @@ import codecs
 import json
 import os
 import random
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Callable, Iterator
@@ -289,6 +290,13 @@ MED_EASI = "https://huggingface.co/datasets/cbasu/Med-EASi/resolve/refs%2Fconver
 BILLSUM = "https://huggingface.co/datasets/FiscalNote/billsum/resolve/main/data"
 LEGALSUM = "https://raw.githubusercontent.com/lauramanor/legal_summarization/master"
 UKABS = "https://huggingface.co/datasets/rusheeliyer/uk-abs/resolve/refs%2Fconvert%2Fparquet/default"
+# Pinned to a commit, never a branch, so the 189 articles cannot shift under us.
+ONESTOP_COMMIT = "37f8db3945cd2f3cc0caafe45674147b224349be"
+ONESTOP = f"https://raw.githubusercontent.com/nishkalavallabhi/OneStopEnglishCorpus/{ONESTOP_COMMIT}"
+ONESTOP_TREE = (
+    "https://api.github.com/repos/nishkalavallabhi/OneStopEnglishCorpus/git/trees/"
+    f"{ONESTOP_COMMIT}?recursive=1"
+)
 
 
 def fetch_cochrane(limit: int) -> Path:
@@ -570,6 +578,66 @@ def fetch_ukabs(limit: int) -> Path:
                   _parquet_rows(urls, "judgement", "summary", "ukabs", limit))
 
 
+def _get(url: str, timeout: int = 300) -> bytes:
+    """One whole HTTP body. GitHub's API refuses requests without a User-Agent."""
+    req = urllib.request.Request(url, headers={"User-Agent": "fetch_all/1"})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read()
+
+
+def _onestop_rows(limit: int) -> Iterator[Pair]:
+    """Seeded draw of OneStopEnglish articles, Advanced -> Elementary.
+
+    Articles are enumerated from the git tree at the pinned commit, not from
+    ``allfeatures-ose-final.csv``: that manifest's ``fileName`` column is
+    normalised (spaces became hyphens, apostrophes were dropped), so only 117 of
+    its 567 names are real files, and a title like ``WNL India's rich`` cannot
+    be recovered from ``WNL-Indias-rich``. Taking only the direct children of
+    ``Adv-Txt/`` and ``Ele-Txt/`` also skips the nested ``Int-Txt/Int-Txt/``
+    duplicate and the ``.DS_Store`` files.
+    """
+    tree = json.loads(_get(ONESTOP_TREE))
+    if tree.get("truncated"):
+        raise ValueError("OneStopEnglish git tree listing came back truncated")
+    base = "Texts-SeparatedByReadingLevel"
+    levels: dict[str, set[str]] = {"adv": set(), "ele": set()}
+    for entry in tree.get("tree", []):
+        parts = entry.get("path", "").split("/")
+        if entry.get("type") != "blob" or len(parts) != 3 or parts[0] != base:
+            continue
+        for lv in levels:
+            if parts[1] == f"{lv.capitalize()}-Txt" and parts[2].endswith(f"-{lv}.txt"):
+                levels[lv].add(parts[2][: -len(f"-{lv}.txt")])
+    # An article needs both ends of the pair; sorted first so the shuffle is
+    # reproducible whatever order the API lists the tree in.
+    stems = sorted(levels["adv"] & levels["ele"])
+    random.Random(SEED).shuffle(stems)
+
+    def text(level: str, stem: str) -> str:
+        path = urllib.parse.quote(f"{base}/{level.capitalize()}-Txt/{stem}-{level}.txt")
+        # utf-8-sig: most Advanced and Elementary files open with a byte-order
+        # mark, and _write's strip() does not remove U+FEFF, so it would reach
+        # the profiler glued to the first token.
+        return _get(f"{ONESTOP}/{path}").decode("utf-8-sig")
+
+    for stem in stems:
+        yield f"ose{stem.lower().replace(' ', '_')}", text("adv", stem), text("ele", stem)
+
+
+def fetch_onestop(limit: int) -> Path:
+    """OneStopEnglish (Vajjala & Lučić 2018), DS -- the news simplification cell.
+
+    Guardian articles rewritten by teachers for adult learners of English at
+    three levels; the pair is Advanced -> Elementary, the widest gap. The
+    Advanced version stays close to the Guardian original but is not identical
+    to it.
+
+    189 articles, so the whole corpus is read regardless of ``limit`` and the
+    [SHORT] note _write prints is expected rather than a fault.
+    """
+    return _write("onestop", "all", limit, _onestop_rows(limit))
+
+
 FETCHERS = {
     "cochrane": fetch_cochrane,
     "plos": fetch_plos,
@@ -584,6 +652,7 @@ FETCHERS = {
     "billsum": fetch_billsum,
     "contracts": fetch_contracts,
     "ukabs": fetch_ukabs,
+    "onestop": fetch_onestop,
 }
 
 

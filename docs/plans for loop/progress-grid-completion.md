@@ -22,3 +22,17 @@ Loop log for `PRD News DS and Encyclopedia SUM Datasets.md`. One entry per itera
 - **Result:** pass. Phase A gate passed: every available layout is recorded, and which field holds the lead is unambiguous.
 - **Next item:** Phase B, `fetch_onestop` + tests on `feature/grid-completion-b`.
 - **DEFERRED:** Newsela layout (no copy).
+
+## 2026-10-09 — Phase B, items 1–5: OneStopEnglish
+
+- **Branch:** `feature/grid-completion-b` (stacked on `feature/grid-completion-a`, PR #13, not merged yet)
+- **Items:** (1) `fetch_onestop` with `_onestop_rows` and a `_get` helper, registered in `FETCHERS`; (2) `configs/onestop.yaml`; (3) `onestop` in `ORDER` (after `med_easi`), `TASK` = DS, `DOMAIN` = news; (4) reference values; (5) its `docs/DATASETS.md` summary row and section. Tests: `tests/test_fetch_grid_completion.py` (OneStopEnglish fetcher tests and the parametrised registration/tag/citation tests). These were done in one iteration because each depends on the others for the registration test to pass; the summary row is added here rather than in Phase E for the same reason.
+- **Fetcher:** enumerates articles from the git tree at `37f8db3` (Phase A deviation), keeps stems with both `-adv` and `-ele`, sorts then shuffles with `SEED`, URL-quotes each path, decodes `utf-8-sig`. Id `ose` + stem lowercased with spaces as `_`; three ids keep an apostrophe (`osewnl_india's_rich` and two others), which the profiler accepts.
+- **Fetch:** `python scripts/fetch_all.py --only onestop` wrote 189 pairs to `data/onestop/all_1000.jsonl`; the `[SHORT]` note was its only warning. 189 unique ids, no U+FEFF left. Mean 824.8 → 534.6 whitespace words, ratio 0.648. One article's Elementary version is not shorter than its Advanced one (corpus content).
+- **Reference values:** the paper reports mean words per level (Table 2: Advanced 820.49, Elementary 533.17) and FKGL per level (Table 3: 9.5 → 6.4), not a ratio. `PUBLISHED_COMPRESSION["onestop"] = "0.650"` (533.17/820.49) and `LITERATURE_TABLE` gets `0.650 (820.49 → 533.17 w)` / `FKGL 9.5→6.4`, each with a comment naming the tables, as the PubMed entry does.
+- **`profiler/` note:** 5.3 requires the `LITERATURE_TABLE` row in `profiler/reference.py`, which conflicts with Section 7's "`git diff --stat main -- profiler/` is empty". The specific requirement wins: only data rows in `profiler/reference.py` change; no module code is touched. Recorded for the final PR.
+- **Offline config run:** scratch copy under `runs/_loop_scratch/` with `embedder: hashing`, `nli_backend: lexical`; all eight modules completed, `n_full` = `n_sample` = 189, median per-pair compression 0.649. `report.md` contains no verdict (only the existing "guidance only — no verdict" heading).
+- **Result:** pass. `pytest -q`: 946 passed, 2 skipped. Two smoke runs byte-identical. `scripts/label_tables.py --check RESULTS.md` exits 0.
+- **Phase B gate:** passed (tests pass; 189 pairs written; offline config run completes).
+- **Next item:** Phase C, `fetch_xwikis_en` + tests on `feature/grid-completion-c`.
+- **DEFERRED:** none.
