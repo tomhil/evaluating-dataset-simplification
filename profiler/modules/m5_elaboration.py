@@ -166,6 +166,13 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         "corrected_not_entailed_rate": None,  # filled by `ingest-annotations`
     }
     notes.append(upper_bound_note(heuristic_only))
+    corpus["document_level"], doc_rows, doc_notes = _document_level(pairs, ctx)
+    notes.extend(doc_notes)
+    corpus["rhetorical_roles"], role_rows, role_notes = _rhetorical_roles(pairs, ctx, tgt_sents_by_id)
+    notes.extend(role_notes)
+    for row in per_pair:
+        row.update(doc_rows.get(row["id"], {}))
+        row.update(role_rows.get(row["id"], {}))
 
     return ModuleResult(
         name=NAME,
@@ -179,6 +186,108 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         notes=notes,
         exports={"annotation_sample": annotation_rows},
     )
+
+
+def _document_level(pairs: Sequence[Pair], ctx: Context) -> tuple[dict, dict[str, dict], list[str]]:
+    """Document-level faithfulness (Cripwell et al. 2024; Laban et al. 2022).
+
+    Precision scores the target against the source; recall swaps the roles, so
+    every source sentence is checked against the target. SummaC runs when
+    ``run.summac`` is set (or as an offline stand-in under the smoke settings);
+    QAFactEval is DEFERRED and its keys stay null.
+    """
+
+    from .. import model_metrics as mm
+
+    notes: list[str] = []
+    scorers_run: list[str] = []
+    summac = None
+    if mm.use_stand_ins(ctx.config):
+        summac = mm.summac_doc_stand_in
+        scorers_run.append("summac:stand-in")
+        notes.append(
+            "document_level SummaC uses an offline content-word stand-in "
+            "(nli_backend=lexical); it is not the published metric."
+        )
+    elif ctx.config.run.summac:
+        summac, note = mm.try_load("SummaC (document level)", lambda: mm.load_summac_doc(ctx.config.run.device))
+        if summac is not None:
+            scorers_run.append("summac")
+        else:
+            notes.append(note)
+    else:
+        notes.append("document_level SummaC not requested (run.summac is false); its keys are null.")
+    notes.append(mm.QAFACTEVAL_DEFERRED)
+
+    rows: dict[str, dict] = {}
+    for p in progress.track(list(pairs), "M5 document level"):
+        rows[p.id] = {
+            "doc_summac_precision": summac(p.source, p.target) if summac else None,
+            "doc_summac_recall": summac(p.target, p.source) if summac else None,
+            "doc_qafacteval_precision": None,
+            "doc_qafacteval_recall": None,
+        }
+
+    def summ(key: str) -> dict:
+        vals = [r[key] for r in rows.values() if r[key] is not None]
+        return summarize(vals, seed=ctx.seed, resamples=ctx.resamples).to_dict()
+
+    block = {
+        "scorers_run": scorers_run,
+        "summac_precision": summ("doc_summac_precision"),
+        "summac_recall": summ("doc_summac_recall"),
+        "qafacteval_precision": summ("doc_qafacteval_precision"),
+        "qafacteval_recall": summ("doc_qafacteval_recall"),
+    }
+    return block, rows, notes
+
+
+def _rhetorical_roles(
+    pairs: Sequence[Pair], ctx: Context, tgt_sents_by_id: dict
+) -> tuple[dict, dict[str, dict], list[str]]:
+    """Share of target sentences per PubMed-RCT label, and of abstract sentences
+    where ``meta["abstract"]`` exists (Goldsack et al. 2022 s4.2). A shift toward
+    background sentences is one form of elaboration, hence M5."""
+
+    from .. import model_metrics as mm
+
+    notes: list[str] = []
+    if mm.use_stand_ins(ctx.config):
+        classify, models_run = mm.rct_stand_in, ["pubmed_rct:stand-in"]
+        notes.append(
+            "rhetorical_roles uses an offline keyword stand-in (nli_backend=lexical); "
+            "it is not the published classifier."
+        )
+    else:
+        classify, note = mm.try_load("PubMed-RCT classifier", lambda: mm.load_rct(ctx.config.run.device))
+        models_run = ["pubmed_rct"] if classify else []
+        if note:
+            notes.append(note)
+    if classify is not None:
+        notes.append(mm.RCT_OFF_DOMAIN)
+
+    proc = ctx.processor
+    rows: dict[str, dict] = {}
+    for p in progress.track(list(pairs), "M5 rhetorical roles"):
+        row: dict = {}
+        texts = {"target": tgt_sents_by_id.get(p.id, [])}
+        abstract = p.meta.get("abstract") if p.meta else None
+        texts["abstract"] = proc.sentences(abstract) if isinstance(abstract, str) and abstract.strip() else []
+        for side, sents in texts.items():
+            shares = mm.role_shares(classify(sents)) if (classify and sents) else dict.fromkeys(mm.RCT_LABELS)
+            row.update({f"role_{side}_{lab}": v for lab, v in shares.items()})
+        rows[p.id] = row
+
+    def summ(key: str) -> dict:
+        vals = [r[key] for r in rows.values() if r[key] is not None]
+        return summarize(vals, seed=ctx.seed, resamples=ctx.resamples).to_dict()
+
+    block = {
+        "models_run": models_run,
+        "target": {lab: summ(f"role_target_{lab}") for lab in mm.RCT_LABELS},
+        "abstract": {lab: summ(f"role_abstract_{lab}") for lab in mm.RCT_LABELS},
+    }
+    return block, rows, notes
 
 
 def _score_all(scorer, records: list[dict], src_sents_by_id: dict) -> list[float]:

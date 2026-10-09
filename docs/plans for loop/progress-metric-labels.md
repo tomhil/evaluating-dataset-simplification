@@ -141,3 +141,64 @@ Loop log for `PRD Metric Labels and Literature Metric Coverage.md`. One entry pe
 - **Phase C gate:** passed. Fetcher and adapter tests green; the abstract metrics are `None` on the smoke corpus with a note. Pushed and opened the Phase C PR.
 - **Next item:** Phase D, move `sample_pairs` into `profiler/sampling.py` and re-export it from `run.py`.
 - **DEFERRED:** none.
+
+## 2026-09-28 — Phase D, item 1: `sample_pairs` → `profiler/sampling.py`
+
+- **Branch:** `feature/metric-labels-d` (stacked on `feature/metric-labels-c`)
+- **Item:** `sample_pairs` moved unchanged into `profiler/sampling.py` and re-exported from `profiler/run.py`. This is the one code move the PRD allows; M3's `m3d_model_based` block can now draw the pipeline sample without a circular import. `tests/test_sampling.py` checks the re-export and a stable seeded draw.
+- **Result:** pass. `pytest -q`: 442 passed. Two smoke runs byte-identical.
+- **Next item:** survey the optional-model packages (SLE, BERT NSP, SummaC, QAFactEval, PubMed-RCT classifier, BLANC, SUPERT, SummaQA) in a scratch virtualenv, then implement each or mark it DEFERRED.
+- **DEFERRED:** none.
+
+## 2026-09-28 — Phase D, item 2: M3 `m3d_model_based` (SLE, coherence)
+
+- **Branch:** `feature/metric-labels-d`
+- **Item:** new M3 block `readability.m3d_model_based` = {`n`, `models_run`, `sle_doc` {source, target}, `sle_gain` (paired target − source), `semantic_coherence`}. It is computed on `sample_pairs(pairs, ctx.config)`, the same seeded sample M4–M8 get; the smoke run gives n = `n_sample` = 10. Registry rows 22 (DS, validated, contested by REFeREE) and 25 (SUM, needs `target`). `models_run` added to BOOKKEEPING. The loaders live in the new `profiler/model_metrics.py`. Offline stand-ins, selected by `nli_backend: lexical` or `heuristic_only` and flagged in notes and `models_run` as `:stand-in`: SLE = a sentence-length proxy on the 0–4 scale, coherence = a content-word-overlap proxy. In real-model mode a model that cannot load is skipped with a note, and its keys are `None`.
+- **SLE:** the released checkpoint `liamcripwell/sle-base`, loaded through `transformers` exactly as the reference `sle.scorer.SLEScorer` does (one-logit head, max_length 128). The `sle` repo itself pins transformers==4.29.1 and torch==1.13.1. The PyPI package named `sle` is an unrelated space-link protocol library and must never be installed. **Verified by hand** (not in tests): the loader reproduces the reference README's example scores [3.9843, 0.5840].
+- **Coherence:** `bert-base-uncased` NSP head. **Paper wins:** Bommasani & Cardie average the NSP *prediction* 1_BERT(S_j | S_{j−1}); the PRD said "probability". Verified by hand: a following sentence gives True, an unrelated one False.
+- **Tests:** `tests/test_model_metrics.py` covers stand-ins on the sample (n = sample size), and a skip test that blocks `transformers` in real-model mode and checks null values, notes and an empty `models_run`.
+- **Process fixes:** the check script now fails on pytest failures; before, a failing `&&` chain didn't trip `set -e`. It flagged two failures, both fixed before this commit: (1) the new notes were first placed before the baseline notes, and (2) a direct `import sle` broke `test_declared_dependencies`. Loading the checkpoint through `transformers` removes that import, so no existing test was edited.
+- **Result:** pass. `pytest -q`: 448 passed. Two smoke runs byte-identical.
+- **Next item:** M5 document-level SummaC precision/recall and QAFactEval, plus the SummaC key fix (the existing scorer emits `per_scorer.summac_conv`, not `per_scorer.summac`).
+- **DEFERRED:** none in this item.
+
+## 2026-09-28 — Phase D, item 3: M5 `document_level` faithfulness
+
+- **Branch:** `feature/metric-labels-d`
+- **Item:** `elaboration.document_level` = {`scorers_run`, `summac_precision`, `summac_recall`, `qafacteval_precision`, `qafacteval_recall`}. Precision is SummaC-Conv on (source → target), with the same config as M5's existing sentence scorer (vitc, percentile bins). Recall swaps the roles, so each source sentence is checked against the target. SummaC loads only when `run.summac` is set, so no config changes. Under the smoke settings an offline content-word stand-in is used and flagged. The API was checked against summac 0.0.4's source: `SummaCConv.score(originals, generateds)` returns one score per pair. Registry rows 17 (recall; DS) and 23 (precision; SUM, DS), all `validated`, with Devaraj 2022 and SummEval caveats.
+- **Key fix (row 10):** M5's existing SummaC scorer is named `summac_conv` (`scorers._load_summac`), so real runs emit `elaboration.per_scorer.summac_conv`, not the PRD's `per_scorer.summac`. The registry now labels the real key (PRD §5.1: "Keys use the real metrics.json paths"); my Phase A registry test was updated to match.
+- **Install check:** `pip install summac` resolves only by downgrading transformers 5.15 → 4.35.2 (summac pins it), so it was not installed here. The code path is not exercised against the real package on this machine; the skip test blocks the import.
+- **DEFERRED — QAFactEval:** `pip install qafacteval` fails while building its dependencies ("pip subprocess to install build dependencies did not run successfully", during a cython build under Python 3.13). Its four keys are emitted as `None` with a note in every run.
+- **Tests:** stand-in (identity gives 1.0/1.0, a shortened target has recall < precision, QAFactEval null plus note) and a skip test (summac import blocked, `run.summac: true`: nulls, a note, empty `scorers_run`, and still no `per_scorer.summac_conv` entry).
+- **Result:** pass. `pytest -q`: 454 passed. Two smoke runs byte-identical.
+- **Next item:** M5 `rhetorical_roles`.
+- **DEFERRED:** QAFactEval precision/recall (install failure).
+
+## 2026-09-28 — Phase D, item 4: M5 `rhetorical_roles`
+
+- **Branch:** `feature/metric-labels-d`
+- **Item:** `elaboration.rhetorical_roles` = {`models_run`, `target` {background, objective, methods, results, conclusions}, `abstract` {same}}. Each is the Summary of per-pair shares of sentences with that PubMed-RCT label, for target sentences and, where `meta["abstract"]` exists, abstract sentences. Registry row 27 (PLS; headline `target.background.median`). Whenever it runs, a note says the classifier is off-domain for news, Wikipedia and legal text. Offline keyword stand-in under the smoke settings, flagged in notes and `models_run`. Skip path: nulls, a note, empty `models_run`.
+- **Model choice:** Hugging Face search for PubMed-RCT classifiers. `gubartz/cls_scibert_pubmed_rct` (BertForSequenceClassification; labels objective/methods/results/conclusions/background) ships no tokenizer; its vocab size 31,090 matches `allenai/scibert_scivocab_uncased`, which is used. `HimuX/pubmed-20k-bert` was rejected: its labels are unnamed `LABEL_0..4`. No model was trained. **Verified by hand:** five hand-written clinical sentences were each classified correctly (background, methods, results, conclusions, objective) through the new loader.
+- **Result:** pass. `pytest -q`: 458 passed. Two smoke runs byte-identical.
+- **Next item:** M8 BLANC, SUPERT, SummaQA.
+- **DEFERRED:** none in this item.
+
+## 2026-09-28 — Phase D, item 5: M8 BLANC, SUPERT, SummaQA
+
+- **Branch:** `feature/metric-labels-d`
+- **Item:** `pair_similarity.{blanc, supert, summaqa}` are emitted as empty Summaries (`n = 0`, `None`), with `models_run: []` and one note per metric giving the install reason. Registry rows 28–30 (SUM, validated). The optional packages are documented as comments in `requirements.txt` (beside alignscore/summac) and `pyproject.toml`. Test: `test_m8_deferred_metrics_are_null_with_reasons`.
+- **DEFERRED — BLANC:** `blanc 0.3.4` declares `torch<2.0` and `numpy<2.0` (core pin `torch>=2.0`). `pip install blanc` then fails building numpy 1.26.4 from source on Python 3.13 ("'type_traits' file not found").
+- **DEFERRED — SUPERT:** the official repo (github.com/yg211/acl20-ref-free-eval) has no setup.py and pins torch==1.5.0, pytorch-transformers==1.2.0, numpy==1.18.4.
+- **DEFERRED — SummaQA:** the official repo (github.com/recitalAI/summa-qa) requires `transformers==2.1.1` (core pin ≥4.35). Per the default, it was not reimplemented.
+- **Result:** pass. `pytest -q`: 462 passed. Two smoke runs byte-identical.
+- **Next item:** inventory test that runs the smoke corpus with M7/M8 enabled in-test and checks every Section 4 key appears (Section 7 "Inventory complete").
+- **DEFERRED:** BLANC, SUPERT, SummaQA (above).
+
+## 2026-09-28 — Phase D, item 6: inventory test
+
+- **Branch:** `feature/metric-labels-d`
+- **Item:** `tests/test_inventory.py` runs the smoke corpus with all eight modules enabled in-test; `configs/smoke.yaml` is unchanged. It asserts that each of the 44 Section 4 keys has a literature label and appears in `metrics.json` and `metric_labels`, and that every emitted path is labelled. Exceptions follow Section 7: `per_scorer.summac_conv` and `per_scorer.alignscore` are skipped when absent from `scorers_run`. `abstractivity_p2` is DEFERRED and asserted absent. This closes the gap noted in PR #7, where the smoke config itself doesn't run M7/M8.
+- **Result:** pass. `pytest -q`: 506 passed, 2 skipped (the two optional per_scorer entries). Two smoke runs byte-identical.
+- **Phase D gate:** passed. Each optional model is either implemented with a passing skip test (SLE, coherence, document-level SummaC, rhetorical roles) or DEFERRED with its install error recorded (QAFactEval, BLANC, SUPERT, SummaQA). Pushed and opened the Phase D PR.
+- **Next item:** Phase E, `docs/metrics.md` and the eight module pages, plus `tests/test_metrics_doc.py`.
+- **DEFERRED:** none new.

@@ -16,3 +16,5 @@ venv/
 # Fetched corpora (~105MB; reproduce with scripts/fetch_all.py).
 # data/smoke.jsonl is tracked -- it is a fixture, not a fetched corpus.
 data/*/
+# SummaC-Conv's released weights, fetched by summac into the working directory.
+summac_conv_vitc_sent_perc_e.bin
