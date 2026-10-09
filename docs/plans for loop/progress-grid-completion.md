@@ -64,3 +64,26 @@ Loop log for `PRD News DS and Encyclopedia SUM Datasets.md`. One entry per itera
 - **Phase D gate:** passed (skip test passes and `fetch_all.py` exits 0 for `--only newsela`; reader DEFERRED).
 - **Next item:** Phase E on `feature/grid-completion-e`: sampling notes, the five rejected candidates, final Section 7 checks.
 - **DEFERRED:** Newsela reader and Newsela offline config run (no licensed copy).
+
+## 2026-10-09 — Phase E: docs and close-out
+
+- **Branch:** `feature/grid-completion-e` (stacked on `feature/grid-completion-d`, PR #16)
+- **Items:** `docs/DATASETS.md` sampling notes (XWikis-en and OneStopEnglish join the "seeded draw over whole file" row); the five rejected candidates from PRD Section 4 under "Candidates checked but not profiled", each with its citation line and link from the Section 4 table and a note that they were checked on 2026-10-09. Summary rows, sections and the Newsela access row were added in Phases B–D because the registration test needs them.
+- **Plain `python scripts/fetch_all.py`** (no `NEWSELA_DIR`): every corpus fetched, `newsela: SKIPPED`, **exit 0**. All data files were hashed before and after: every one is byte-identical except `plos` and `elife`. Their 1,000 ids match the archived 2026-09-20 runs exactly; the only difference is the `abstract` field the PLOS/eLife fetchers have written since `501fcab` (2026-09-28), which the older local files predated. No fetcher behaviour changed.
+- **Result:** pass. `pytest -q`: 966 passed, 2 skipped. Smoke runs byte-identical. `label_tables.py --check` exits 0.
+
+### Section 7 checklist
+
+- [x] **Formats recorded** — Phase A entry; XWikis `en` fields, lead field, lead not in body, section structure; OneStopEnglish layout at `37f8db3`. No corpus text quoted. Newsela: no copy.
+- [x] **XWikis-en fetched** — 1,000 pairs, no `[SHORT]`.
+- [x] **OneStopEnglish fetched** — 189 pairs; `[SHORT]` its only warning.
+- [x] **Newsela skip path** — `--only newsela` prints SKIPPED, exits 0; plain `fetch_all.py` exits 0.
+- [ ] **Newsela reader — DEFERRED:** no licensed copy at `NEWSELA_DIR`, so no layout to write it against. `docs/DATASETS.md` carries the access row.
+- [x] **Configs run** — `onestop` and `xwikis_en` complete all eight modules offline (hashing embedder, lexical NLI) with no verdict in `report.md`. **`newsela` offline run DEFERRED:** no data.
+- [x] **Registries, tags and citations** — registration test passes for all three; `test_every_ordered_dataset_has_a_domain` passes.
+- [x] **Reference values** — `onestop` 0.650 (Tables 2–3), `newsela` 0.587 (Table 4), `xwikis_en` `"--"`/`—` (no English figure); each with a comment.
+- [x] **Docs** — summary rows, three sections, sampling notes, Newsela access row, five rejected candidates; every size measured from fetched files.
+- [x] **No licensed text** — `git ls-files data/` lists only `data/smoke.jsonl` (unchanged); all fixtures in `tests/test_fetch_grid_completion.py` are invented.
+- [x] **Nothing else moved — with one recorded exception:** `git diff --stat main -- profiler/` shows only `profiler/reference.py`, 11 added lines: the three `LITERATURE_TABLE` data rows that 5.3 requires. No module code changed. `pytest -q` passes offline, smoke runs byte-identical, `label_tables.py --check RESULTS.md` exits 0. No existing test changed.
+
+- **Stop condition:** met. Every box is checked or DEFERRED.
