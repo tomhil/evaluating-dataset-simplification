@@ -35,6 +35,9 @@ LITERATURE_TABLE = [
     # Neither legal paper reports a compression ratio or a readability delta.
     ("BillSum (Kornilova & Eidelman 2019)", "SUM", "—", "—"),
     ("Contracts (Manor & Li 2019)", "PLS", "—", "—"),
+    # Vajjala & Lučić report mean words per level (Table 2) and FKGL per level
+    # (Table 3), not a ratio; 0.650 is 533.17/820.49, Advanced -> Elementary.
+    ("OneStopEnglish (Vajjala & Lučić 2018)", "DS", "0.650 (820.49 → 533.17 w)", "FKGL 9.5→6.4"),
 ]
 
 LITERATURE_ANCHORS = (

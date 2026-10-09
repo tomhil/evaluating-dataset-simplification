@@ -22,6 +22,7 @@ expected title.
 | [SWiPE-gold](#swipe-gold) | DS* | 5,204 | 1,000 | train (annotated) | encyclopedia |
 | [CNN/DailyMail](#cnndailymail) | SUM | 311,971 | 1,000 | train (shard 0 of 3) | news |
 | [XSum](#xsum) | SUM | 226,711 | 1,000 | train | news (BBC) |
+| [OneStopEnglish](#onestopenglish) | DS | 189 | **189** (all) | whole corpus | news (The Guardian) |
 | [BillSum](#billsum) | SUM | 23,455 | 1,000 | train | legal (US bills) |
 | [Contracts](#contracts) | PLS† | 446 | **446** (all) | whole corpus | legal (contracts/ToS) |
 | [UK-Abs](#uk-abs) | unlabelled‡ | 793 | 589 | train | legal (UK Supreme Court) |
@@ -291,6 +292,45 @@ Summarization](https://aclanthology.org/D18-1206/), EMNLP 2018.
 
 Every summary is exactly one sentence, which makes some M4 metrics structurally
 undefined for this corpus — see the caveats in `RESULTS.md`.
+
+## OneStopEnglish
+
+**Vajjala & Lučić 2018** — [OneStopEnglish corpus: A new corpus for automatic
+readability assessment and text simplification](https://aclanthology.org/W18-0535/),
+BEA 2018.
+
+| | |
+|---|---|
+| full corpus | **189** articles, each at three levels (567 texts) |
+| used | **all 189** |
+| domain | news — Guardian articles rewritten for adult learners of English |
+| source → target | Advanced version → Elementary version |
+| obtained from | [`nishkalavallabhi/OneStopEnglishCorpus`](https://github.com/nishkalavallabhi/OneStopEnglishCorpus) at commit `37f8db3`, `Texts-SeparatedByReadingLevel/` |
+| license | CC BY-SA 4.0 |
+
+**The smallest corpus here**, smaller even than Contracts' 446, and used in
+full. M1–M3 and M4–M6 all run on 189, so its confidence intervals are wider
+than every other corpus's. Each metric carries its own n, so this stays visible
+in the report.
+
+Teachers at onestopenglish.com rewrote each Guardian article at three levels
+for adult learners of English. The pair is **Advanced → Elementary**, the widest
+gap; Intermediate is not fetched. Each simpler version is rewritten *from* the
+article, unlike the encyclopedia DS corpora, whose Simple English pages were
+written separately. Two audience caveats: the readers are adult learners, not
+children, and the Advanced version stays close to the Guardian original but is
+not identical to it.
+
+Measured: **824.8 source and 534.6 target** whitespace words, compression
+**0.648** (median per-article ratio 0.649), against the paper's 820.49 → 533.17
+words (Table 2), i.e. 0.650.
+
+Fetch notes. Files are enumerated from the git tree at the pinned commit, not
+from `allfeatures-ose-final.csv`: that manifest's `fileName` column replaces
+spaces with hyphens and drops apostrophes, so only 117 of its 567 names are real
+files. Most Advanced and Elementary files open with a UTF-8 byte-order mark,
+which the fetcher strips. `Texts-Together-OneCSVperFile/` is avoided because its
+CSVs carry mis-encoded characters.
 
 ## BillSum
 

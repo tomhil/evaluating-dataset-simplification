@@ -33,9 +33,9 @@ from pathlib import Path
 # committed corpus has to be registered here or it silently disappears from
 # every comparison table.
 ORDER = ["cochrane", "plos", "elife", "contracts", "dwikipedia", "swipe",
-         "med_easi", "cnn_dailymail", "xsum", "arxiv_pubmed", "billsum"]
+         "med_easi", "onestop", "cnn_dailymail", "xsum", "arxiv_pubmed", "billsum"]
 TASK = {"cochrane": "PLS", "plos": "PLS", "elife": "PLS", "contracts": "PLS",
-        "dwikipedia": "DS", "swipe": "DS", "med_easi": "DS",
+        "dwikipedia": "DS", "swipe": "DS", "med_easi": "DS", "onestop": "DS",
         "cnn_dailymail": "SUM", "xsum": "SUM", "arxiv_pubmed": "SUM",
         "billsum": "SUM"}
 # Domain of each registered corpus, for the within-domain label tables that
@@ -44,7 +44,7 @@ DOMAIN = {"cochrane": "biomedical", "plos": "biomedical", "elife": "biomedical",
           "med_easi": "biomedical", "arxiv_pubmed": "biomedical",
           "contracts": "legal", "billsum": "legal",
           "dwikipedia": "encyclopedia", "swipe": "encyclopedia",
-          "cnn_dailymail": "news", "xsum": "news"}
+          "cnn_dailymail": "news", "xsum": "news", "onestop": "news"}
 # ukabs is deliberately absent from ORDER and TASK. It is a legal-PLS candidate
 # whose press-summary targets are not confirmed to be lay register; M3 is being
 # run to decide that. Registering it would make it a PLS data point by default,
@@ -61,6 +61,9 @@ PUBLISHED_COMPRESSION = {
     # Neither legal paper reports a compression ratio.
     "billsum": "--",
     "contracts": "--",
+    # 533.17/820.49 w (Elementary/Advanced) from Vajjala & Lučić's Table 2;
+    # they report lengths, not a ratio.
+    "onestop": "0.650",
 }
 
 
