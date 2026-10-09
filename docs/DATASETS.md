@@ -20,6 +20,7 @@ expected title.
 | [D-Wikipedia](#d-wikipedia) | DS | 143,546 | 1,000 | **test** | encyclopedia |
 | [SWiPE](#swipe) | DS | 143,359 | 1,000 | full corpus | encyclopedia |
 | [SWiPE-gold](#swipe-gold) | DS* | 5,204 | 1,000 | train (annotated) | encyclopedia |
+| [XWikis-en](#xwikis-en) | SUM | 639,372 | 1,000 | **valid** | encyclopedia |
 | [CNN/DailyMail](#cnndailymail) | SUM | 311,971 | 1,000 | train (shard 0 of 3) | news |
 | [XSum](#xsum) | SUM | 226,711 | 1,000 | train | news (BBC) |
 | [OneStopEnglish](#onestopenglish) | DS | 189 | **189** (all) | whole corpus | news (The Guardian) |
@@ -255,6 +256,48 @@ field names from the full corpus.
 
 It also contains a vandalised revision (`swipeg3153`) that the pipeline now
 flags automatically.
+
+## XWikis-en
+
+**Perez-Beltrachini & Lapata 2021** — [Models and Datasets for Cross-Lingual
+Summarisation](https://aclanthology.org/2021.emnlp-main.742/), EMNLP 2021.
+
+| | |
+|---|---|
+| full corpus (`en` subset) | **639,372** (train 624,178 · val 8,194 · test 7,000) |
+| used | 1,000 from **valid** |
+| domain | encyclopedia — English Wikipedia |
+| source → target | English Wikipedia article body → that article's own lead section |
+| obtained from | HF [`GEM/xwikis`](https://huggingface.co/datasets/GEM/xwikis), `valid/en.jsonl` |
+| license | CC BY-SA 4.0 (Wikipedia's; the card's license section says public domain, its tags say CC BY-SA 4.0) |
+
+The encyclopedia SUM cell. The corpus is built for cross-lingual pairs; this
+reads only the monolingual English subset, where `src_document` is the article
+body as a list of `{title, section_level, content}` sections and `src_summary`
+is its lead. The source is every section's content in order, joined by a blank
+line, with headings dropped. The lead never reappears inside the body (checked
+over all 8,194 `valid` records), so nothing is removed from the source.
+
+**Split choice.** `valid`, not `test`. The test split's 7,000 records are
+XWikis-parallel: only titles that exist in all four of English, German, French
+and Czech, which likely skews toward well-covered topics. Train and valid were
+split at random, and valid is 50MB, so it is read whole and sampled with a
+seeded permutation.
+
+**The lead is written alongside the body**, not from a finished one, and for
+the same reader. D-Wikipedia and SWiPE carry the same caveat, so the
+encyclopedia domain is at least consistent; a small readability change here is
+a finding to check, not a defect.
+
+Measured: **857.9 source and 59.8 target** whitespace words, compression
+**0.070** — in the news SUM band (~0.05–0.08). The paper reports no English
+figure: its Table 3 gives German, French and Czech subsets and an all-language
+average only.
+
+Fetch notes. The repo's loading script needs arbitrary code execution, which
+recent `datasets` releases refuse, so the fetcher reads the JSONL directly and
+splits it on `"\n"` only (`str.splitlines()` would also split on U+2028 and
+similar separators inside Wikipedia text).
 
 ## CNN/DailyMail
 

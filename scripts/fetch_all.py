@@ -297,6 +297,9 @@ ONESTOP_TREE = (
     "https://api.github.com/repos/nishkalavallabhi/OneStopEnglishCorpus/git/trees/"
     f"{ONESTOP_COMMIT}?recursive=1"
 )
+# Plain JSONL per split and language. The repo's loading script needs arbitrary
+# code execution, which recent `datasets` releases refuse, so it is not used.
+XWIKIS = "https://huggingface.co/datasets/GEM/xwikis/resolve/main"
 
 
 def fetch_cochrane(limit: int) -> Path:
@@ -638,6 +641,63 @@ def fetch_onestop(limit: int) -> Path:
     return _write("onestop", "all", limit, _onestop_rows(limit))
 
 
+def _xwikis_pair(line_no: int, line: str) -> Pair:
+    """One XWikis record as (id, body, lead).
+
+    The body is every section's ``content`` in order, joined by a blank line;
+    headings are dropped and empty sections (headings whose text sits in their
+    subsections) skipped. ``src_summary`` is the article's own lead, which never
+    reappears inside ``src_document`` (checked over all 8,194 ``valid/en``
+    records, 2026-10-09), so nothing has to be removed from the body.
+    """
+    try:
+        rec = json.loads(line)
+    except ValueError as exc:
+        raise ValueError(f"xwikis: line {line_no} does not parse as JSON ({exc})") from exc
+    sections = rec.get("src_document") or []
+    body = "\n\n".join(
+        str(s.get("content") or "").strip()
+        for s in sections
+        if str(s.get("content") or "").strip()
+    )
+    return f"xwikis{rec['id']}", body, str(rec.get("src_summary") or "")
+
+
+def _xwikis_rows(url: str) -> Iterator[Pair]:
+    """Seeded permutation of a whole XWikis JSONL file, parsed lazily.
+
+    Split on ``"\\n"`` only, not with ``_lines``: ``str.splitlines()`` also
+    breaks on U+2028, U+2029, U+0085 and form feeds, and any of those inside
+    Wikipedia text would cut a JSON record in two.
+    """
+    text = _get(url, timeout=900).decode("utf-8", errors="replace")
+    lines = [(i + 1, ln) for i, ln in enumerate(text.split("\n")) if ln.strip()]
+    if not lines:
+        raise ValueError(f"xwikis: no records at {url}")
+    # The last record is parsed up front: a cut transfer ends mid-record, and a
+    # lazy parse would only notice if the draw happened to reach that line.
+    _xwikis_pair(*lines[-1])
+    picks = list(range(len(lines)))
+    random.Random(SEED).shuffle(picks)
+    for i in picks:
+        yield _xwikis_pair(*lines[i])
+
+
+def fetch_xwikis_en(limit: int) -> Path:
+    """XWikis-en (Perez-Beltrachini & Lapata 2021), SUM -- the encyclopedia summarization cell.
+
+    English Wikipedia article body -> that article's own lead section, from the
+    monolingual ``en`` subset. The lead is written alongside the body rather
+    than from a finished one, the same caveat D-Wikipedia and SWiPE carry.
+
+    ``valid`` rather than ``test``: the test split is drawn only from titles
+    that exist in English, German, French and Czech, which skews toward
+    well-covered topics, while train and valid were split at random. ``valid``
+    is 50MB, so it is read whole.
+    """
+    return _write("xwikis_en", "valid", limit, _xwikis_rows(f"{XWIKIS}/valid/en.jsonl"))
+
+
 FETCHERS = {
     "cochrane": fetch_cochrane,
     "plos": fetch_plos,
@@ -653,6 +713,7 @@ FETCHERS = {
     "contracts": fetch_contracts,
     "ukabs": fetch_ukabs,
     "onestop": fetch_onestop,
+    "xwikis_en": fetch_xwikis_en,
 }
 
 

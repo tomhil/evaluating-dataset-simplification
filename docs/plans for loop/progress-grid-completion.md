@@ -36,3 +36,18 @@ Loop log for `PRD News DS and Encyclopedia SUM Datasets.md`. One entry per itera
 - **Phase B gate:** passed (tests pass; 189 pairs written; offline config run completes).
 - **Next item:** Phase C, `fetch_xwikis_en` + tests on `feature/grid-completion-c`.
 - **DEFERRED:** none.
+
+## 2026-10-09 — Phase C, items 1–5: XWikis-en
+
+- **Branch:** `feature/grid-completion-c` (stacked on `feature/grid-completion-b`, PR #14)
+- **Items:** `fetch_xwikis_en` (`_xwikis_rows`, `_xwikis_pair`), `configs/xwikis_en.yaml`, `xwikis_en` in `ORDER` (after `billsum`), `TASK` = SUM, `DOMAIN` = encyclopedia, reference values, its `DATASETS.md` summary row and section, and tests.
+- **Fetcher:** downloads `valid/en.jsonl` whole, splits on `"\n"` only, yields a seeded permutation of every record and parses each lazily; the last record is parsed up front so a cut transfer raises `ValueError` naming its line even if the draw would not reach it. Source = non-empty section contents joined by a blank line, headings dropped; target = `src_summary`; id `xwikis<id>`.
+- **Fetch:** 1,000 pairs to `data/xwikis_en/valid_1000.jsonl`, no `[SHORT]`. Mean 857.9 → 59.8 whitespace words, ratio 0.070; every target is shorter than its source.
+- **Full-corpus size:** 639,372 (train 624,178 · val 8,194 · test 7,000), counted as newline-terminated records: valid parsed whole, test (38.5 MB) and train (4.63 GB) streamed once without storing; last record of each parses. Test's 7,000 matches the paper's XWikis-parallel.
+- **Reference values:** the paper's Table 3 reports German, French and Czech monolingual subsets and an all-language average, nothing for English, so `"--"` and `—` with a comment.
+- **Config:** `sample_size: 250` (mean body 857.9 words, under 3,000 tokens); `m6_tau: 0.7` with the D-Wikipedia comment plus a "provisional for a SUM corpus" note (Q3).
+- **Offline config run:** all eight modules complete, `n_full` 1000, `n_sample` 250, median per-pair compression 0.083; no verdict in `report.md`.
+- **Result:** pass. `pytest -q`: 957 passed, 2 skipped. Smoke runs byte-identical. `label_tables.py --check` exits 0.
+- **Phase C gate:** passed.
+- **Next item:** Phase D, `LicensedCorpusMissing` + Newsela skip path on `feature/grid-completion-d`.
+- **DEFERRED:** none.

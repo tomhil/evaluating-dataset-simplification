@@ -38,6 +38,10 @@ LITERATURE_TABLE = [
     # Vajjala & Lučić report mean words per level (Table 2) and FKGL per level
     # (Table 3), not a ratio; 0.650 is 533.17/820.49, Advanced -> Elementary.
     ("OneStopEnglish (Vajjala & Lučić 2018)", "DS", "0.650 (820.49 → 533.17 w)", "FKGL 9.5→6.4"),
+    # Perez-Beltrachini & Lapata's Table 3 gives lengths for the German, French
+    # and Czech monolingual subsets only, and no readability figure, so the
+    # English subset's entries stay unfilled.
+    ("XWikis-en (Perez-Beltrachini & Lapata 2021)", "SUM", "—", "—"),
 ]
 
 LITERATURE_ANCHORS = (
