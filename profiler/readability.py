@@ -229,3 +229,56 @@ def jargon_rate(content_words: list[str], terms: list[str]) -> float | None:
     termset = {t.lower() for t in terms}
     hits = sum(1 for w in content_words if w.lower() in termset)
     return hits / len(content_words)
+
+
+# --------------------------------------------------------------------------
+# Frequency-rank measures (WordRank, lexical complexity)
+# --------------------------------------------------------------------------
+# The papers rank words by FastText/Wikipedia frequency; wordfreq's list is the
+# offline stand-in. Rank 1 is the most frequent word; a word outside the list
+# ranks one past its end. Values compare across corpora in this pipeline, not
+# with published numbers.
+RANK_VOCAB_SIZE = 100_000
+
+
+@lru_cache(maxsize=1)
+def _word_ranks() -> dict[str, int]:
+    from wordfreq import top_n_list
+
+    ranks: dict[str, int] = {}
+    for i, w in enumerate(top_n_list("en", RANK_VOCAB_SIZE), start=1):
+        ranks.setdefault(w, i)
+    return ranks
+
+
+def log_rank(word: str) -> float:
+    """Natural log of the word's frequency rank (lowercased)."""
+
+    import math
+
+    return math.log(_word_ranks().get(word.lower(), RANK_VOCAB_SIZE + 1))
+
+
+def wordrank(sentence_words: list[list[str]]) -> float | None:
+    """Martin et al. (2020) WordRank: per sentence, the third quartile of the
+    log-ranks of all its words; the document value is the mean over sentences."""
+
+    import numpy as np
+
+    per_sentence = [
+        float(np.quantile([log_rank(w) for w in words], 0.75))
+        for words in sentence_words
+        if words
+    ]
+    if not per_sentence:
+        return None
+    return sum(per_sentence) / len(per_sentence)
+
+
+def lexical_complexity(content_words: list[str]) -> float | None:
+    """ASSET (Alva-Manchego et al. 2020) lexical complexity: the mean squared
+    log-rank of content words (stopwords removed)."""
+
+    if not content_words:
+        return None
+    return sum(log_rank(w) ** 2 for w in content_words) / len(content_words)
