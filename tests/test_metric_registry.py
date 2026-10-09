@@ -118,3 +118,10 @@ def test_bookkeeping_is_exact_names():
     assert not any("*" in k for k in BOOKKEEPING)
     labelled_leaves = {m.key.rsplit(".", 1)[1] for m in REGISTRY}
     assert not BOOKKEEPING & labelled_leaves
+
+
+def test_pairwise_agreement_is_labelled():
+    # Empty in every archived and smoke run; filled when two scorers run.
+    modules = {"elaboration": {"corpus": {"pairwise_agreement": {
+        "nli_vs_summac_conv": {"label_agreement": 0.8, "pearson": 0.5}}}}}
+    assert all(label_for(p) is not None for p in metric_paths(modules))
