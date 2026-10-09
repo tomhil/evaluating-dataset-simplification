@@ -1,0 +1,105 @@
+# Newsela (Xu et al. 2015) -- the news DS cell.
+# News article, original version -> its simplest English rewrite (grades 2-12).
+#
+# Published reference values: 0.587 (1152.01 -> 676.2 w), Original -> Simp-4
+# words per document from Xu et al.'s Table 4 (their 1,130-article release);
+# they report lengths, not a ratio. Measured here: not yet -- no licensed copy
+# has been fetched.
+#
+# LICENSED DATA. Newsela is released under an NDA to academic researchers. The
+# corpus is read only from $NEWSELA_DIR and is never committed: data/ is
+# gitignored, and no text from it may appear in tests, logs, commits or PRs.
+# Check any results file for article text before committing it.
+#
+# PAIRING. One pair per article, original -> simplest version, never several
+# levels of the same article in one corpus: the bootstrap resamples pairs as if
+# independent, so a repeated source would make the intervals look tighter than
+# they are. Rewrites between adjacent levels are very conservative (Cripwell et
+# al. 2023), so the widest pairing gives the clearest DS signal.
+#
+# Corpus materialised by `NEWSELA_DIR=<copy> python scripts/fetch_all.py --only
+# newsela` (seeded shuffle of articles, one pair each). Without the copy the
+# fetcher prints SKIPPED and this config has no data to run on.
+dataset:
+  adapter: jsonl
+  path: data/newsela/all_1000.jsonl
+  source_field: source
+  target_field: target
+run:
+  dataset_label: newsela
+  # 250, matching the anchors. Revisit once the copy arrives: the PRD drops to
+  # 60 if the mean source exceeds 3,000 tokens (the eLife precedent); Xu et
+  # al.'s originals average 1,152 words.
+  sample_size: 250         # M4-M6 sample; M1-M3 run on all fetched pairs
+  seed: 13
+  language: en
+  cache_dir: .cache/
+  bootstrap_resamples: 1000
+  embedder: sbert
+  embed_model: sentence-transformers/all-MiniLM-L6-v2
+  nli_backend: nli
+  nli_model: microsoft/deberta-large-mnli
+  device: auto             # mps here; deberta-large is ~4x cpu
+  nli_threshold: 0.5
+  tau_sweep: [0.4, 0.5, 0.6, 0.7, 0.8]
+  # 0.5, the non-Wikipedia default, and UNVALIDATED for news prose. The 0.7
+  # that scripts/validate_deletion_split.py validated against SWiPE's human
+  # deletion labels is Wikipedia prose with MiniLM and does not transfer; every
+  # existing anchor carries the same caveat. No human-annotated news subset
+  # is in use, so nothing here can be validated the way SWiPE was -- the sweep
+  # below reports the alternatives so the sensitivity stays visible.
+  #
+  # The threshold is genre-dependent, so a single global value is wrong; see
+  # docs/modules/m4-alignment.md.
+  m6_tau: 0.5
+  # One shared technical-term list across all five corpora, so M3b/M6
+  # jargon_rate is comparable between them rather than domain-tuned per corpus.
+  jargon_terms:
+    - randomised
+    - randomized
+    - placebo
+    - trial
+    - trials
+    - meta-analysis
+    - systematic
+    - efficacy
+    - intervention
+    - interventions
+    - outcome
+    - outcomes
+    - clinical
+    - dose
+    - dosage
+    - adverse
+    - mortality
+    - morbidity
+    - prognosis
+    - incidence
+    - prevalence
+    - cohort
+    - baseline
+    - statistically
+    - significance
+    - hypothesis
+    - methodology
+    - empirical
+    - correlation
+    - regression
+    - coefficient
+    - parameter
+    - mechanism
+    - molecular
+    - cellular
+    - protein
+    - gene
+    - genome
+    - enzyme
+    - receptor
+    - pathway
+    - inhibitor
+    - expression
+    - phenotype
+    - in-vitro
+    - in-vivo
+modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile,
+          linguistic_features, pair_similarity]

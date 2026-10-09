@@ -24,6 +24,7 @@ expected title.
 | [CNN/DailyMail](#cnndailymail) | SUM | 311,971 | 1,000 | train (shard 0 of 3) | news |
 | [XSum](#xsum) | SUM | 226,711 | 1,000 | train | news (BBC) |
 | [OneStopEnglish](#onestopenglish) | DS | 189 | **189** (all) | whole corpus | news (The Guardian) |
+| [Newsela](#newsela) | DS | — | gated | — | news (Newsela) |
 | [BillSum](#billsum) | SUM | 23,455 | 1,000 | train | legal (US bills) |
 | [Contracts](#contracts) | PLS† | 446 | **446** (all) | whole corpus | legal (contracts/ToS) |
 | [UK-Abs](#uk-abs) | unlabelled‡ | 793 | 589 | train | legal (UK Supreme Court) |
@@ -375,6 +376,45 @@ files. Most Advanced and Elementary files open with a UTF-8 byte-order mark,
 which the fetcher strips. `Texts-Together-OneCSVperFile/` is avoided because its
 CSVs carry mis-encoded characters.
 
+## Newsela
+
+**Xu et al. 2015** — [Problems in Current Text Simplification Research: New
+Data Can Help](https://aclanthology.org/Q15-1021/), TACL 2015.
+
+| | |
+|---|---|
+| full corpus | — (gated: no licensed copy yet) |
+| used | gated |
+| domain | news — Newsela articles rewritten for school grades 2–12 |
+| source → target | news article, original → simplest English rewritten version |
+| obtained from | Newsela's [research access page](https://newsela.com/legal/data) (request form + NDA); read only from a local copy at `$NEWSELA_DIR` |
+| license | licensed under an NDA; never committed |
+
+**Gated on a license.** Newsela grants access only to academically affiliated
+researchers, who submit a request form, get a decision within two weeks and
+sign an NDA (see "Access requests" below). Until a copy is available,
+`python scripts/fetch_all.py --only newsela` prints `SKIPPED` and exits 0, and
+`configs/newsela.yaml` has no data to run on. The reader itself is **deferred**:
+releases differ in size and layout (1,130 articles in Xu et al. 2015, 1,882
+article sets behind Newsela-Auto, 23,130 English articles in Agrawal & Carpuat
+2019), so it is written against the layout recorded once the copy arrives.
+
+**Pairing.** One pair per article: the original → the simplest English
+version (lowest grade, else highest version number); articles with a single
+version are skipped. Each simpler version is rewritten *from* the original,
+unlike the encyclopedia DS corpora. Adjacent levels are very conservative
+(Cripwell et al. 2023), so the widest pairing gives the clearest DS signal, and
+a corpus never mixes several pairings of the same article: the bootstrap
+resamples pairs as if independent.
+
+**Licensing.** Nothing derived from Newsela may enter this public repository
+beyond what the NDA allows. If the NDA does not allow publishing aggregate
+statistics, Newsela is profiled locally and its results are never committed;
+otherwise check each `results/newsela.json` for article text before committing.
+
+Published reference: Original → Simp-4 averages **1,152.01 → 676.2** words per
+document (Xu et al., Table 4), i.e. 0.587.
+
 ## BillSum
 
 **Kornilova & Eidelman 2019** — [BillSum: A Corpus for Automatic Summarization of
@@ -542,22 +582,23 @@ cover this.
 
 ## Access requests a human needs to make
 
-**One dataset is blocked purely on permission.** Nothing in this repository can
-unblock it — the pipeline's guardrails forbid scraping and forbid contacting
+**Two datasets are blocked purely on permission.** Nothing in this repository can
+unblock them — the pipeline's guardrails forbid scraping and forbid contacting
 authors automatically, so a person has to ask.
 
 | dataset | would fill | what to do | expected |
 |---|---|---|---|
 | **PlainMedScale** (English side) | Biomedical DS — a **full-document**, non-Cochrane alternative to the sentence-level Med-EASi | Open the Zenodo record [10.5281/zenodo.21728290](https://doi.org/10.5281/zenodo.21728290) → **"Request access"**. The condition is non-commercial research use, and the form asks what you intend to do with it — say corpus profiling / metric validation, no redistribution. | MIT-licensed; maintainers are Ohta & Brocai at Heidelberg |
+| **Newsela** | News DS — a second, professionally edited news simplification corpus beside OneStopEnglish | Submit Newsela's [research access request form](https://newsela.com/legal/data) and sign the NDA (academic affiliation required). Put the copy outside the repository, set `NEWSELA_DIR` to it, record its layout in the progress log, write the reader, then run `python scripts/fetch_all.py --only newsela`. | Decision within two weeks; never commit the data or quote it anywhere |
 
 Once the files arrive, PlainMedScale needs a `fetch_plainmedscale` in
 `scripts/fetch_all.py` and a config; pair **MSD Professional → MSD Consumer**
 (same publisher, adjacent tiers) per the PRD, profile M1–M3 only at first, and
 list it as a candidate rather than adding it to `TASK`.
 
-**No other dataset here is permission-blocked.** SIMPLE-LAW is publicly
-downloadable and is excluded on content grounds instead (see below) — asking for
-access would not change anything. The one remaining lead for a *human-authored*
+**Apart from PlainMedScale and Newsela, no dataset here is permission-blocked.**
+SIMPLE-LAW is publicly downloadable and is excluded on content grounds instead
+(see below) — asking for access would not change anything. The one remaining lead for a *human-authored*
 English legal simplification corpus, a Korean-legislation corpus translated into
 English (Muralidharan, TUM, 2021–22), has no confirmed public release at all, so
 pursuing it means contacting the author speculatively rather than filing an
