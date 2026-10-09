@@ -1,0 +1,100 @@
+# XWikis-en (Perez-Beltrachini & Lapata 2021) -- the encyclopedia SUM cell.
+# English Wikipedia article body -> that article's own lead section.
+#
+# No published compression ratio for English: the paper's Table 3 reports
+# lengths for the German, French and Czech monolingual subsets and an
+# all-language average only, so PUBLISHED_COMPRESSION carries "--". Measured
+# here: 0.070 (857.9 -> 59.8 whitespace words).
+#
+# SPLIT AND AUTHORSHIP WARNINGS. Drawn from `valid`, not `test`: the test split
+# holds only titles that exist in all four of English, German, French and
+# Czech, which likely skews toward well-covered topics. The lead is written
+# alongside the body rather than from a finished one -- the caveat D-Wikipedia
+# and SWiPE carry too -- and for the same reader, so a small readability change
+# here is a finding to check, not a defect.
+#
+# Corpus materialised by `python scripts/fetch_all.py --only xwikis_en`
+# (seeded draw over the whole valid/en.jsonl, 8,194 records, n=1000).
+dataset:
+  adapter: jsonl
+  path: data/xwikis_en/valid_1000.jsonl
+  source_field: source
+  target_field: target
+run:
+  dataset_label: xwikis_en
+  # 250, matching the anchors: bodies average 857.9 words, well under the
+  # 3,000-token mark at which eLife dropped to 60.
+  sample_size: 250         # M4-M6 sample; M1-M3 run on all 1000
+  seed: 13
+  language: en
+  cache_dir: .cache/
+  bootstrap_resamples: 1000
+  embedder: sbert
+  embed_model: sentence-transformers/all-MiniLM-L6-v2
+  nli_backend: nli
+  nli_model: microsoft/deberta-large-mnli
+  device: auto             # mps here; deberta-large is ~4x cpu
+  nli_threshold: 0.5
+  tau_sweep: [0.4, 0.5, 0.6, 0.7, 0.8]
+  # 0.7, validated per sentence against SWiPE's human deletion annotations
+  # (scripts/validate_deletion_split.py, 1,140 sentences): Cohen's kappa 0.410
+  # at 0.5 against 0.754 at 0.7, and the pipeline's deletion rate only matches
+  # the annotators' from 0.7 up. This corpus is the same genre and embedder the
+  # threshold was calibrated on.
+  #
+  # PROVISIONAL for a SUM corpus. SWiPE validated 0.7 on simplification, and on
+  # summarization corpora 0.7 can starve M6: XSum's usable documents fall from
+  # 48/60 to 13/60 (configs/xsum.yaml). Revisit once the real run reports the
+  # usable-document count; the sweep below reports 0.5 as well.
+  m6_tau: 0.7
+  # One shared technical-term list across all five corpora, so M3b/M6
+  # jargon_rate is comparable between them rather than domain-tuned per corpus.
+  jargon_terms:
+    - randomised
+    - randomized
+    - placebo
+    - trial
+    - trials
+    - meta-analysis
+    - systematic
+    - efficacy
+    - intervention
+    - interventions
+    - outcome
+    - outcomes
+    - clinical
+    - dose
+    - dosage
+    - adverse
+    - mortality
+    - morbidity
+    - prognosis
+    - incidence
+    - prevalence
+    - cohort
+    - baseline
+    - statistically
+    - significance
+    - hypothesis
+    - methodology
+    - empirical
+    - correlation
+    - regression
+    - coefficient
+    - parameter
+    - mechanism
+    - molecular
+    - cellular
+    - protein
+    - gene
+    - genome
+    - enzyme
+    - receptor
+    - pathway
+    - inhibitor
+    - expression
+    - phenotype
+    - in-vitro
+    - in-vivo
+modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile,
+          linguistic_features, pair_similarity]

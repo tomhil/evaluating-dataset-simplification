@@ -204,6 +204,134 @@ def test_onestop_rejects_a_truncated_tree(web):
 
 
 # --------------------------------------------------------------------------
+# XWikis-en (Perez-Beltrachini & Lapata 2021) -- encyclopedia SUM
+
+XW_URL = f"{fa.XWIKIS}/valid/en.jsonl"
+
+
+def _xw_record(rid, lead, sections, title="Invented Topic"):
+    return {
+        "src_title": title,
+        "tgt_title": None,
+        "src_document": [
+            {"title": h, "section_level": lvl, "content": c} for h, lvl, c in sections
+        ],
+        "src_summary": lead,
+        "tgt_summary": None,
+        "id": rid,
+    }
+
+
+def _xw_serve(pages, records, raw_tail=""):
+    body = "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records) + raw_tail
+    pages[XW_URL] = body.encode("utf-8")
+
+
+def test_xwikis_joins_sections_in_order_and_drops_headings(web):
+    pages, _ = web
+    _xw_serve(pages, [_xw_record(7, "A short invented lead.", [
+        ("History.", 1, "First invented paragraph about the topic."),
+        ("Early years.", 2, ""),
+        ("Founding.", 3, "Second invented paragraph, nested deeper."),
+        ("Legacy.", 1, "Third invented paragraph."),
+    ])])
+
+    [(pid, src, tgt)] = list(fa._xwikis_rows(XW_URL))
+
+    assert pid == "xwikis7"
+    assert src == (
+        "First invented paragraph about the topic.\n\n"
+        "Second invented paragraph, nested deeper.\n\n"
+        "Third invented paragraph."
+    )
+    for heading in ("History.", "Early years.", "Founding.", "Legacy."):
+        assert heading not in src
+    # The lead is the target and only the target.
+    assert tgt == "A short invented lead."
+    assert tgt not in src
+
+
+def test_xwikis_never_reverses_body_and_lead(web):
+    pages, _ = web
+    records = [
+        _xw_record(i, f"Brief lead {i}.", [
+            ("Body.", 1, " ".join(f"bodyword{i}_{j}" for j in range(40))),
+            ("More.", 1, " ".join(f"moreword{i}_{j}" for j in range(40))),
+        ])
+        for i in range(10)
+    ]
+    _xw_serve(pages, records)
+
+    rows = list(fa._xwikis_rows(XW_URL))
+
+    assert len(rows) == 10
+    for _, src, tgt in rows:
+        assert len(tgt.split()) < len(src.split())
+        assert tgt.startswith("Brief lead") and src.startswith("bodyword")
+
+
+def test_xwikis_ids_are_unique_and_draw_is_shuffled(web):
+    pages, _ = web
+    _xw_serve(pages, [
+        _xw_record(1000 + i, f"lead {i}", [("S.", 1, f"body {i}")]) for i in range(30)
+    ])
+
+    ids = [pid for pid, _, _ in fa._xwikis_rows(XW_URL)]
+
+    assert len(ids) == len(set(ids)) == 30
+    assert ids != sorted(ids, key=lambda p: int(p[len("xwikis"):])), "draw was not shuffled"
+    assert ids == [pid for pid, _, _ in fa._xwikis_rows(XW_URL)], "draw is not seeded"
+
+
+def test_xwikis_skips_an_empty_lead(web, tmp_path, monkeypatch):
+    pages, _ = web
+    _xw_serve(pages, [
+        _xw_record(1, "", [("S.", 1, "invented body with no lead")]),
+        _xw_record(2, "   ", [("S.", 1, "another invented body")]),
+        _xw_record(3, "A real invented lead.", [("S.", 1, "invented body three")]),
+    ])
+    monkeypatch.chdir(tmp_path)
+
+    out = fa.fetch_xwikis_en(1000)
+
+    rows = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines()]
+    assert out == Path("data/xwikis_en/valid_1000.jsonl")
+    assert [r["id"] for r in rows] == ["xwikis3"]
+
+
+def test_xwikis_splits_on_newline_only(web):
+    """U+2028 and friends inside Wikipedia text must not cut a record in two."""
+    pages, _ = web
+    _xw_serve(pages, [
+        _xw_record(1, "Lead with a line separator.", [("S.", 1, "body para\x85next\x0cfeed")]),
+        _xw_record(2, "Second lead.", [("S.", 1, "second body")]),
+    ])
+
+    rows = dict((pid, (src, tgt)) for pid, src, tgt in fa._xwikis_rows(XW_URL))
+
+    assert set(rows) == {"xwikis1", "xwikis2"}
+    assert rows["xwikis1"][1] == "Lead with a line separator."
+
+
+def test_xwikis_truncated_last_line_raises_with_its_line_number(web):
+    pages, _ = web
+    good = [_xw_record(i, f"lead {i}", [("S.", 1, f"body {i}")]) for i in range(5)]
+    cut = json.dumps(_xw_record(99, "cut lead", [("S.", 1, "cut body")]))[:40]
+    _xw_serve(pages, good, raw_tail=cut)
+
+    with pytest.raises(ValueError, match="line 6"):
+        list(fa._xwikis_rows(XW_URL))
+
+
+def test_xwikis_does_not_use_the_datasets_library():
+    import inspect
+
+    src = inspect.getsource(fa._xwikis_rows) + inspect.getsource(fa.fetch_xwikis_en)
+    assert "datasets" not in src.replace("GEM/xwikis", "")
+    assert "_lines(" not in src
+
+
+# --------------------------------------------------------------------------
 # Registration, tags and citations (PRD s5.3)
 
 GRID = {
@@ -215,6 +343,15 @@ GRID = {
         "section_domain": "news — Guardian articles rewritten for adult learners of English",
         "cite_as": "Vajjala & Lučić 2018",
         "url": "https://aclanthology.org/W18-0535/",
+    },
+    "xwikis_en": {
+        "name": "XWikis-en",
+        "task": "SUM",
+        "domain": "encyclopedia",
+        "summary_domain": "encyclopedia",
+        "section_domain": "encyclopedia — English Wikipedia",
+        "cite_as": "Perez-Beltrachini & Lapata 2021",
+        "url": "https://aclanthology.org/2021.emnlp-main.742/",
     },
 }
 

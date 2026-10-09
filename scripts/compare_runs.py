@@ -33,17 +33,19 @@ from pathlib import Path
 # committed corpus has to be registered here or it silently disappears from
 # every comparison table.
 ORDER = ["cochrane", "plos", "elife", "contracts", "dwikipedia", "swipe",
-         "med_easi", "onestop", "cnn_dailymail", "xsum", "arxiv_pubmed", "billsum"]
+         "med_easi", "onestop", "cnn_dailymail", "xsum", "arxiv_pubmed", "billsum",
+         "xwikis_en"]
 TASK = {"cochrane": "PLS", "plos": "PLS", "elife": "PLS", "contracts": "PLS",
         "dwikipedia": "DS", "swipe": "DS", "med_easi": "DS", "onestop": "DS",
         "cnn_dailymail": "SUM", "xsum": "SUM", "arxiv_pubmed": "SUM",
-        "billsum": "SUM"}
+        "billsum": "SUM", "xwikis_en": "SUM"}
 # Domain of each registered corpus, for the within-domain label tables that
 # scripts/label_tables.py generates. Every dataset in ORDER must have one.
 DOMAIN = {"cochrane": "biomedical", "plos": "biomedical", "elife": "biomedical",
           "med_easi": "biomedical", "arxiv_pubmed": "biomedical",
           "contracts": "legal", "billsum": "legal",
           "dwikipedia": "encyclopedia", "swipe": "encyclopedia",
+          "xwikis_en": "encyclopedia",
           "cnn_dailymail": "news", "xsum": "news", "onestop": "news"}
 # ukabs is deliberately absent from ORDER and TASK. It is a legal-PLS candidate
 # whose press-summary targets are not confirmed to be lay register; M3 is being
@@ -64,6 +66,9 @@ PUBLISHED_COMPRESSION = {
     # 533.17/820.49 w (Elementary/Advanced) from Vajjala & Lučić's Table 2;
     # they report lengths, not a ratio.
     "onestop": "0.650",
+    # Perez-Beltrachini & Lapata report lengths for de/fr/cs and an
+    # all-language average (Table 3), nothing for English.
+    "xwikis_en": "--",
 }
 
 
