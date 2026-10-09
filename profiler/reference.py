@@ -42,6 +42,10 @@ LITERATURE_TABLE = [
     # and Czech monolingual subsets only, and no readability figure, so the
     # English subset's entries stay unfilled.
     ("XWikis-en (Perez-Beltrachini & Lapata 2021)", "SUM", "—", "—"),
+    # Xu et al. report words per document per level (Table 4), not a ratio;
+    # 0.587 is 676.2/1152.01, Original -> Simp-4, for their 1,130-article
+    # release. They give no corpus-level readability delta.
+    ("Newsela (Xu et al. 2015)", "DS", "0.587 (1152.01 → 676.2 w)", "—"),
 ]
 
 LITERATURE_ANCHORS = (

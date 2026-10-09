@@ -332,6 +332,75 @@ def test_xwikis_does_not_use_the_datasets_library():
 
 
 # --------------------------------------------------------------------------
+# Newsela (Xu et al. 2015) -- news DS, licensed and gated
+#
+# The reader is DEFERRED until a licensed copy's layout is recorded, so these
+# cover the skip path only. No Newsela text appears here in any form.
+
+
+def _run_main(monkeypatch, argv):
+    monkeypatch.setattr("sys.argv", ["fetch_all.py", *argv])
+    return fa.main()
+
+
+@pytest.fixture
+def no_network(monkeypatch):
+    def _refuse(*a, **k):
+        raise AssertionError("Newsela must never be downloaded")
+
+    monkeypatch.setattr(fa.urllib.request, "urlopen", _refuse)
+
+
+def test_newsela_unset_is_skipped_not_failed(monkeypatch, capsys, no_network):
+    monkeypatch.delenv("NEWSELA_DIR", raising=False)
+
+    rc = _run_main(monkeypatch, ["--only", "newsela"])
+
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "newsela: SKIPPED -- licensed corpus; set NEWSELA_DIR (see docs/DATASETS.md)" in out
+    assert "FAILED" not in out
+
+
+def test_newsela_missing_directory_is_skipped(monkeypatch, capsys, tmp_path, no_network):
+    monkeypatch.setenv("NEWSELA_DIR", str(tmp_path / "not-there"))
+
+    assert _run_main(monkeypatch, ["--only", "newsela"]) == 0
+    assert "newsela: SKIPPED" in capsys.readouterr().out
+
+
+def test_plain_fetch_all_still_exits_zero_without_newsela(monkeypatch, capsys, no_network):
+    """Every other fetcher stubbed to succeed; only Newsela runs for real."""
+    monkeypatch.delenv("NEWSELA_DIR", raising=False)
+    for name in fa.FETCHERS:
+        if name != "newsela":
+            monkeypatch.setitem(fa.FETCHERS, name, lambda limit: None)
+
+    assert _run_main(monkeypatch, []) == 0
+    out = capsys.readouterr().out
+    assert "newsela: SKIPPED" in out
+    assert "failed:" not in out
+
+
+def test_newsela_with_a_copy_but_no_recorded_layout_fails_loudly(monkeypatch, tmp_path, no_network):
+    """A copy is present but the reader is DEFERRED: report it, never guess a layout."""
+    monkeypatch.setenv("NEWSELA_DIR", str(tmp_path))
+
+    with pytest.raises(NotImplementedError, match="DEFERRED"):
+        fa.fetch_newsela(1000)
+    assert not (tmp_path / "data").exists()
+
+
+def test_licensed_skip_is_not_an_ordinary_exception_path():
+    """main catches LicensedCorpusMissing before its generic handler."""
+    import inspect
+
+    src = inspect.getsource(fa.main)
+    assert src.index("except LicensedCorpusMissing") < src.index("except Exception")
+    assert issubclass(fa.LicensedCorpusMissing, Exception)
+
+
+# --------------------------------------------------------------------------
 # Registration, tags and citations (PRD s5.3)
 
 GRID = {
@@ -352,6 +421,15 @@ GRID = {
         "section_domain": "encyclopedia — English Wikipedia",
         "cite_as": "Perez-Beltrachini & Lapata 2021",
         "url": "https://aclanthology.org/2021.emnlp-main.742/",
+    },
+    "newsela": {
+        "name": "Newsela",
+        "task": "DS",
+        "domain": "news",
+        "summary_domain": "news (Newsela)",
+        "section_domain": "news — Newsela articles rewritten for school grades 2–12",
+        "cite_as": "Xu et al. 2015",
+        "url": "https://aclanthology.org/Q15-1021/",
     },
 }
 

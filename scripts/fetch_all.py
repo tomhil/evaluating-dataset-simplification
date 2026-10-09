@@ -266,6 +266,14 @@ def _aligned_rows(base: str, split: str, src_ext: str, tgt_ext: str, prefix: str
         yield f"{prefix}{i}", src[i], tgt[i]
 
 
+class LicensedCorpusMissing(Exception):
+    """A licensed corpus whose local copy is absent: skipped, not failed.
+
+    ``main`` reports it as SKIPPED and does not count it as a failure, so a
+    plain ``python scripts/fetch_all.py`` still exits 0 without the copy.
+    """
+
+
 # --- per-corpus fetchers -------------------------------------------------
 
 COCHRANE = "https://raw.githubusercontent.com/AshOlogn/Paragraph-level-Simplification-of-Medical-Texts/master/data/data-1024"
@@ -698,6 +706,33 @@ def fetch_xwikis_en(limit: int) -> Path:
     return _write("xwikis_en", "valid", limit, _xwikis_rows(f"{XWIKIS}/valid/en.jsonl"))
 
 
+def fetch_newsela(limit: int) -> Path:
+    """Newsela (Xu et al. 2015), DS -- the news simplification cell.
+
+    News articles rewritten by professional editors at up to four simpler
+    reading levels; the pair is the original -> the simplest English version,
+    one pair per article.
+
+    Licensed: released under an NDA to academic researchers, so it is read only
+    from the local copy named by ``NEWSELA_DIR`` and never downloaded from
+    anywhere. Without that copy this raises ``LicensedCorpusMissing``, which
+    ``main`` reports as SKIPPED.
+
+    The reader is DEFERRED: Newsela's file layout differs between releases and
+    is recorded only once a copy arrives, and the reading code is to be written
+    against that recorded layout, not an assumed one.
+    """
+    root = os.environ.get("NEWSELA_DIR")
+    if not root or not Path(root).is_dir():
+        raise LicensedCorpusMissing(
+            "licensed corpus; set NEWSELA_DIR (see docs/DATASETS.md)"
+        )
+    raise NotImplementedError(
+        "newsela reader DEFERRED: record the copy's layout in "
+        "docs/plans for loop/progress-grid-completion.md, then write the reader"
+    )
+
+
 FETCHERS = {
     "cochrane": fetch_cochrane,
     "plos": fetch_plos,
@@ -714,6 +749,7 @@ FETCHERS = {
     "ukabs": fetch_ukabs,
     "onestop": fetch_onestop,
     "xwikis_en": fetch_xwikis_en,
+    "newsela": fetch_newsela,
 }
 
 
@@ -733,6 +769,9 @@ def main() -> int:
         print(f"fetching {name} ...")
         try:
             FETCHERS[name](args.limit)
+        except LicensedCorpusMissing as exc:
+            # Not a failure: the copy is the human's to obtain.
+            print(f"  {name}: SKIPPED -- {exc}")
         except Exception as exc:  # keep going; report at the end
             print(f"  {name}: FAILED -- {type(exc).__name__}: {exc}")
             failed.append(name)

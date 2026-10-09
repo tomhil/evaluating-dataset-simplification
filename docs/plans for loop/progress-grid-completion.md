@@ -51,3 +51,16 @@ Loop log for `PRD News DS and Encyclopedia SUM Datasets.md`. One entry per itera
 - **Phase C gate:** passed.
 - **Next item:** Phase D, `LicensedCorpusMissing` + Newsela skip path on `feature/grid-completion-d`.
 - **DEFERRED:** none.
+
+## 2026-10-09 — Phase D, items 1–4: Newsela (gated)
+
+- **Branch:** `feature/grid-completion-d` (stacked on `feature/grid-completion-c`, PR #15)
+- **Items:** (1) `LicensedCorpusMissing` and the SKIPPED branch in `main`, caught before the generic `except Exception`; (2) `fetch_newsela`, registered in `FETCHERS`, which reads only `NEWSELA_DIR` and raises `LicensedCorpusMissing` when it is unset or missing; (3) `configs/newsela.yaml`; (4) `newsela` in `ORDER` (after `onestop`), `TASK` = DS, `DOMAIN` = news, reference values, its `DATASETS.md` summary row (`—` / gated), section, and the access-request row; the two "one dataset is permission-blocked" sentences updated.
+- **Reader: DEFERRED.** `NEWSELA_DIR` is unset, so no layout is recorded. With a copy present but no recorded layout, `fetch_newsela` raises `NotImplementedError` naming the deferral rather than guessing a layout (main reports it as FAILED, which is the signal to record the layout and write the reader).
+- **Reference values:** Xu et al.'s Table 4 gives words per document for Original (1,152.01) and Simp-4 (676.2) in their 1,130-article release, i.e. 0.587 for the same original → simplest pairing. `PUBLISHED_COMPRESSION["newsela"] = "0.587"`, `LITERATURE_TABLE` `0.587 (1152.01 → 676.2 w)` / `—` (no corpus-level readability delta reported), each with a comment naming the table.
+- **Skip path:** `python scripts/fetch_all.py --only newsela` prints `newsela: SKIPPED -- licensed corpus; set NEWSELA_DIR (see docs/DATASETS.md)` and exits 0. Tests: unset → SKIPPED/0; missing dir → SKIPPED/0; plain `main()` with the other fetchers stubbed → 0; copy without layout → `NotImplementedError`; `urlopen` is patched to refuse in every Newsela test. No Newsela text anywhere.
+- **Offline config run: DEFERRED** for `newsela` — there is no data file to run on until the copy arrives.
+- **Result:** pass. `pytest -q`: 966 passed, 2 skipped. Smoke runs byte-identical. `label_tables.py --check` exits 0. A real plain `python scripts/fetch_all.py` is running to confirm the exit code (recorded in Phase E).
+- **Phase D gate:** passed (skip test passes and `fetch_all.py` exits 0 for `--only newsela`; reader DEFERRED).
+- **Next item:** Phase E on `feature/grid-completion-e`: sampling notes, the five rejected candidates, final Section 7 checks.
+- **DEFERRED:** Newsela reader and Newsela offline config run (no licensed copy).
