@@ -165,6 +165,13 @@ _LITERATURE: tuple[MetricLabel, ...] = (
     # Row 26
     _lit("abstractiveness.topic_similarity", {"SUM"}, (BOMMASANI_2020,),
          direction="↑ closer topic mix to source"),
+    # Row 20 (abstract): Goldsack et al.'s ABSTRACT baseline.
+    _lit("abstractiveness.rouge_abstract_target", {"PLS"}, (GOLDSACK_2022,), needs="abstract",
+         direction="↑ closer to the abstract",
+         headline=("rouge1_f1.median", "rouge2_f1.median", "rougeL_f1.median")),
+    # Row 14 (abstract): Goldsack et al. s4.3, spaCy in place of ScispaCy.
+    _lit("abstractiveness.abstract_content_overlap", {"PLS"}, (GOLDSACK_2022,), needs="abstract",
+         direction="↑ more abstract terms kept", headline=("all.median",)),
     # Row 5
     *(
         _lit(f"abstractiveness.novel_{n}gram", {"SUM", "PLS"}, (NARAYAN_2018, GOLDSACK_2022),

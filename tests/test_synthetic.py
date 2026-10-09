@@ -246,3 +246,67 @@ def test_entity_preservation(ctx):
     ep = plain.corpus["entity_preservation"]
     assert all(ep[k]["n"] == 0 and ep[k]["median"] is None for k in ep)
     assert any("no NER model" in n for n in plain.notes)
+
+
+def test_rouge_abstract_target(ctx):
+    """ROUGE F1 of abstract vs target: 1.0 when equal; None (with a note) without an abstract."""
+    with_abs = Pair("a", SOURCE_LONG, IDENTITY_TEXT, meta={"abstract": IDENTITY_TEXT})
+    half = Pair("b", SOURCE_LONG, "alpha beta", meta={"abstract": "alpha gamma"})
+    none = Pair("c", SOURCE_LONG, IDENTITY_TEXT)
+    res = _run(m2_abstractiveness, [with_abs, half, none], ctx)
+    rows = {r["id"]: r for r in res.per_pair}
+    assert rows["a"]["abstract_target_rouge1_f1"] == 1.0
+    assert rows["a"]["abstract_target_rouge2_f1"] == 1.0
+    assert rows["a"]["abstract_target_rougeL_f1"] == 1.0
+    assert rows["b"]["abstract_target_rouge1_f1"] == 0.5
+    assert rows["b"]["abstract_target_rouge2_f1"] == 0.0
+    assert rows["c"]["abstract_target_rouge1_f1"] is None
+    assert res.corpus["rouge_abstract_target"]["rouge1_f1"]["n"] == 2
+    assert any("have no abstract" in n for n in res.notes)
+
+
+class _POSProcessor(SimpleProcessor):
+    """Offline POS stand-in: capitalised words are PROPN, digits NUM, the rest NOUN."""
+
+    has_parser = True
+
+    def analyze_sentence(self, sent):
+        from profiler.nlp import Token
+
+        out = []
+        for i, w in enumerate(self.words(sent)):
+            pos = "NUM" if w.isdigit() else ("PROPN" if w[:1].isupper() else "NOUN")
+            out.append(Token(text=w, lemma=w.lower(), pos=pos, is_content=True, i=i))
+        return out
+
+
+def test_abstract_content_overlap(ctx):
+    """Share of abstract content words kept in the target, by abstract count and type."""
+    pos_ctx = Context(config=ctx.config, processor=_POSProcessor(), cache=ctx.cache, seed=ctx.seed)
+    pairs = [
+        # Shared by both abstracts: "cells" (2 abstracts). Unique: Zebra, 42 / kidney, mice.
+        Pair("a", "src", "cells and 42 here", meta={"abstract": "Zebra cells 42"}),
+        Pair("b", "src", "nothing shared", meta={"abstract": "kidney cells mice"}),
+        Pair("c", "src", "tgt"),
+    ]
+    res = _run(m2_abstractiveness, pairs, pos_ctx)
+    rows = {r["id"]: r for r in res.per_pair}
+    assert rows["a"]["abstract_overlap_all"] == 2 / 3
+    assert rows["a"]["abstract_overlap_bucket_1"] == 1 / 2  # Zebra no, 42 yes
+    assert rows["a"]["abstract_overlap_bucket_2-10"] == 1.0  # cells
+    assert rows["a"]["abstract_overlap_type_propn"] == 0.0
+    assert rows["a"]["abstract_overlap_type_num"] == 1.0
+    assert rows["b"]["abstract_overlap_all"] == 0.0
+    assert rows["c"]["abstract_overlap_all"] is None
+    block = res.corpus["abstract_content_overlap"]
+    assert block["all"]["n"] == 2
+    assert set(block["by_abstract_count"]) == {"1", "2-10", "11-100", "100+"}
+
+    # Identity: every abstract word is in the target.
+    same = _run(m2_abstractiveness, [Pair("s", "x", IDENTITY_TEXT, meta={"abstract": IDENTITY_TEXT})], pos_ctx)
+    assert same.per_pair[0]["abstract_overlap_all"] == 1.0
+
+    # No POS tagger: null plus a note.
+    plain = _run(m2_abstractiveness, pairs, ctx)
+    assert plain.corpus["abstract_content_overlap"]["all"]["n"] == 0
+    assert any("no POS" in n for n in plain.notes)
