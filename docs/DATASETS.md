@@ -562,7 +562,7 @@ representative the 1,000 documents are:
 
 | method | corpora | note |
 |---|---|---|
-| seeded draw over whole file | Cochrane, D-Wikipedia | both sides download in full |
+| seeded draw over whole file | Cochrane, D-Wikipedia, XWikis-en, OneStopEnglish | the whole file (or, for OneStopEnglish, every article at the pinned commit) downloads in full |
 | stratified across parquet row groups | PLOS, eLife, CNN/DailyMail, XSum, arXiv/PubMed, Med-EASi | shards are ordered, so a head-take would skew |
 | streaming reservoir sample | SWiPE | 190MB single JSON array, ordered by page title |
 
@@ -610,7 +610,8 @@ access request.
 
 Datasets the cross-domain PRD named for the SUM/DS/PLS grid that are **not** in
 the table above, with what was actually checked on 2026-09-21. None of these
-displaces a corpus already profiled.
+displaces a corpus already profiled. The last five, candidates for the
+encyclopedia SUM and news DS cells, were checked on 2026-10-09.
 
 ### PlainMedScale — biomedical DS candidate — **access-restricted**
 
@@ -663,3 +664,46 @@ simplification corpus was found". The PRD's own second search reported the same
 scarcity — the other candidates it turned up (LengClaro2023, LegalSim-PT) are
 Spanish and Portuguese, and the one English lead (a Korean-legislation corpus
 translated into English, Muralidharan, TUM) has no confirmed public release.
+
+### WikiSum — encyclopedia SUM candidate — **excluded: multi-document, non-Wikipedia sources**
+
+**Liu et al. 2018** — [Generating Wikipedia by Summarizing Long
+Sequences](https://ar5iv.labs.arxiv.org/html/1801.10198).
+
+Its sources are the cited web pages and Google search results for a topic, not
+Wikipedia, with many documents per example, and it is released as URLs to
+rebuild from Common Crawl. The profiler measures a single source document
+against its target, and the encyclopedia SUM cell needs Wikipedia on both
+sides; XWikis-en fills it instead.
+
+### WikiCatSum — encyclopedia SUM candidate — **excluded: multi-document, non-Wikipedia sources**
+
+**Perez-Beltrachini et al. 2019** — [WikiCatSum on Edinburgh
+DataShare](https://datashare.ed.ac.uk/handle/10283/3368).
+
+Built the same way as WikiSum — cited web sources to a Wikipedia lead — and
+restricted to three categories, so it inherits WikiSum's exclusion.
+
+### WikiAsp — encyclopedia SUM candidate — **excluded: multi-document, section targets**
+
+**Hayashi et al. 2020** — [WikiAsp](https://arxiv.org/abs/2011.07832).
+
+Pairs an article's cited references with its individual sections: many source
+documents per example, and the sources are not Wikipedia text.
+
+### Wikipedia revision pairs — encyclopedia SUM candidate — **excluded: release never confirmed**
+
+**Zhou et al. 2020** — [Wikipedia revision pairs](https://arxiv.org/abs/2004.02592).
+
+Body passage → introductory sentence. No public release of the pairs could be
+confirmed, so there is nothing to fetch.
+
+### Newsela-Auto — news DS candidate — **excluded: sentence pairs, not documents**
+
+**Jiang et al. 2020** — [Newsela-Auto](https://github.com/chaojiang06/wiki-auto)
+([paper](https://arxiv.org/pdf/2005.02324v4)).
+
+Automatic sentence alignments over Newsela article sets. The profiler needs
+the full articles, which the licensed Newsela release itself provides (see
+[Newsela](#newsela)); sentence pairs would also make M1 compression
+incomparable with the document-level corpora.
