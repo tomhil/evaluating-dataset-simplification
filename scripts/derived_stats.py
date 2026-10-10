@@ -92,11 +92,32 @@ def family(label: str, classes: int = 2) -> str:
 # --- core statistics ----------------------------------------------------------
 
 def gap_ratio(values: dict[str, float], labels: dict[str, str]) -> float:
-    """Mean within-family |difference| over mean between-family |difference|."""
+    """Mean within-family |difference| over mean between-family |difference|.
+
+    Undefined -- ValueError -- when no family has two corpora, when there is
+    only one family, or when the measure is the same on every corpus.
+    """
     within, between = [], []
     for a, b in itertools.combinations(values, 2):
         (within if labels[a] == labels[b] else between).append(abs(values[a] - values[b]))
+    if not within:
+        raise ValueError("gap ratio undefined: no family has two corpora (no within-family pair)")
+    if not between:
+        raise ValueError("gap ratio undefined: only one family (no between-family pair)")
+    if st.mean(between) == 0:
+        raise ValueError("gap ratio undefined: the measure is constant across corpora")
     return st.mean(within) / st.mean(between)
+
+
+def gap_ratio_or_none(values: dict[str, float], labels: dict[str, str]) -> float | None:
+    try:
+        return gap_ratio(values, labels)
+    except ValueError:
+        return None
+
+
+def _ratio(x: float | None) -> str:
+    return "—" if x is None else f"{x:.2f}"
 
 
 def ranges(values: dict[str, float], labels: dict[str, str]) -> dict[str, tuple[float, float]]:
@@ -171,9 +192,9 @@ def section_gap_ratios(res: dict[str, dict]) -> list[str]:
         r = ranges(v, labels2)
         span = (f"SIMP {r['SIMP'][0]:+.3f}…{r['SIMP'][1]:+.3f}, SUM {r['SUM'][0]:+.3f}…{r['SUM'][1]:+.3f}"
                 + (f"; **no overlap**, gap {g:.3f}" if g is not None else "; overlaps"))
-        rows.append((gap_ratio(v, labels2), name, gap_ratio(v, labels3), span))
-    for r2, name, r3, span in sorted(rows):
-        out.append(f"| {name} | {r2:.2f} | {r3:.2f} | {span} |")
+        rows.append((gap_ratio(v, labels2), name, gap_ratio_or_none(v, labels3), span))
+    for r2, name, r3, span in sorted(rows, key=lambda r: (r[0], r[1])):
+        out.append(f"| {name} | {r2:.2f} | {_ratio(r3)} | {span} |")
     return out
 
 
@@ -232,7 +253,7 @@ def m6_ranked(m: dict) -> list[tuple[str, float]]:
 def section_m6(res: dict[str, dict]) -> list[str]:
     out = ["## M6", "", "| corpus | top 3 | salience in top 3 | |rare_word|, |jargon| | deletion rate | τ |",
            "|---|---|---|---|---|---|"]
-    two_plus = all3 = small_diff = 0
+    two_plus = all3 = small_diff = no_estimate = 0
     for l, m in res.items():
         d = m["deletion_profile"]["corpus"]
         ranked = m6_ranked(m)
@@ -241,15 +262,20 @@ def section_m6(res: dict[str, dict]) -> list[str]:
         n_sal = sum(k in SALIENCE for k in top3)
         two_plus += n_sal >= 2
         all3 += n_sal == 3
-        rw, jg = abs(eff.get("rare_word_rate", 0.0)), abs(eff.get("jargon_rate", 0.0))
-        small_diff += max(rw, jg) < 0.25
-        out.append(f"| {l} | {', '.join(top3)} | {n_sal} | {rw:.2f}, {jg:.2f} | "
+        rw, jg = eff.get("rare_word_rate"), eff.get("jargon_rate")
+        if rw is None or jg is None:
+            no_estimate += 1  # an absent estimate is not evidence of a small one
+        else:
+            small_diff += max(abs(rw), abs(jg)) < 0.25
+        cell = ", ".join("—" if x is None else f"{abs(x):.2f}" for x in (rw, jg))
+        out.append(f"| {l} | {', '.join(top3)} | {n_sal} | {cell} | "
                    f"{d['n_deleted'] / d['n_source_sentences']:.3f} | {d['primary_tau']} |")
     cs = [dict(m6_ranked(m)).get("centroid_sim") for m in res.values()]
     cs = [c for c in cs if c is not None]
     span = (f"ranges {min(cs):.2f} to {max(cs):.2f}" if cs else "not reported")
     out += ["", f"- salience takes ≥2 of the top 3 on **{two_plus} of {len(res)}** corpora; all 3 on {all3}",
-            f"- |rare_word_rate| and |jargon_rate| both under 0.25 on **{small_diff} of {len(res)}**",
+            f"- |rare_word_rate| and |jargon_rate| both under 0.25 on **{small_diff} of "
+            f"{len(res) - no_estimate}**" + (f" ({no_estimate} without an estimate)" if no_estimate else ""),
             f"- centroid_sim within-document effect{' ' if cs else ': '}{span}"]
     return out
 
@@ -265,10 +291,20 @@ def section_m2_density(res: dict[str, dict]) -> list[str]:
 
 
 def section_m7(res: dict[str, dict]) -> list[str]:
-    feats = list(next(iter(res.values()))["linguistic_features"]["corpus"])
-    feats = [f for f in feats if isinstance(next(iter(res.values()))["linguistic_features"]["corpus"][f], dict)
-             and "delta" in next(iter(res.values()))["linguistic_features"]["corpus"][f]]
+    def has_delta(m: dict) -> set[str]:
+        lf = (m.get("linguistic_features") or {}).get("corpus") or {}
+        return {f for f, v in lf.items()
+                if isinstance(v, dict) and isinstance(v.get("delta"), dict) and v["delta"].get("mean") is not None}
+
+    per_corpus = [has_delta(m) for m in res.values()]
+    shared = set.intersection(*per_corpus)
+    partial = sorted(set.union(*per_corpus) - shared)
+    feats = [f for f in (m for m in next(iter(res.values()))["linguistic_features"]["corpus"]) if f in shared]
     vals = {f: {l: _m7(f)(m) for l, m in res.items()} for f in feats}
+    labels2 = {l: family(l) for l in res}
+    constant = [f for f in feats if gap_ratio_or_none(vals[f], labels2) is None]
+    feats = [f for f in feats if f not in constant]
+    vals = {f: vals[f] for f in feats}
     pls_apart = []
     pairwise = []
     for f, v in vals.items():
@@ -279,7 +315,6 @@ def section_m7(res: dict[str, dict]) -> list[str]:
         rs = ranges(v, {l: TASK[l] for l in v})
         if len(rs) == 3 and all(a[1] < b[0] or b[1] < a[0] for a, b in itertools.combinations(rs.values(), 2)):
             pairwise.append(f)
-    labels2 = {l: family(l) for l in res}
     labels3 = {l: family(l, 3) for l in res}
     perms2 = relabelings(labels2)
     p2 = {f: permutation_p(v, labels2, perms2) for f, v in vals.items()}
@@ -290,29 +325,41 @@ def section_m7(res: dict[str, dict]) -> list[str]:
            f" ({', '.join(pls_apart) or 'none'})",
            f"- features separating PLS, DS and SUM pairwise with no overlap: **{len(pairwise)}**"
            f" ({', '.join(pairwise) or 'none'})",
+           *([f"- features not in every corpus: {', '.join(partial)}"] if partial else []),
+           *([f"- features constant across corpora, skipped: {', '.join(constant)}"] if constant else []),
            "",
            f"Exact permutation test, 2 families: {len(perms2)} relabelings, smallest attainable p = "
            f"{1 / len(perms2):.5f}; BH over {len(feats)} features.", "",
            "| feature | gap ratio (2 fam.) | p | BH q | gap ratio (3 cls.) |", "|---|---|---|---|---|"]
     for f in best:
         out.append(f"| {f} | {gap_ratio(vals[f], labels2):.2f} | {p2[f]:.4f} | {q2[f]:.3f} | "
-                   f"{gap_ratio(vals[f], labels3):.2f} |")
-    if len(labels3) <= 9:  # 3-class enumeration grows fast; only for small sets
+                   f"{_ratio(gap_ratio_or_none(vals[f], labels3))} |")
+    three_ok = all(gap_ratio_or_none(v, labels3) is not None for v in vals.values())
+    if not three_ok:
+        out += ["", "3 classes: not computed (no class has two corpora, or only one class present)"]
+    elif len(labels3) <= 9:  # 3-class enumeration grows fast; only for small sets
         perms3 = relabelings(labels3)
         p3 = {f: permutation_p(v, labels3, perms3) for f, v in vals.items()}
         q3 = benjamini_hochberg(p3)
         b3 = min(p3, key=p3.get)
         out += ["", f"3 classes: {len(perms3)} relabelings; best p = {p3[b3]:.4f} ({b3}); "
                 f"best BH q = {min(q3.values()):.3f}"]
+    else:
+        out += ["", f"3 classes: not computed ({len(labels3)} corpora; exact enumeration is limited to 9)"]
     return out
 
 
 def section_bimodality(res: dict[str, dict]) -> list[str]:
     bc = {l: m["length"]["corpus"]["compression_bimodality"] for l, m in res.items()}
+    missing = [l for l, v in bc.items() if v is None]
     flagged = {l: v for l, v in bc.items() if v is not None and v > 0.555}
-    return ["## Bimodality (Sarle's coefficient, threshold 0.555)", "",
-            "- flagged: " + (", ".join(f"{l} {v:.3f}" for l, v in flagged.items()) or "none"),
-            "- clear: " + ", ".join(f"{l} {v:.3f}" for l, v in bc.items() if l not in flagged)]
+    clear = {l: v for l, v in bc.items() if v is not None and l not in flagged}
+    out = ["## Bimodality (Sarle's coefficient, threshold 0.555)", "",
+           "- flagged: " + (", ".join(f"{l} {v:.3f}" for l, v in flagged.items()) or "none"),
+           "- clear: " + (", ".join(f"{l} {v:.3f}" for l, v in clear.items()) or "none")]
+    if missing:
+        out.append("- not computed: " + ", ".join(missing))
+    return out
 
 
 SECTIONS = [section_gap_ratios, section_class_spread, section_compression_vs_published,
@@ -336,9 +383,17 @@ def main(argv: list[str] | None = None) -> int:
         unknown = [c for c in corpora if c not in TASK]
         if unknown:
             raise SystemExit(f"not labelled corpora: {unknown}")
-    res = load(Path(args.results), corpora)
+    results_dir = Path(args.results)
+    if corpora:
+        absent = [c for c in corpora if not (results_dir / f"{c}.json").exists()]
+        if absent:
+            raise SystemExit(f"no results file for {absent} in {results_dir}/")
+    res = load(results_dir, corpora)
     if len(res) < 3:
         raise SystemExit("need at least three labelled corpora with results")
+    if {family(l) for l in res} != {"SIMP", "SUM"}:
+        raise SystemExit("need corpora from both families: simplification (PLS or DS) and "
+                         "summarization (SUM)")
     print(report(res))
     return 0
 

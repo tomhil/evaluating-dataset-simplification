@@ -311,6 +311,10 @@ def test_report_contains_every_section_once(res):
 # --------------------------------------------------------------------------
 # RESULTS.md agrees with the script on the committed archive
 
+# Pinned, like OLD11 and OLD7: the 13-corpus column must stay the same 13 corpora
+# when another labelled corpus (Newsela is registered already) gets results.
+THIRTEEN = ["cochrane", "plos", "elife", "contracts", "dwikipedia", "swipe", "med_easi",
+            "onestop", "cnn_dailymail", "xsum", "arxiv_pubmed", "billsum", "xwikis_en"]
 OLD11 = ["cochrane", "plos", "elife", "contracts", "dwikipedia", "swipe", "med_easi",
          "cnn_dailymail", "xsum", "arxiv_pubmed", "billsum"]
 OLD7 = ["cochrane", "plos", "elife", "dwikipedia", "swipe", "cnn_dailymail", "xsum"]
@@ -343,7 +347,7 @@ def _doc_gap_table():
 
 def test_results_md_gap_ratio_table_matches_the_script():
     sets = {
-        13: (ds.load(REPO / "results"), 2),
+        13: (ds.load(REPO / "results", THIRTEEN), 2),
         11: (ds.load(REPO / "results", OLD11), 2),
         7: (ds.load(REPO / "results", OLD7), 3),
     }
@@ -374,7 +378,7 @@ def _doc_section(title):
     ("encyclopedia", "Within encyclopedia, holding domain constant"),
 ])
 def test_results_md_within_domain_tables_match_the_script(domain, title):
-    res = ds.load(REPO / "results")
+    res = ds.load(REPO / "results", THIRTEEN)
     doc_rows = [r for r in _doc_section(title).splitlines()
                 if r.startswith("| ") and not r.startswith("| corpus")]
     want = [l for l, m in res.items() if ds.DOMAIN[l] == domain]
@@ -392,7 +396,7 @@ def test_results_md_within_domain_tables_match_the_script(domain, title):
 
 def test_results_md_quoted_permutation_figures_match_the_script():
     """The M7 significance note quotes p and q values the script must produce."""
-    res = ds.load(REPO / "results")
+    res = ds.load(REPO / "results", THIRTEEN)
     out = "\n".join(ds.section_m7(res))
     assert "1287 relabelings, smallest attainable p = 0.00078" in out
     for feat, q in (("unique_entities_average", "0.013"), ("third_person_pronouns_ratio", "0.013")):
@@ -406,3 +410,65 @@ def test_results_md_original_seven_permutation_figures_reproduce():
     out = "\n".join(ds.section_m7(res))
     assert "3 classes: 210 relabelings; best p = 0.0095" in out
     assert "best BH q = 0.105" in out
+
+
+# --------------------------------------------------------------------------
+# Code-review findings: subsets and missing data must not crash the report
+
+def test_gap_ratio_undefined_cases_raise_value_error():
+    with pytest.raises(ValueError, match="within-family"):
+        ds.gap_ratio({"a": 1.0, "b": 2.0, "c": 3.0}, {"a": "X", "b": "Y", "c": "Z"})
+    with pytest.raises(ValueError, match="between-family"):
+        ds.gap_ratio({"a": 1.0, "b": 2.0}, {"a": "X", "b": "X"})
+    with pytest.raises(ValueError, match="constant"):
+        ds.gap_ratio({k: 1.0 for k in "abcd"}, {"a": "X", "b": "X", "c": "Y", "d": "Y"})
+
+
+def test_one_corpus_per_class_subset_reports_undefined_three_class_ratio(results_dir, capsys):
+    # One PLS, one DS, one SUM: the 2-family ratio is defined (two SIMP corpora),
+    # the 3-class one is not -- it must print as a dash, not crash.
+    assert ds.main(["--results", str(results_dir), "--corpora", "cochrane,dwikipedia,xsum"]) == 0
+    out = capsys.readouterr().out
+    row = next(l for l in out.splitlines() if l.startswith("| M3b rare_word_rate delta"))
+    assert row.split("|")[3].strip() == "—"
+    assert "3 classes: not computed" in out
+
+
+def test_single_family_subset_exits_cleanly(results_dir):
+    with pytest.raises(SystemExit, match="both families"):
+        ds.main(["--results", str(results_dir), "--corpora", "cochrane,plos,dwikipedia"])
+
+
+def test_corpus_without_a_results_file_exits_cleanly(results_dir):
+    with pytest.raises(SystemExit, match="no results file"):
+        ds.main(["--results", str(results_dir), "--corpora", "cochrane,plos,xsum,billsum"])
+
+
+def test_missing_bimodality_is_reported_not_formatted(res):
+    res["plos"]["length"]["corpus"]["compression_bimodality"] = None
+    lines = ds.section_bimodality(res)
+    assert "plos" not in lines[2] and "plos" not in lines[3]
+    assert lines[4] == "- not computed: plos"
+
+
+def test_m6_missing_difficulty_effect_is_excluded_from_the_count(res):
+    feats = res["dwikipedia"]["deletion_profile"]["corpus"]["features"]
+    feats["rare_word_rate"]["stratified_effect"]["effect"] = None
+    text = "\n".join(ds.section_m6(res))
+    # Before: dwikipedia counted as "under 0.25" through a 0.0 default -> 2 of 6.
+    assert "- |rare_word_rate| and |jargon_rate| both under 0.25 on **1 of 5** (1 without an estimate)" in text
+    assert "| dwikipedia | " in text and "| —, 0.00 |" in text
+
+
+def test_m7_feature_missing_from_one_corpus_is_skipped(res):
+    del res["xsum"]["linguistic_features"]["corpus"]["conjunctions_ratio"]
+    text = "\n".join(ds.section_m7(res))
+    assert "**3 of 5**" in text  # 5 features shared by every corpus
+    assert "conjunctions_ratio" in text.split("not in every corpus:")[1].splitlines()[0]
+
+
+def test_m7_constant_feature_is_skipped(res):
+    for m in res.values():
+        m["linguistic_features"]["corpus"]["negations_ratio"] = {"delta": {"mean": 0.0}}
+    text = "\n".join(ds.section_m7(res))
+    assert "constant across corpora, skipped: negations_ratio" in text

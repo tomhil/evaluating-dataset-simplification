@@ -376,9 +376,10 @@ not recover the label. Whole-article lay summarisation compresses like
 summarization. This sharpens finding 0: compression separates simplification
 from summarization only where no lay *summary* of a long document is present.
 
-**Surface FKGL does not separate task either.** The SUM corpora are the only
-positives in biomedical, legal and encyclopedia (+0.80, +0.92, +0.47), but the
-rule has a counterexample on each side: PLOS (PLS) is positive at +1.88, and
+**Surface FKGL does not separate task either.** It works in two domains: the
+SUM corpus is the only positive in legal (+0.92) and in encyclopedia (+0.47).
+In the other two it fails, once on each side: in biomedical PLOS (PLS) is
+positive too, at +1.88 — above arXiv/PubMed's +0.80 — and in news
 CNN/DailyMail (SUM) is negative at −2.07, as large a fall as several
 simplification corpora manage.
 
@@ -1391,13 +1392,18 @@ SUM ranges overlap (Contracts 0.332, arXiv/PubMed 0.147). M1's
 
 ### These are rankings, not significance claims
 
-**On the original seven no M7 feature could survive correction.** The exact
+**On the original seven no M7 feature survived correction.** The exact
 permutation test had 210 labelings (three classes), so the smallest attainable
-p was 0.0048 and the best possible BH-corrected q over 33 features 0.157; the
-best observed was q = 0.105 (printed as 0.104 in an earlier revision).
+p was 0.0048. Under Benjamini–Hochberg over 33 features that p gives
+q = 0.0048 × 33 / k when k features share it — 0.157 for one feature alone,
+lower only if several tie at the minimum. None reached it: the best observed p
+was 0.0095, shared by three features, giving q = 0.105 (printed as 0.104 in an
+earlier revision). An earlier revision called 0.157 the best *possible* q; that
+holds only for a single feature, so the claim that no feature *could* survive
+was too strong — the seven corpora simply did not produce one that did.
 
-**With thirteen corpora that ceiling has lifted, and five features now clear
-it.** Testing the two families (8 simplification, 5 summarization) gives 1,287
+**With thirteen corpora the smallest attainable p is six times smaller, and
+five features now clear correction.** Testing the two families (8 simplification, 5 summarization) gives 1,287
 relabelings and a smallest attainable p of 0.00078. `unique_entities_average`
 and `third_person_pronouns_ratio` are each separated better by the real labels
 than by any of the other 1,286 (p = 0.00078, BH q = 0.013 over the 33 features),
