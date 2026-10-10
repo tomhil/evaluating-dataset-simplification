@@ -247,18 +247,20 @@ def section_m6(res: dict[str, dict]) -> list[str]:
                    f"{d['n_deleted'] / d['n_source_sentences']:.3f} | {d['primary_tau']} |")
     cs = [dict(m6_ranked(m)).get("centroid_sim") for m in res.values()]
     cs = [c for c in cs if c is not None]
+    span = (f"ranges {min(cs):.2f} to {max(cs):.2f}" if cs else "not reported")
     out += ["", f"- salience takes ≥2 of the top 3 on **{two_plus} of {len(res)}** corpora; all 3 on {all3}",
             f"- |rare_word_rate| and |jargon_rate| both under 0.25 on **{small_diff} of {len(res)}**",
-            f"- centroid_sim within-document effect ranges {min(cs):.2f} to {max(cs):.2f}"]
+            f"- centroid_sim within-document effect{' ' if cs else ': '}{span}"]
     return out
 
 
 def section_m2_density(res: dict[str, dict]) -> list[str]:
     d = {l: m["abstractiveness"]["corpus"]["density"]["mean"] for l, m in res.items()}
     inside = [l for l, v in d.items() if v <= 10]
+    span = (f" (range {min(d[l] for l in inside):.2f}–{max(d[l] for l in inside):.2f})"
+            if inside else "")
     return ["## M2 density", "",
-            f"- {len(inside)} of {len(d)} corpora have Grusky density ≤ 10 "
-            f"(range {min(d[l] for l in inside):.2f}–{max(d[l] for l in inside):.2f}); "
+            f"- {len(inside)} of {len(d)} corpora have Grusky density ≤ 10{span}; "
             f"above 10: {', '.join(f'{l} {v:.2f}' for l, v in d.items() if v > 10) or 'none'}"]
 
 
