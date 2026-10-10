@@ -26,6 +26,177 @@
  "modules": {
   "abstractiveness": {
    "corpus": {
+    "abstract_content_overlap": {
+     "all": {
+      "ci95": [
+       null,
+       null
+      ],
+      "extra": {},
+      "iqr": [
+       null,
+       null
+      ],
+      "mean": null,
+      "median": null,
+      "n": 0,
+      "std": null
+     },
+     "by_abstract_count": {
+      "1": {
+       "ci95": [
+        null,
+        null
+       ],
+       "extra": {},
+       "iqr": [
+        null,
+        null
+       ],
+       "mean": null,
+       "median": null,
+       "n": 0,
+       "std": null
+      },
+      "100+": {
+       "ci95": [
+        null,
+        null
+       ],
+       "extra": {},
+       "iqr": [
+        null,
+        null
+       ],
+       "mean": null,
+       "median": null,
+       "n": 0,
+       "std": null
+      },
+      "11-100": {
+       "ci95": [
+        null,
+        null
+       ],
+       "extra": {},
+       "iqr": [
+        null,
+        null
+       ],
+       "mean": null,
+       "median": null,
+       "n": 0,
+       "std": null
+      },
+      "2-10": {
+       "ci95": [
+        null,
+        null
+       ],
+       "extra": {},
+       "iqr": [
+        null,
+        null
+       ],
+       "mean": null,
+       "median": null,
+       "n": 0,
+       "std": null
+      }
+     },
+     "by_type": {
+      "noun": {
+       "ci95": [
+        null,
+        null
+       ],
+       "extra": {},
+       "iqr": [
+        null,
+        null
+       ],
+       "mean": null,
+       "median": null,
+       "n": 0,
+       "std": null
+      },
+      "num": {
+       "ci95": [
+        null,
+        null
+       ],
+       "extra": {},
+       "iqr": [
+        null,
+        null
+       ],
+       "mean": null,
+       "median": null,
+       "n": 0,
+       "std": null
+      },
+      "propn": {
+       "ci95": [
+        null,
+        null
+       ],
+       "extra": {},
+       "iqr": [
+        null,
+        null
+       ],
+       "mean": null,
+       "median": null,
+       "n": 0,
+       "std": null
+      },
+      "verb": {
+       "ci95": [
+        null,
+        null
+       ],
+       "extra": {},
+       "iqr": [
+        null,
+        null
+       ],
+       "mean": null,
+       "median": null,
+       "n": 0,
+       "std": null
+      }
+     }
+    },
+    "abstractivity_p1": {
+     "ci95": [
+      0.035356,
+      0.038169
+     ],
+     "extra": {},
+     "iqr": [
+      0.023719,
+      0.0455
+     ],
+     "mean": 0.03671,
+     "median": 0.034402,
+     "n": 589,
+     "std": 0.017165
+    },
+    "additions_proportion": {
+     "ci95": [
+      0.005958,
+      0.006969
+     ],
+     "extra": {},
+     "iqr": [
+      0.002402,
+      0.008475
+     ],
+     "mean": 0.006426,
+     "median": 0.004674,
+     "n": 589,
+     "std": 0.0063
+    },
     "content_type_overlap": {
      "ci95": [
       0.898356,
@@ -56,6 +227,21 @@
      "n": 589,
      "std": 0.017165
     },
+    "deletions_proportion": {
+     "ci95": [
+      0.889347,
+      0.899257
+     ],
+     "extra": {},
+     "iqr": [
+      0.860875,
+      0.941643
+     ],
+     "mean": 0.89444,
+     "median": 0.901492,
+     "n": 589,
+     "std": 0.060876
+    },
     "density": {
      "ci95": [
       9.194741,
@@ -70,6 +256,36 @@
      "median": 7.517078,
      "n": 589,
      "std": 7.712915
+    },
+    "exact_copies": {
+     "ci95": [
+      0.00336,
+      0.004767
+     ],
+     "extra": {},
+     "iqr": [
+      0.0,
+      0.004854
+     ],
+     "mean": 0.00401,
+     "median": 0.0,
+     "n": 589,
+     "std": 0.008387
+    },
+    "levenshtein_similarity": {
+     "ci95": [
+      0.173938,
+      0.187913
+     ],
+     "extra": {},
+     "iqr": [
+      0.111715,
+      0.233798
+     ],
+     "mean": 0.180568,
+     "median": 0.17509,
+     "n": 589,
+     "std": 0.084909
     },
     "n": 589,
     "novel_1gram": {
@@ -147,6 +363,21 @@
      "n": 589,
      "std": 0.031616
     },
+    "redundancy": {
+     "ci95": [
+      0.101317,
+      0.104567
+     ],
+     "extra": {},
+     "iqr": [
+      0.090791,
+      0.114761
+     ],
+     "mean": 0.103032,
+     "median": 0.103096,
+     "n": 589,
+     "std": 0.019578
+    },
     "rouge1_recall": {
      "ci95": [
       0.101532,
@@ -191,18 +422,107 @@
      "median": 0.133042,
      "n": 42,
      "std": 0.056348
+    },
+    "rouge_abstract_target": {
+     "rouge1_f1": {
+      "ci95": [
+       null,
+       null
+      ],
+      "extra": {},
+      "iqr": [
+       null,
+       null
+      ],
+      "mean": null,
+      "median": null,
+      "n": 0,
+      "std": null
+     },
+     "rouge2_f1": {
+      "ci95": [
+       null,
+       null
+      ],
+      "extra": {},
+      "iqr": [
+       null,
+       null
+      ],
+      "mean": null,
+      "median": null,
+      "n": 0,
+      "std": null
+     },
+     "rougeL_f1": {
+      "ci95": [
+       null,
+       null
+      ],
+      "extra": {},
+      "iqr": [
+       null,
+       null
+      ],
+      "mean": null,
+      "median": null,
+      "n": 0,
+      "std": null
+     }
+    },
+    "topic_similarity": {
+     "ci95": [
+      0.778131,
+      0.7909
+     ],
+     "extra": {},
+     "iqr": [
+      0.734063,
+      0.836021
+     ],
+     "mean": 0.784879,
+     "median": 0.788945,
+     "n": 589,
+     "std": 0.078878
     }
    },
    "notes": [
-    "ROUGE-L skipped for 547 pair(s) exceeding the LCS size cap; those contribute no rougeL_recall value."
+    "ROUGE-L skipped for 547 pair(s) exceeding the LCS size cap; those contribute no rougeL_recall value.",
+    "589 of 589 pair(s) have no abstract (meta['abstract']); the abstract-based metrics are null for them."
    ],
    "params": {
+    "abstract_content_overlap": "share of the abstract's distinct nouns, proper nouns, verbs and numbers (spaCy POS, standing in for ScispaCy) found among the target's words; buckets by how many abstracts in this corpus contain the word",
+    "abstractivity_p": 1,
+    "edit_features": "EASSE/tseval features on whole documents: Levenshtein = rapidfuzz fuzz.ratio(source, target)/100 on raw text; additions/deletions over case-preserving profiler word tokens; exact copies = share of source sentences found verbatim among target sentences",
     "lcs_cell_cap": 4000000,
-    "rouge_orientation": "recall(candidate=target, reference=source) = overlap / |source n-grams|"
+    "rouge_orientation": "recall(candidate=target, reference=source) = overlap / |source n-grams|",
+    "topic_similarity": {
+     "distance": "Jensen-Shannon distance, base 2",
+     "fit_on": "sources",
+     "model": "sklearn LatentDirichletAllocation (batch)",
+     "n_topics": 20,
+     "seed": 13,
+     "vectorizer": "CountVectorizer(lowercase, English stop words)"
+    }
    }
   },
   "length": {
    "corpus": {
+    "char_compression_ratio": {
+     "ci95": [
+      0.108358,
+      0.119424
+     ],
+     "extra": {},
+     "iqr": [
+      0.061976,
+      0.148853
+     ],
+     "mean": 0.113769,
+     "median": 0.104739,
+     "n": 589,
+     "std": 0.067034
+    },
     "compression_bimodality": 0.449014,
     "compression_ratio": {
      "ci95": [
@@ -637,6 +957,53 @@
        "std": 0.004362
       }
      },
+     "lexical_complexity": {
+      "delta": {
+       "ci95": [
+        0.191008,
+        0.496571
+       ],
+       "extra": {},
+       "iqr": [
+        -1.077516,
+        1.640499
+       ],
+       "mean": 0.33843,
+       "median": 0.338917,
+       "n": 589,
+       "std": 1.981059
+      },
+      "source": {
+       "ci95": [
+        62.831553,
+        63.2063
+       ],
+       "extra": {},
+       "iqr": [
+        61.364671,
+        64.732277
+       ],
+       "mean": 63.024978,
+       "median": 62.84713,
+       "n": 589,
+       "std": 2.357138
+      },
+      "target": {
+       "ci95": [
+        63.121124,
+        63.628012
+       ],
+       "extra": {},
+       "iqr": [
+        61.17457,
+        65.473529
+       ],
+       "mean": 63.363408,
+       "median": 63.252583,
+       "n": 589,
+       "std": 3.252204
+      }
+     },
      "mean_dependency_distance": {
       "delta": {
        "ci95": [
@@ -1011,6 +1378,53 @@
        "median": 1.637528,
        "n": 589,
        "std": 0.064789
+      }
+     },
+     "wordrank": {
+      "delta": {
+       "ci95": [
+        0.391333,
+        0.444693
+       ],
+       "extra": {},
+       "iqr": [
+        0.204109,
+        0.632284
+       ],
+       "mean": 0.417113,
+       "median": 0.410687,
+       "n": 589,
+       "std": 0.334635
+      },
+      "source": {
+       "ci95": [
+        7.627501,
+        7.665394
+       ],
+       "extra": {},
+       "iqr": [
+        7.48862,
+        7.786282
+       ],
+       "mean": 7.646558,
+       "median": 7.645143,
+       "n": 589,
+       "std": 0.236932
+      },
+      "target": {
+       "ci95": [
+        8.035182,
+        8.092508
+       ],
+       "extra": {},
+       "iqr": [
+        7.813516,
+        8.294208
+       ],
+       "mean": 8.063671,
+       "median": 8.072272,
+       "n": 589,
+       "std": 0.357354
       }
      }
     },
@@ -1646,6 +2060,75 @@
       }
      }
     },
+    "m3d_model_based": {
+     "models_run": [
+      "sle",
+      "coherence"
+     ],
+     "n": 250,
+     "semantic_coherence": {
+      "ci95": [
+       0.973741,
+       0.980671
+      ],
+      "extra": {},
+      "iqr": [
+       0.962963,
+       1.0
+      ],
+      "mean": 0.977167,
+      "median": 0.981637,
+      "n": 250,
+      "std": 0.029158
+     },
+     "sle_doc": {
+      "source": {
+       "ci95": [
+        0.096726,
+        0.141572
+       ],
+       "extra": {},
+       "iqr": [
+        -0.001188,
+        0.221905
+       ],
+       "mean": 0.118113,
+       "median": 0.108767,
+       "n": 250,
+       "std": 0.187079
+      },
+      "target": {
+       "ci95": [
+        0.416262,
+        0.485889
+       ],
+       "extra": {},
+       "iqr": [
+        0.242054,
+        0.63625
+       ],
+       "mean": 0.450255,
+       "median": 0.426622,
+       "n": 250,
+       "std": 0.288711
+      }
+     },
+     "sle_gain": {
+      "ci95": [
+       0.296122,
+       0.371652
+      ],
+      "extra": {},
+      "iqr": [
+       0.125502,
+       0.528586
+      ],
+      "mean": 0.332143,
+      "median": 0.327334,
+      "n": 250,
+      "std": 0.30969
+     }
+    },
     "n": 589
    },
    "notes": [],
@@ -1682,8 +2165,8 @@
  "n_full": 589,
  "n_sample": 250,
  "provenance": {
-  "git_commit": "1ab255d",
-  "run_dir": "ukabs_20260921T153904Z",
-  "source_file": "runs/ukabs_20260921T153904Z/metrics.json"
+  "git_commit": "55a5b38",
+  "run_dir": "ukabs_20261009T190757Z",
+  "source_file": "runs/ukabs_20261009T190757Z/metrics.json"
  }
 }

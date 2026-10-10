@@ -308,52 +308,71 @@ SUM is generic summarization, PLS plain-language (lay) summarization and DS docu
 
 #### SUM — summarization metrics
 
-| Metric | cochrane | plos | elife | contracts | dwikipedia | swipe | med_easi | cnn_dailymail | xsum | arxiv_pubmed | billsum |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| *dataset task* | PLS | PLS | PLS | PLS | DS | DS | DS | SUM | SUM | SUM | SUM |
-| [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.584 | 0.0311 | 0.0408 | 0.242 | 0.642 | 0.687 | 0.957 | 0.0770 | 0.0694 | 0.0769 | 0.123 |
-| [Coverage](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ more copied | 0.704 | 0.913 | 0.826 | 0.500 | 0.750 | 0.875 | 0.700 | 0.881 | 0.650 | 0.903 | 0.906 |
-| [Density](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ longer copied spans | 1.95 | 2.48 | 1.46 | 0.718 | 2.70 | 6.82 | 2.91 | 2.65 | 0.957 | 3.24 | 5.42 |
-| [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.296 | 0.0870 | 0.174 | 0.500 | 0.250 | 0.125 | 0.300 | 0.119 | 0.350 | 0.0966 | 0.0938 |
-| [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.722 | 0.494 | 0.702 | 0.889 | 0.588 | 0.359 | 0.519 | 0.538 | 0.850 | 0.460 | 0.372 |
-| [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.854 | 0.770 | 0.927 | 1.00 | 0.742 | 0.494 | 0.650 | 0.752 | 1.00 | 0.697 | 0.543 |
-| [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.913 | 0.889 | 0.983 | 1.00 | 0.826 | 0.584 | 0.750 | 0.865 | 1.00 | 0.816 | 0.657 |
+| Metric | cochrane | plos | elife | contracts | dwikipedia | swipe | med_easi | onestop | cnn_dailymail | xsum | arxiv_pubmed | billsum | xwikis_en |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| *dataset task* | PLS | PLS | PLS | PLS | DS | DS | DS | DS | SUM | SUM | SUM | SUM | SUM |
+| [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.584 | 0.0311 | 0.0408 | 0.242 | 0.642 | 0.687 | 0.957 | 0.649 | 0.0770 | 0.0694 | 0.0769 | 0.123 | 0.0828 |
+| [Coverage](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ more copied | 0.704 | 0.913 | 0.826 | 0.500 | 0.750 | 0.875 | 0.700 | 0.922 | 0.881 | 0.650 | 0.903 | 0.906 | 0.722 |
+| [Density](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ longer copied spans | 1.95 | 2.48 | 1.46 | 0.718 | 2.70 | 6.82 | 2.91 | 8.18 | 2.65 | 0.957 | 3.24 | 5.42 | 1.33 |
+| [Abstractivity](docs/metrics.md#abstractivenessabstractivity_p1--abstractivity) ↑ more abstractive | 0.296 | 0.0870 | 0.174 | 0.500 | 0.250 | 0.125 | 0.300 | 0.0785 | 0.119 | 0.350 | 0.0966 | 0.0938 | 0.278 |
+| [Redundancy](docs/metrics.md#abstractivenessredundancy--redundancy) ↑ more repetitive target | 0.116 | 0.120 | 0.112 | 0.139 | 0.124 | 0.125 | 0.119 | 0.0930 | 0.0787 | 0.00 | 0.125 | 0.150 | 0.131 |
+| [Topic similarity](docs/metrics.md#abstractivenesstopic_similarity--topic-similarity) ↑ closer topic mix to source | 0.553 | 0.686 | 0.558 | 0.335 | 0.632 | 0.791 | 0.692 | 0.763 | 0.715 | 0.462 | 0.747 | 0.666 | 0.585 |
+| [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.296 | 0.0870 | 0.174 | 0.500 | 0.250 | 0.125 | 0.300 | 0.0785 | 0.119 | 0.350 | 0.0966 | 0.0938 | 0.278 |
+| [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.722 | 0.494 | 0.702 | 0.889 | 0.588 | 0.359 | 0.519 | 0.347 | 0.538 | 0.850 | 0.460 | 0.372 | 0.750 |
+| [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.854 | 0.770 | 0.927 | 1.00 | 0.742 | 0.494 | 0.650 | 0.503 | 0.752 | 1.00 | 0.697 | 0.543 | 0.923 |
+| [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.913 | 0.889 | 0.983 | 1.00 | 0.826 | 0.584 | 0.750 | 0.595 | 0.865 | 1.00 | 0.816 | 0.657 | 0.981 |
+| [Semantic coherence](docs/metrics.md#readabilitym3d_model_basedsemantic_coherence--semantic-coherence)† ↑ more coherent | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 0.947 | 1.00 | 0.00 | 1.00 | 1.00 | 1.00 |
 
-Not yet computed for any dataset: Abstractivity, Redundancy, Topic similarity, Semantic coherence, SummaC precision (document), QAFactEval precision, SummaC-Conv (sentence), AlignScore (sentence), BLANC, SUPERT, SummaQA.
+Not yet computed for any dataset: SummaC precision (document), QAFactEval precision, SummaC-Conv (sentence), AlignScore (sentence), BLANC, SUPERT, SummaQA.
 
 #### PLS — plain-language summarization metrics
 
-| Metric | cochrane | plos | elife | contracts | dwikipedia | swipe | med_easi | cnn_dailymail | xsum | arxiv_pubmed | billsum |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| *dataset task* | PLS | PLS | PLS | PLS | DS | DS | DS | SUM | SUM | SUM | SUM |
-| [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.296 | 0.0870 | 0.174 | 0.500 | 0.250 | 0.125 | 0.300 | 0.119 | 0.350 | 0.0966 | 0.0938 |
-| [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.722 | 0.494 | 0.702 | 0.889 | 0.588 | 0.359 | 0.519 | 0.538 | 0.850 | 0.460 | 0.372 |
-| [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.854 | 0.770 | 0.927 | 1.00 | 0.742 | 0.494 | 0.650 | 0.752 | 1.00 | 0.697 | 0.543 |
-| [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.913 | 0.889 | 0.983 | 1.00 | 0.826 | 0.584 | 0.750 | 0.865 | 1.00 | 0.816 | 0.657 |
-| [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 12.6 (Δ −1.60) | 14.6 (Δ +1.80) | 11.2 (Δ −1.40) | 7.60 (Δ −6.15) | 7.60 (Δ −3.40) | 7.60 (Δ −2.60) | 10.2 (Δ −1.35) | 6.90 (Δ −2.10) | 10.3 (Δ +0.60) | 15.1 (Δ +0.30) | 20.7 (Δ 0.00) |
-| [CLI](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 13.9 (Δ +0.05) | 15.8 (Δ +2.27) | 12.5 (Δ −0.99) | 9.35 (Δ −1.34) | 9.16 (Δ −2.04) | 9.39 (Δ −1.50) | 11.4 (Δ −1.23) | 10.5 (Δ +0.33) | 11.1 (Δ +0.95) | 15.5 (Δ +1.62) | 15.3 (Δ +1.80) |
-| [DCRS](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 9.49 (Δ −0.49) | 10.9 (Δ +3.26) | 8.94 (Δ +1.56) | 9.35 (Δ −0.06) | 10.2 (Δ −0.73) | 10.3 (Δ −0.50) | 10.8 (Δ −0.63) | 10.8 (Δ +2.12) | 11.0 (Δ +1.78) | 11.1 (Δ +2.63) | 11.3 (Δ +2.40) |
+| Metric | cochrane | plos | elife | contracts | dwikipedia | swipe | med_easi | onestop | cnn_dailymail | xsum | arxiv_pubmed | billsum | xwikis_en |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| *dataset task* | PLS | PLS | PLS | PLS | DS | DS | DS | DS | SUM | SUM | SUM | SUM | SUM |
+| [ROUGE-1/2/L(abstract, target)](docs/metrics.md#abstractivenessrouge_abstract_target--rougeabstract-target) ↑ closer to the abstract | — | 0.460 / 0.158 / 0.239 | 0.292 / 0.0590 / 0.152 | — | — | — | — | — | — | — | — | — | — |
+| [Abstract content-word overlap](docs/metrics.md#abstractivenessabstract_content_overlap--abstract-content-word-overlap-by-rarity) ↑ more abstract terms kept | — | 0.333 | 0.300 | — | — | — | — | — | — | — | — | — | — |
+| [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.296 | 0.0870 | 0.174 | 0.500 | 0.250 | 0.125 | 0.300 | 0.0785 | 0.119 | 0.350 | 0.0966 | 0.0938 | 0.278 |
+| [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.722 | 0.494 | 0.702 | 0.889 | 0.588 | 0.359 | 0.519 | 0.347 | 0.538 | 0.850 | 0.460 | 0.372 | 0.750 |
+| [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.854 | 0.770 | 0.927 | 1.00 | 0.742 | 0.494 | 0.650 | 0.503 | 0.752 | 1.00 | 0.697 | 0.543 | 0.923 |
+| [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.913 | 0.889 | 0.983 | 1.00 | 0.826 | 0.584 | 0.750 | 0.595 | 0.865 | 1.00 | 0.816 | 0.657 | 0.981 |
+| [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 12.6 (Δ −1.60) | 14.6 (Δ +1.80) | 11.2 (Δ −1.40) | 7.60 (Δ −6.15) | 7.60 (Δ −3.40) | 7.60 (Δ −2.60) | 10.2 (Δ −1.35) | 7.50 (Δ −2.80) | 6.90 (Δ −2.10) | 10.3 (Δ +0.60) | 15.1 (Δ +0.30) | 20.7 (Δ 0.00) | 11.0 (Δ +0.20) |
+| [CLI](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 13.9 (Δ +0.05) | 15.8 (Δ +2.27) | 12.5 (Δ −0.99) | 9.35 (Δ −1.34) | 9.16 (Δ −2.04) | 9.39 (Δ −1.50) | 11.4 (Δ −1.23) | 8.82 (Δ −1.56) | 10.5 (Δ +0.33) | 11.1 (Δ +0.95) | 15.5 (Δ +1.62) | 15.3 (Δ +1.80) | 11.4 (Δ +0.14) |
+| [DCRS](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 9.49 (Δ −0.49) | 10.9 (Δ +3.26) | 8.94 (Δ +1.56) | 9.35 (Δ −0.06) | 10.2 (Δ −0.73) | 10.3 (Δ −0.50) | 10.8 (Δ −0.63) | 7.85 (Δ −0.97) | 10.8 (Δ +2.12) | 11.0 (Δ +1.78) | 11.1 (Δ +2.63) | 11.3 (Δ +2.40) | 11.1 (Δ +1.74) |
+| [WordRank](docs/metrics.md#readabilitym3b_length_invariantwordrank--wordrank) ↓ more frequent words | 7.71 (Δ −0.76) | 8.64 (Δ −0.49) | 8.09 (Δ −1.49) | 6.97 (Δ −0.21) | 8.28 (Δ −0.29) | 8.34 (Δ −0.09) | 8.15 (Δ −0.21) | 7.12 (Δ −0.35) | 8.07 (Δ +0.47) | 7.84 (Δ +0.23) | 8.84 (Δ +0.10) | 7.98 (Δ −0.21) | 8.47 (Δ +0.20) |
+| [Background sentence share](docs/metrics.md#elaborationrhetorical_roles--rhetorical-role-distribution)† ↑ more background sentences | 0.143 | 0.481 | 0.353 | 0.00 | 0.333 | 0.333 | 0.00 | 0.239 | 0.200 | 0.00 | 0.200 | 0.354 | 0.200 |
 
-Not yet computed for any dataset: ROUGE-1/2/L(abstract, target), Abstract content-word overlap, WordRank, Background sentence share, SummaC-Conv (sentence), AlignScore (sentence).
+Not yet computed for any dataset: SummaC-Conv (sentence), AlignScore (sentence).
 
 #### DS — document simplification metrics
 
-| Metric | cochrane | plos | elife | contracts | dwikipedia | swipe | med_easi | cnn_dailymail | xsum | arxiv_pubmed | billsum |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| *dataset task* | PLS | PLS | PLS | PLS | DS | DS | DS | SUM | SUM | SUM | SUM |
-| [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.584 | 0.0311 | 0.0408 | 0.242 | 0.642 | 0.687 | 0.957 | 0.0770 | 0.0694 | 0.0769 | 0.123 |
-| [Sentence split ratio](docs/metrics.md#lengthsentence_ratio--sentence-split-ratio) ↑ more target sentences per source sentence | 0.667 | 0.0274 | 0.0343 | 0.500 | 1.00 | 1.00 | 1.00 | 0.109 | 0.0667 | 0.0822 | 0.125 |
-| [Source length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 326 | 5865 | 8666 | 58 | 85 | 86 | 20 | 634 | 306 | 2340 | 1218 |
-| [Target length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 199 | 188 | 352 | 13 | 52 | 47 | 18 | 46 | 21 | 186 | 161 |
-| [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 12.6 (Δ −1.60) | 14.6 (Δ +1.80) | 11.2 (Δ −1.40) | 7.60 (Δ −6.15) | 7.60 (Δ −3.40) | 7.60 (Δ −2.60) | 10.2 (Δ −1.35) | 6.90 (Δ −2.10) | 10.3 (Δ +0.60) | 15.1 (Δ +0.30) | 20.7 (Δ 0.00) |
-| [FRE](docs/metrics.md#readabilitym3a_surfacefre--flesch-reading-ease) ↑ easier | 42.8 (Δ +5.62) | 30.0 (Δ −11.25) | 51.4 (Δ +8.59) | 64.0 (Δ +18.71) | 67.5 (Δ +14.38) | 67.1 (Δ +10.14) | 55.9 (Δ +8.46) | 68.3 (Δ +3.90) | 59.6 (Δ −2.85) | 29.1 (Δ −6.13) | 14.8 (Δ −5.45) |
-| [BLEU(target, source)](docs/metrics.md#pair_similaritybleu--bleutarget-source)† ↑ closer to source wording | 11.9 | 0.00 | 0.00 | 0.0913 | 15.4 | 23.6 | 39.7 | <0.001 | 0.00 | <0.001 | 0.0184 |
+| Metric | cochrane | plos | elife | contracts | dwikipedia | swipe | med_easi | onestop | cnn_dailymail | xsum | arxiv_pubmed | billsum | xwikis_en |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| *dataset task* | PLS | PLS | PLS | PLS | DS | DS | DS | DS | SUM | SUM | SUM | SUM | SUM |
+| [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.584 | 0.0311 | 0.0408 | 0.242 | 0.642 | 0.687 | 0.957 | 0.649 | 0.0770 | 0.0694 | 0.0769 | 0.123 | 0.0828 |
+| [Sentence split ratio](docs/metrics.md#lengthsentence_ratio--sentence-split-ratio) ↑ more target sentences per source sentence | 0.667 | 0.0274 | 0.0343 | 0.500 | 1.00 | 1.00 | 1.00 | 0.852 | 0.109 | 0.0667 | 0.0822 | 0.125 | 0.0870 |
+| [Compression ratio (characters)](docs/metrics.md#lengthchar_compression_ratio--compression-ratio-characters) ↓ more compressed | 0.583 | 0.0326 | 0.0392 | 0.232 | 0.608 | 0.655 | 0.939 | 0.628 | 0.0804 | 0.0686 | 0.0804 | 0.106 | 0.0835 |
+| [Source length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 326 | 5865 | 8666 | 58 | 85 | 86 | 20 | 844 | 634 | 306 | 2340 | 1218 | 600 |
+| [Target length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 199 | 188 | 352 | 13 | 52 | 47 | 18 | 557 | 46 | 21 | 186 | 161 | 53 |
+| [Exact copies](docs/metrics.md#abstractivenessexact_copies--exact-copies) ↑ more source sentences kept verbatim | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.0600 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| [Additions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words added | 0.220 | 0.00314 | 0.00841 | 0.105 | 0.162 | 0.0779 | 0.236 | 0.0930 | 0.0106 | 0.0243 | 0.00766 | 0.0149 | 0.0250 |
+| [Deletions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words deleted | 0.649 | 0.973 | 0.968 | 0.896 | 0.584 | 0.482 | 0.353 | 0.447 | 0.934 | 0.957 | 0.932 | 0.894 | 0.945 |
+| [Levenshtein similarity](docs/metrics.md#abstractivenesslevenshtein_similarity--levenshtein-similarity) ↑ closer to source text | 0.441 | 0.0627 | 0.0749 | 0.303 | 0.470 | 0.577 | 0.688 | 0.652 | 0.139 | 0.121 | 0.142 | 0.178 | 0.139 |
+| [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 12.6 (Δ −1.60) | 14.6 (Δ +1.80) | 11.2 (Δ −1.40) | 7.60 (Δ −6.15) | 7.60 (Δ −3.40) | 7.60 (Δ −2.60) | 10.2 (Δ −1.35) | 7.50 (Δ −2.80) | 6.90 (Δ −2.10) | 10.3 (Δ +0.60) | 15.1 (Δ +0.30) | 20.7 (Δ 0.00) | 11.0 (Δ +0.20) |
+| [FRE](docs/metrics.md#readabilitym3a_surfacefre--flesch-reading-ease) ↑ easier | 42.8 (Δ +5.62) | 30.0 (Δ −11.25) | 51.4 (Δ +8.59) | 64.0 (Δ +18.71) | 67.5 (Δ +14.38) | 67.1 (Δ +10.14) | 55.9 (Δ +8.46) | 71.8 (Δ +12.02) | 68.3 (Δ +3.90) | 59.6 (Δ −2.85) | 29.1 (Δ −6.13) | 14.8 (Δ −5.45) | 54.2 (Δ −2.35) |
+| [Lexical complexity](docs/metrics.md#readabilitym3b_length_invariantlexical_complexity--lexical-complexity) ↓ more frequent words | 62.9 (Δ −4.63) | 74.0 (Δ −4.18) | 67.7 (Δ −12.78) | 53.3 (Δ −4.00) | 65.6 (Δ −2.05) | 67.7 (Δ −0.61) | 67.5 (Δ −2.08) | 55.8 (Δ −4.68) | 62.8 (Δ +1.65) | 60.6 (Δ +0.33) | 75.7 (Δ +0.76) | 61.7 (Δ −0.62) | 68.4 (Δ +0.62) |
+| [SLE (document)](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler | 0.134 | 0.283 | 1.18 | 1.14 | 2.72 | 2.02 | 1.41 | 2.13 | 2.63 | 0.475 | 0.424 | −0.530 | 1.05 |
+| [SLE gain](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler than source | 0.394 | −0.663 | −0.307 | 1.24 | 1.01 | 0.955 | 0.738 | 1.27 | 1.39 | −0.414 | −0.0162 | −2.38 | 0.102 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ fewer entities absent from source | 0.621 | 1.00 | 0.600 | 0.00 | 0.500 | 0.800 | 0.667 | 0.900 | 0.800 | 0.333 | 0.750 | 0.625 | 0.444 |
+| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more source entities kept | 0.167 | 0.0160 | 0.00820 | 0.00 | 0.315 | 0.500 | 0.500 | 0.652 | 0.120 | 0.0339 | 0.0541 | 0.102 | 0.0523 |
+| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more entity overlap | 0.259 | 0.0315 | 0.0162 | 0.00 | 0.364 | 0.538 | 0.500 | 0.753 | 0.203 | 0.0616 | 0.101 | 0.174 | 0.0920 |
+| [BLEU(target, source)](docs/metrics.md#pair_similaritybleu--bleutarget-source)† ↑ closer to source wording | 11.9 | 0.00 | 0.00 | 0.0913 | 15.4 | 23.6 | 39.7 | 34.1 | <0.001 | 0.00 | <0.001 | 0.0184 | <0.001 |
 
-Not yet computed for any dataset: Compression ratio (characters), Exact copies, Additions proportion, Deletions proportion, Levenshtein similarity, Lexical complexity, SLE (document), SLE gain, Entity precision, Entity recall, Entity F1, SummaC precision (document), QAFactEval precision, SummaC recall (document), QAFactEval recall, SummaC-Conv (sentence).
+Not yet computed for any dataset: SummaC precision (document), QAFactEval precision, SummaC recall (document), QAFactEval recall, SummaC-Conv (sentence).
 
 ### Within domain
 
-Here domain is held constant, so a difference between columns is not a difference of subject matter. Only domains whose datasets carry at least two task labels get a table; encyclopedia (DS only) and news (SUM only) have a single task label, so there is nothing to compare within them. † and Δ mean the same as above, and metrics with no value for any dataset in a domain are omitted; the lists above name the metrics not yet computed.
+Here domain is held constant, so a difference between columns is not a difference of subject matter. Only domains whose datasets carry at least two task labels get a table. † and Δ mean the same as above, and metrics with no value for any dataset in a domain are omitted; the lists above name the metrics not yet computed.
 
 #### Biomedical
 
@@ -364,11 +383,17 @@ Here domain is held constant, so a difference between columns is not a differenc
 | [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.584 | 0.0311 | 0.0408 | 0.957 | 0.0769 |
 | [Coverage](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ more copied | 0.704 | 0.913 | 0.826 | 0.700 | 0.903 |
 | [Density](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ longer copied spans | 1.95 | 2.48 | 1.46 | 2.91 | 3.24 |
+| [Abstractivity](docs/metrics.md#abstractivenessabstractivity_p1--abstractivity) ↑ more abstractive | 0.296 | 0.0870 | 0.174 | 0.300 | 0.0966 |
+| [Redundancy](docs/metrics.md#abstractivenessredundancy--redundancy) ↑ more repetitive target | 0.116 | 0.120 | 0.112 | 0.119 | 0.125 |
+| [Topic similarity](docs/metrics.md#abstractivenesstopic_similarity--topic-similarity) ↑ closer topic mix to source | 0.553 | 0.686 | 0.558 | 0.692 | 0.747 |
 | [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.296 | 0.0870 | 0.174 | 0.300 | 0.0966 |
 | [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.722 | 0.494 | 0.702 | 0.519 | 0.460 |
 | [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.854 | 0.770 | 0.927 | 0.650 | 0.697 |
 | [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.913 | 0.889 | 0.983 | 0.750 | 0.816 |
+| [Semantic coherence](docs/metrics.md#readabilitym3d_model_basedsemantic_coherence--semantic-coherence)† ↑ more coherent | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
 | **PLS metrics** |  |  |  |  |  |
+| [ROUGE-1/2/L(abstract, target)](docs/metrics.md#abstractivenessrouge_abstract_target--rougeabstract-target) ↑ closer to the abstract | — | 0.460 / 0.158 / 0.239 | 0.292 / 0.0590 / 0.152 | — | — |
+| [Abstract content-word overlap](docs/metrics.md#abstractivenessabstract_content_overlap--abstract-content-word-overlap-by-rarity) ↑ more abstract terms kept | — | 0.333 | 0.300 | — | — |
 | [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.296 | 0.0870 | 0.174 | 0.300 | 0.0966 |
 | [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.722 | 0.494 | 0.702 | 0.519 | 0.460 |
 | [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.854 | 0.770 | 0.927 | 0.650 | 0.697 |
@@ -376,13 +401,26 @@ Here domain is held constant, so a difference between columns is not a differenc
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 12.6 (Δ −1.60) | 14.6 (Δ +1.80) | 11.2 (Δ −1.40) | 10.2 (Δ −1.35) | 15.1 (Δ +0.30) |
 | [CLI](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 13.9 (Δ +0.05) | 15.8 (Δ +2.27) | 12.5 (Δ −0.99) | 11.4 (Δ −1.23) | 15.5 (Δ +1.62) |
 | [DCRS](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 9.49 (Δ −0.49) | 10.9 (Δ +3.26) | 8.94 (Δ +1.56) | 10.8 (Δ −0.63) | 11.1 (Δ +2.63) |
+| [WordRank](docs/metrics.md#readabilitym3b_length_invariantwordrank--wordrank) ↓ more frequent words | 7.71 (Δ −0.76) | 8.64 (Δ −0.49) | 8.09 (Δ −1.49) | 8.15 (Δ −0.21) | 8.84 (Δ +0.10) |
+| [Background sentence share](docs/metrics.md#elaborationrhetorical_roles--rhetorical-role-distribution)† ↑ more background sentences | 0.143 | 0.481 | 0.353 | 0.00 | 0.200 |
 | **DS metrics** |  |  |  |  |  |
 | [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.584 | 0.0311 | 0.0408 | 0.957 | 0.0769 |
 | [Sentence split ratio](docs/metrics.md#lengthsentence_ratio--sentence-split-ratio) ↑ more target sentences per source sentence | 0.667 | 0.0274 | 0.0343 | 1.00 | 0.0822 |
+| [Compression ratio (characters)](docs/metrics.md#lengthchar_compression_ratio--compression-ratio-characters) ↓ more compressed | 0.583 | 0.0326 | 0.0392 | 0.939 | 0.0804 |
 | [Source length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 326 | 5865 | 8666 | 20 | 2340 |
 | [Target length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 199 | 188 | 352 | 18 | 186 |
+| [Exact copies](docs/metrics.md#abstractivenessexact_copies--exact-copies) ↑ more source sentences kept verbatim | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| [Additions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words added | 0.220 | 0.00314 | 0.00841 | 0.236 | 0.00766 |
+| [Deletions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words deleted | 0.649 | 0.973 | 0.968 | 0.353 | 0.932 |
+| [Levenshtein similarity](docs/metrics.md#abstractivenesslevenshtein_similarity--levenshtein-similarity) ↑ closer to source text | 0.441 | 0.0627 | 0.0749 | 0.688 | 0.142 |
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 12.6 (Δ −1.60) | 14.6 (Δ +1.80) | 11.2 (Δ −1.40) | 10.2 (Δ −1.35) | 15.1 (Δ +0.30) |
 | [FRE](docs/metrics.md#readabilitym3a_surfacefre--flesch-reading-ease) ↑ easier | 42.8 (Δ +5.62) | 30.0 (Δ −11.25) | 51.4 (Δ +8.59) | 55.9 (Δ +8.46) | 29.1 (Δ −6.13) |
+| [Lexical complexity](docs/metrics.md#readabilitym3b_length_invariantlexical_complexity--lexical-complexity) ↓ more frequent words | 62.9 (Δ −4.63) | 74.0 (Δ −4.18) | 67.7 (Δ −12.78) | 67.5 (Δ −2.08) | 75.7 (Δ +0.76) |
+| [SLE (document)](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler | 0.134 | 0.283 | 1.18 | 1.41 | 0.424 |
+| [SLE gain](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler than source | 0.394 | −0.663 | −0.307 | 0.738 | −0.0162 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ fewer entities absent from source | 0.621 | 1.00 | 0.600 | 0.667 | 0.750 |
+| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more source entities kept | 0.167 | 0.0160 | 0.00820 | 0.500 | 0.0541 |
+| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more entity overlap | 0.259 | 0.0315 | 0.0162 | 0.500 | 0.101 |
 | [BLEU(target, source)](docs/metrics.md#pair_similaritybleu--bleutarget-source)† ↑ closer to source wording | 11.9 | 0.00 | 0.00 | 39.7 | <0.001 |
 
 #### Legal
@@ -394,10 +432,14 @@ Here domain is held constant, so a difference between columns is not a differenc
 | [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.242 | 0.123 |
 | [Coverage](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ more copied | 0.500 | 0.906 |
 | [Density](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ longer copied spans | 0.718 | 5.42 |
+| [Abstractivity](docs/metrics.md#abstractivenessabstractivity_p1--abstractivity) ↑ more abstractive | 0.500 | 0.0938 |
+| [Redundancy](docs/metrics.md#abstractivenessredundancy--redundancy) ↑ more repetitive target | 0.139 | 0.150 |
+| [Topic similarity](docs/metrics.md#abstractivenesstopic_similarity--topic-similarity) ↑ closer topic mix to source | 0.335 | 0.666 |
 | [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.500 | 0.0938 |
 | [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.889 | 0.372 |
 | [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 1.00 | 0.543 |
 | [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 1.00 | 0.657 |
+| [Semantic coherence](docs/metrics.md#readabilitym3d_model_basedsemantic_coherence--semantic-coherence)† ↑ more coherent | 1.00 | 1.00 |
 | **PLS metrics** |  |  |
 | [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.500 | 0.0938 |
 | [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.889 | 0.372 |
@@ -406,16 +448,123 @@ Here domain is held constant, so a difference between columns is not a differenc
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 7.60 (Δ −6.15) | 20.7 (Δ 0.00) |
 | [CLI](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 9.35 (Δ −1.34) | 15.3 (Δ +1.80) |
 | [DCRS](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 9.35 (Δ −0.06) | 11.3 (Δ +2.40) |
+| [WordRank](docs/metrics.md#readabilitym3b_length_invariantwordrank--wordrank) ↓ more frequent words | 6.97 (Δ −0.21) | 7.98 (Δ −0.21) |
+| [Background sentence share](docs/metrics.md#elaborationrhetorical_roles--rhetorical-role-distribution)† ↑ more background sentences | 0.00 | 0.354 |
 | **DS metrics** |  |  |
 | [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.242 | 0.123 |
 | [Sentence split ratio](docs/metrics.md#lengthsentence_ratio--sentence-split-ratio) ↑ more target sentences per source sentence | 0.500 | 0.125 |
+| [Compression ratio (characters)](docs/metrics.md#lengthchar_compression_ratio--compression-ratio-characters) ↓ more compressed | 0.232 | 0.106 |
 | [Source length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 58 | 1218 |
 | [Target length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 13 | 161 |
+| [Exact copies](docs/metrics.md#abstractivenessexact_copies--exact-copies) ↑ more source sentences kept verbatim | 0.00 | 0.00 |
+| [Additions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words added | 0.105 | 0.0149 |
+| [Deletions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words deleted | 0.896 | 0.894 |
+| [Levenshtein similarity](docs/metrics.md#abstractivenesslevenshtein_similarity--levenshtein-similarity) ↑ closer to source text | 0.303 | 0.178 |
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 7.60 (Δ −6.15) | 20.7 (Δ 0.00) |
 | [FRE](docs/metrics.md#readabilitym3a_surfacefre--flesch-reading-ease) ↑ easier | 64.0 (Δ +18.71) | 14.8 (Δ −5.45) |
+| [Lexical complexity](docs/metrics.md#readabilitym3b_length_invariantlexical_complexity--lexical-complexity) ↓ more frequent words | 53.3 (Δ −4.00) | 61.7 (Δ −0.62) |
+| [SLE (document)](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler | 1.14 | −0.530 |
+| [SLE gain](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler than source | 1.24 | −2.38 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ fewer entities absent from source | 0.00 | 0.625 |
+| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more source entities kept | 0.00 | 0.102 |
+| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more entity overlap | 0.00 | 0.174 |
 | [BLEU(target, source)](docs/metrics.md#pair_similaritybleu--bleutarget-source)† ↑ closer to source wording | 0.0913 | 0.0184 |
 
-† Computed on a seeded sample: 60 pairs for plos and elife, 250 for every other dataset. Unmarked metrics use the full corpus: 446 pairs for contracts, 1,000 for every other dataset.
+#### Encyclopedia
+
+| Metric | dwikipedia | swipe | xwikis_en |
+| --- | --- | --- | --- |
+| *dataset task* | DS | DS | SUM |
+| **SUM metrics** |  |  |  |
+| [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.642 | 0.687 | 0.0828 |
+| [Coverage](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ more copied | 0.750 | 0.875 | 0.722 |
+| [Density](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ longer copied spans | 2.70 | 6.82 | 1.33 |
+| [Abstractivity](docs/metrics.md#abstractivenessabstractivity_p1--abstractivity) ↑ more abstractive | 0.250 | 0.125 | 0.278 |
+| [Redundancy](docs/metrics.md#abstractivenessredundancy--redundancy) ↑ more repetitive target | 0.124 | 0.125 | 0.131 |
+| [Topic similarity](docs/metrics.md#abstractivenesstopic_similarity--topic-similarity) ↑ closer topic mix to source | 0.632 | 0.791 | 0.585 |
+| [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.250 | 0.125 | 0.278 |
+| [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.588 | 0.359 | 0.750 |
+| [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.742 | 0.494 | 0.923 |
+| [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.826 | 0.584 | 0.981 |
+| [Semantic coherence](docs/metrics.md#readabilitym3d_model_basedsemantic_coherence--semantic-coherence)† ↑ more coherent | 1.00 | 1.00 | 1.00 |
+| **PLS metrics** |  |  |  |
+| [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.250 | 0.125 | 0.278 |
+| [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.588 | 0.359 | 0.750 |
+| [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.742 | 0.494 | 0.923 |
+| [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.826 | 0.584 | 0.981 |
+| [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 7.60 (Δ −3.40) | 7.60 (Δ −2.60) | 11.0 (Δ +0.20) |
+| [CLI](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 9.16 (Δ −2.04) | 9.39 (Δ −1.50) | 11.4 (Δ +0.14) |
+| [DCRS](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 10.2 (Δ −0.73) | 10.3 (Δ −0.50) | 11.1 (Δ +1.74) |
+| [WordRank](docs/metrics.md#readabilitym3b_length_invariantwordrank--wordrank) ↓ more frequent words | 8.28 (Δ −0.29) | 8.34 (Δ −0.09) | 8.47 (Δ +0.20) |
+| [Background sentence share](docs/metrics.md#elaborationrhetorical_roles--rhetorical-role-distribution)† ↑ more background sentences | 0.333 | 0.333 | 0.200 |
+| **DS metrics** |  |  |  |
+| [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.642 | 0.687 | 0.0828 |
+| [Sentence split ratio](docs/metrics.md#lengthsentence_ratio--sentence-split-ratio) ↑ more target sentences per source sentence | 1.00 | 1.00 | 0.0870 |
+| [Compression ratio (characters)](docs/metrics.md#lengthchar_compression_ratio--compression-ratio-characters) ↓ more compressed | 0.608 | 0.655 | 0.0835 |
+| [Source length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 85 | 86 | 600 |
+| [Target length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 52 | 47 | 53 |
+| [Exact copies](docs/metrics.md#abstractivenessexact_copies--exact-copies) ↑ more source sentences kept verbatim | 0.00 | 0.00 | 0.00 |
+| [Additions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words added | 0.162 | 0.0779 | 0.0250 |
+| [Deletions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words deleted | 0.584 | 0.482 | 0.945 |
+| [Levenshtein similarity](docs/metrics.md#abstractivenesslevenshtein_similarity--levenshtein-similarity) ↑ closer to source text | 0.470 | 0.577 | 0.139 |
+| [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 7.60 (Δ −3.40) | 7.60 (Δ −2.60) | 11.0 (Δ +0.20) |
+| [FRE](docs/metrics.md#readabilitym3a_surfacefre--flesch-reading-ease) ↑ easier | 67.5 (Δ +14.38) | 67.1 (Δ +10.14) | 54.2 (Δ −2.35) |
+| [Lexical complexity](docs/metrics.md#readabilitym3b_length_invariantlexical_complexity--lexical-complexity) ↓ more frequent words | 65.6 (Δ −2.05) | 67.7 (Δ −0.61) | 68.4 (Δ +0.62) |
+| [SLE (document)](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler | 2.72 | 2.02 | 1.05 |
+| [SLE gain](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler than source | 1.01 | 0.955 | 0.102 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ fewer entities absent from source | 0.500 | 0.800 | 0.444 |
+| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more source entities kept | 0.315 | 0.500 | 0.0523 |
+| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more entity overlap | 0.364 | 0.538 | 0.0920 |
+| [BLEU(target, source)](docs/metrics.md#pair_similaritybleu--bleutarget-source)† ↑ closer to source wording | 15.4 | 23.6 | <0.001 |
+
+#### News
+
+| Metric | onestop | cnn_dailymail | xsum |
+| --- | --- | --- | --- |
+| *dataset task* | DS | SUM | SUM |
+| **SUM metrics** |  |  |  |
+| [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.649 | 0.0770 | 0.0694 |
+| [Coverage](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ more copied | 0.922 | 0.881 | 0.650 |
+| [Density](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ longer copied spans | 8.18 | 2.65 | 0.957 |
+| [Abstractivity](docs/metrics.md#abstractivenessabstractivity_p1--abstractivity) ↑ more abstractive | 0.0785 | 0.119 | 0.350 |
+| [Redundancy](docs/metrics.md#abstractivenessredundancy--redundancy) ↑ more repetitive target | 0.0930 | 0.0787 | 0.00 |
+| [Topic similarity](docs/metrics.md#abstractivenesstopic_similarity--topic-similarity) ↑ closer topic mix to source | 0.763 | 0.715 | 0.462 |
+| [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.0785 | 0.119 | 0.350 |
+| [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.347 | 0.538 | 0.850 |
+| [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.503 | 0.752 | 1.00 |
+| [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.595 | 0.865 | 1.00 |
+| [Semantic coherence](docs/metrics.md#readabilitym3d_model_basedsemantic_coherence--semantic-coherence)† ↑ more coherent | 0.947 | 1.00 | 0.00 |
+| **PLS metrics** |  |  |  |
+| [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.0785 | 0.119 | 0.350 |
+| [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.347 | 0.538 | 0.850 |
+| [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.503 | 0.752 | 1.00 |
+| [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.595 | 0.865 | 1.00 |
+| [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 7.50 (Δ −2.80) | 6.90 (Δ −2.10) | 10.3 (Δ +0.60) |
+| [CLI](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 8.82 (Δ −1.56) | 10.5 (Δ +0.33) | 11.1 (Δ +0.95) |
+| [DCRS](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 7.85 (Δ −0.97) | 10.8 (Δ +2.12) | 11.0 (Δ +1.78) |
+| [WordRank](docs/metrics.md#readabilitym3b_length_invariantwordrank--wordrank) ↓ more frequent words | 7.12 (Δ −0.35) | 8.07 (Δ +0.47) | 7.84 (Δ +0.23) |
+| [Background sentence share](docs/metrics.md#elaborationrhetorical_roles--rhetorical-role-distribution)† ↑ more background sentences | 0.239 | 0.200 | 0.00 |
+| **DS metrics** |  |  |  |
+| [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.649 | 0.0770 | 0.0694 |
+| [Sentence split ratio](docs/metrics.md#lengthsentence_ratio--sentence-split-ratio) ↑ more target sentences per source sentence | 0.852 | 0.109 | 0.0667 |
+| [Compression ratio (characters)](docs/metrics.md#lengthchar_compression_ratio--compression-ratio-characters) ↓ more compressed | 0.628 | 0.0804 | 0.0686 |
+| [Source length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 844 | 634 | 306 |
+| [Target length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 557 | 46 | 21 |
+| [Exact copies](docs/metrics.md#abstractivenessexact_copies--exact-copies) ↑ more source sentences kept verbatim | 0.0600 | 0.00 | 0.00 |
+| [Additions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words added | 0.0930 | 0.0106 | 0.0243 |
+| [Deletions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words deleted | 0.447 | 0.934 | 0.957 |
+| [Levenshtein similarity](docs/metrics.md#abstractivenesslevenshtein_similarity--levenshtein-similarity) ↑ closer to source text | 0.652 | 0.139 | 0.121 |
+| [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 7.50 (Δ −2.80) | 6.90 (Δ −2.10) | 10.3 (Δ +0.60) |
+| [FRE](docs/metrics.md#readabilitym3a_surfacefre--flesch-reading-ease) ↑ easier | 71.8 (Δ +12.02) | 68.3 (Δ +3.90) | 59.6 (Δ −2.85) |
+| [Lexical complexity](docs/metrics.md#readabilitym3b_length_invariantlexical_complexity--lexical-complexity) ↓ more frequent words | 55.8 (Δ −4.68) | 62.8 (Δ +1.65) | 60.6 (Δ +0.33) |
+| [SLE (document)](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler | 2.13 | 2.63 | 0.475 |
+| [SLE gain](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler than source | 1.27 | 1.39 | −0.414 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ fewer entities absent from source | 0.900 | 0.800 | 0.333 |
+| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more source entities kept | 0.652 | 0.120 | 0.0339 |
+| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more entity overlap | 0.753 | 0.203 | 0.0616 |
+| [BLEU(target, source)](docs/metrics.md#pair_similaritybleu--bleutarget-source)† ↑ closer to source wording | 34.1 | <0.001 | 0.00 |
+
+† Computed on a seeded sample: 60 pairs for plos and elife, 189 pairs for onestop, 250 for every other dataset. Unmarked metrics use the full corpus: 189 pairs for onestop, 446 pairs for contracts, 1,000 for every other dataset.
 
 The hand-written tables under "The domain-controlled comparison" report means, so their figures differ from the medians here.
 <!-- END label-tables -->

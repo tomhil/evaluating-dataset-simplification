@@ -185,8 +185,10 @@ def test_committed_block_sits_immediately_before_m1():
 
 def test_committed_results_domains():
     multi, single = lt.split_domains(lt.load_results(REPO / "results"))
-    assert multi == ["biomedical", "legal"]
-    assert dict(single) == {"encyclopedia": ["DS"], "news": ["SUM"]}
+    # XWikis-en (SUM) and OneStopEnglish (DS) made encyclopedia and news
+    # two-task domains, so every domain now gets a within-domain table.
+    assert multi == ["biomedical", "legal", "encyclopedia", "news"]
+    assert single == []
 
 
 def test_every_domain_multi_task_renders(tmp_path):

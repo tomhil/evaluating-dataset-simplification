@@ -31,6 +31,177 @@
  "modules": {
   "abstractiveness": {
    "corpus": {
+    "abstract_content_overlap": {
+     "all": {
+      "ci95": [
+       0.334105,
+       0.348085
+      ],
+      "extra": {},
+      "iqr": [
+       0.266667,
+       0.403226
+      ],
+      "mean": 0.34135,
+      "median": 0.333333,
+      "n": 1000,
+      "std": 0.109964
+     },
+     "by_abstract_count": {
+      "1": {
+       "ci95": [
+        0.294031,
+        0.324131
+       ],
+       "extra": {},
+       "iqr": [
+        0.125,
+        0.454545
+       ],
+       "mean": 0.309425,
+       "median": 0.285714,
+       "n": 993,
+       "std": 0.245943
+      },
+      "100+": {
+       "ci95": [
+        0.417033,
+        0.436189
+       ],
+       "extra": {},
+       "iqr": [
+        0.315789,
+        0.533333
+       ],
+       "mean": 0.426802,
+       "median": 0.428571,
+       "n": 1000,
+       "std": 0.153939
+      },
+      "11-100": {
+       "ci95": [
+        0.315288,
+        0.330883
+       ],
+       "extra": {},
+       "iqr": [
+        0.236455,
+        0.392857
+       ],
+       "mean": 0.323262,
+       "median": 0.314006,
+       "n": 1000,
+       "std": 0.12269
+      },
+      "2-10": {
+       "ci95": [
+        0.30369,
+        0.323129
+       ],
+       "extra": {},
+       "iqr": [
+        0.2,
+        0.416667
+       ],
+       "mean": 0.313086,
+       "median": 0.291667,
+       "n": 1000,
+       "std": 0.161452
+      }
+     },
+     "by_type": {
+      "noun": {
+       "ci95": [
+        0.382339,
+        0.39725
+       ],
+       "extra": {},
+       "iqr": [
+        0.302326,
+        0.466667
+       ],
+       "mean": 0.389776,
+       "median": 0.381699,
+       "n": 1000,
+       "std": 0.121295
+      },
+      "num": {
+       "ci95": [
+        0.248781,
+        0.296149
+       ],
+       "extra": {},
+       "iqr": [
+        0.0,
+        0.5
+       ],
+       "mean": 0.272147,
+       "median": 0.125,
+       "n": 796,
+       "std": 0.336072
+      },
+      "propn": {
+       "ci95": [
+        0.401048,
+        0.435511
+       ],
+       "extra": {},
+       "iqr": [
+        0.224747,
+        0.6
+       ],
+       "mean": 0.418619,
+       "median": 0.4,
+       "n": 959,
+       "std": 0.266612
+      },
+      "verb": {
+       "ci95": [
+        0.229375,
+        0.244844
+       ],
+       "extra": {},
+       "iqr": [
+        0.15,
+        0.3
+       ],
+       "mean": 0.237287,
+       "median": 0.222222,
+       "n": 1000,
+       "std": 0.127018
+      }
+     }
+    },
+    "abstractivity_p1": {
+     "ci95": [
+      0.090615,
+      0.096025
+     ],
+     "extra": {},
+     "iqr": [
+      0.061162,
+      0.121332
+     ],
+     "mean": 0.093247,
+     "median": 0.086957,
+     "n": 1000,
+     "std": 0.045414
+    },
+    "additions_proportion": {
+     "ci95": [
+      0.003685,
+      0.004048
+     ],
+     "extra": {},
+     "iqr": [
+      0.001953,
+      0.004812
+     ],
+     "mean": 0.003856,
+     "median": 0.003142,
+     "n": 1000,
+     "std": 0.00299
+    },
     "content_type_overlap": {
      "ci95": [
       0.802729,
@@ -61,6 +232,21 @@
      "n": 1000,
      "std": 0.045414
     },
+    "deletions_proportion": {
+     "ci95": [
+      0.968938,
+      0.970566
+     ],
+     "extra": {},
+     "iqr": [
+      0.965046,
+      0.977987
+     ],
+     "mean": 0.969757,
+     "median": 0.972501,
+     "n": 1000,
+     "std": 0.012983
+    },
     "density": {
      "ci95": [
       3.205258,
@@ -75,6 +261,36 @@
      "median": 2.476047,
      "n": 1000,
      "std": 3.833208
+    },
+    "exact_copies": {
+     "ci95": [
+      0.001903,
+      0.003464
+     ],
+     "extra": {},
+     "iqr": [
+      0.0,
+      0.0
+     ],
+     "mean": 0.002582,
+     "median": 0.0,
+     "n": 1000,
+     "std": 0.012101
+    },
+    "levenshtein_similarity": {
+     "ci95": [
+      0.066075,
+      0.069424
+     ],
+     "extra": {},
+     "iqr": [
+      0.050606,
+      0.079726
+     ],
+     "mean": 0.067713,
+     "median": 0.062722,
+     "n": 1000,
+     "std": 0.026583
     },
     "n": 1000,
     "novel_1gram": {
@@ -152,6 +368,21 @@
      "n": 1000,
      "std": 0.07503
     },
+    "redundancy": {
+     "ci95": [
+      0.120478,
+      0.123946
+     ],
+     "extra": {},
+     "iqr": [
+      0.10195,
+      0.139788
+     ],
+     "mean": 0.122157,
+     "median": 0.120121,
+     "n": 998,
+     "std": 0.028595
+    },
     "rouge1_recall": {
      "ci95": [
       0.02974,
@@ -196,12 +427,85 @@
      "median": 0.018104,
      "n": 1000,
      "std": 0.00846
+    },
+    "rouge_abstract_target": {
+     "rouge1_f1": {
+      "ci95": [
+       0.462256,
+       0.472531
+      ],
+      "extra": {},
+      "iqr": [
+       0.416272,
+       0.512739
+      ],
+      "mean": 0.467375,
+      "median": 0.460245,
+      "n": 1000,
+      "std": 0.080956
+     },
+     "rouge2_f1": {
+      "ci95": [
+       0.174959,
+       0.186814
+      ],
+      "extra": {},
+      "iqr": [
+       0.115742,
+       0.217187
+      ],
+      "mean": 0.180719,
+      "median": 0.158188,
+      "n": 1000,
+      "std": 0.096173
+     },
+     "rougeL_f1": {
+      "ci95": [
+       0.253454,
+       0.264285
+      ],
+      "extra": {},
+      "iqr": [
+       0.199525,
+       0.295516
+      ],
+      "mean": 0.25879,
+      "median": 0.239268,
+      "n": 1000,
+      "std": 0.086895
+     }
+    },
+    "topic_similarity": {
+     "ci95": [
+      0.663576,
+      0.681663
+     ],
+     "extra": {},
+     "iqr": [
+      0.580667,
+      0.779728
+     ],
+     "mean": 0.672861,
+     "median": 0.686403,
+     "n": 1000,
+     "std": 0.143389
     }
    },
    "notes": [],
    "params": {
+    "abstract_content_overlap": "share of the abstract's distinct nouns, proper nouns, verbs and numbers (spaCy POS, standing in for ScispaCy) found among the target's words; buckets by how many abstracts in this corpus contain the word",
+    "abstractivity_p": 1,
+    "edit_features": "EASSE/tseval features on whole documents: Levenshtein = rapidfuzz fuzz.ratio(source, target)/100 on raw text; additions/deletions over case-preserving profiler word tokens; exact copies = share of source sentences found verbatim among target sentences",
     "lcs_cell_cap": 4000000,
-    "rouge_orientation": "recall(candidate=target, reference=source) = overlap / |source n-grams|"
+    "rouge_orientation": "recall(candidate=target, reference=source) = overlap / |source n-grams|",
+    "topic_similarity": {
+     "distance": "Jensen-Shannon distance, base 2",
+     "fit_on": "sources",
+     "model": "sklearn LatentDirichletAllocation (batch)",
+     "n_topics": 20,
+     "seed": 13,
+     "vectorizer": "CountVectorizer(lowercase, English stop words)"
+    }
    }
   },
   "alignment": {
@@ -513,6 +817,53 @@
       }
      }
     },
+    "entity_preservation": {
+     "entity_f1": {
+      "ci95": [
+       0.029238,
+       0.04501
+      ],
+      "extra": {},
+      "iqr": [
+       0.015174,
+       0.053079
+      ],
+      "mean": 0.036578,
+      "median": 0.03148,
+      "n": 60,
+      "std": 0.03171
+     },
+     "entity_precision": {
+      "ci95": [
+       0.766013,
+       0.894787
+      ],
+      "extra": {},
+      "iqr": [
+       0.776923,
+       1.0
+      ],
+      "mean": 0.83275,
+      "median": 1.0,
+      "n": 54,
+      "std": 0.24852
+     },
+     "entity_recall": {
+      "ci95": [
+       0.015068,
+       0.023612
+      ],
+      "extra": {},
+      "iqr": [
+       0.007645,
+       0.027353
+      ],
+      "mean": 0.019036,
+      "median": 0.015992,
+      "n": 60,
+      "std": 0.017057
+     }
+    },
     "n": 60,
     "tau_sweep": [
      0.4,
@@ -527,6 +878,7 @@
    ],
    "params": {
     "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "entity_preservation": "Cripwell et al. 2024 entity matching: set overlap of lowercased spaCy named entities; precision over target entities, recall over source entities",
     "matching": "greedy many-to-many: link(i,j) iff cos(i,j) >= tau",
     "primary_tau_for_m5_m6": 0.5,
     "tau_sweep": [
@@ -1016,6 +1368,69 @@
   "elaboration": {
    "corpus": {
     "corrected_not_entailed_rate": null,
+    "document_level": {
+     "qafacteval_precision": {
+      "ci95": [
+       null,
+       null
+      ],
+      "extra": {},
+      "iqr": [
+       null,
+       null
+      ],
+      "mean": null,
+      "median": null,
+      "n": 0,
+      "std": null
+     },
+     "qafacteval_recall": {
+      "ci95": [
+       null,
+       null
+      ],
+      "extra": {},
+      "iqr": [
+       null,
+       null
+      ],
+      "mean": null,
+      "median": null,
+      "n": 0,
+      "std": null
+     },
+     "scorers_run": [],
+     "summac_precision": {
+      "ci95": [
+       null,
+       null
+      ],
+      "extra": {},
+      "iqr": [
+       null,
+       null
+      ],
+      "mean": null,
+      "median": null,
+      "n": 0,
+      "std": null
+     },
+     "summac_recall": {
+      "ci95": [
+       null,
+       null
+      ],
+      "extra": {},
+      "iqr": [
+       null,
+       null
+      ],
+      "mean": null,
+      "median": null,
+      "n": 0,
+      "std": null
+     }
+    },
     "heuristic_only": false,
     "n_not_entailed_primary": 220,
     "n_target_sentences": 507,
@@ -1061,13 +1476,175 @@
      }
     },
     "primary_scorer": "nli",
+    "rhetorical_roles": {
+     "abstract": {
+      "background": {
+       "ci95": [
+        0.248907,
+        0.340352
+       ],
+       "extra": {},
+       "iqr": [
+        0.151099,
+        0.388462
+       ],
+       "mean": 0.293008,
+       "median": 0.283422,
+       "n": 60,
+       "std": 0.179238
+      },
+      "conclusions": {
+       "ci95": [
+        0.318117,
+        0.418624
+       ],
+       "extra": {},
+       "iqr": [
+        0.2,
+        0.5
+       ],
+       "mean": 0.366828,
+       "median": 0.345238,
+       "n": 60,
+       "std": 0.198695
+      },
+      "methods": {
+       "ci95": [
+        0.145918,
+        0.224886
+       ],
+       "extra": {},
+       "iqr": [
+        0.0,
+        0.295588
+       ],
+       "mean": 0.184997,
+       "median": 0.19375,
+       "n": 60,
+       "std": 0.157991
+      },
+      "objective": {
+       "ci95": [
+        0.012828,
+        0.033603
+       ],
+       "extra": {},
+       "iqr": [
+        0.0,
+        0.035477
+       ],
+       "mean": 0.022776,
+       "median": 0.0,
+       "n": 60,
+       "std": 0.042811
+      },
+      "results": {
+       "ci95": [
+        0.094951,
+        0.171802
+       ],
+       "extra": {},
+       "iqr": [
+        0.0,
+        0.2
+       ],
+       "mean": 0.132391,
+       "median": 0.1,
+       "n": 60,
+       "std": 0.154274
+      }
+     },
+     "models_run": [
+      "pubmed_rct"
+     ],
+     "target": {
+      "background": {
+       "ci95": [
+        0.390515,
+        0.486176
+       ],
+       "extra": {},
+       "iqr": [
+        0.285714,
+        0.571429
+       ],
+       "mean": 0.436368,
+       "median": 0.480769,
+       "n": 60,
+       "std": 0.186003
+      },
+      "conclusions": {
+       "ci95": [
+        0.363167,
+        0.44772
+       ],
+       "extra": {},
+       "iqr": [
+        0.285714,
+        0.5
+       ],
+       "mean": 0.406143,
+       "median": 0.369318,
+       "n": 60,
+       "std": 0.17142
+      },
+      "methods": {
+       "ci95": [
+        0.066363,
+        0.119293
+       ],
+       "extra": {},
+       "iqr": [
+        0.0,
+        0.170455
+       ],
+       "mean": 0.091807,
+       "median": 0.091667,
+       "n": 60,
+       "std": 0.103969
+      },
+      "objective": {
+       "ci95": [
+        0.007465,
+        0.028819
+       ],
+       "extra": {},
+       "iqr": [
+        0.0,
+        0.0
+       ],
+       "mean": 0.016912,
+       "median": 0.0,
+       "n": 60,
+       "std": 0.042146
+      },
+      "results": {
+       "ci95": [
+        0.029317,
+        0.071667
+       ],
+       "extra": {},
+       "iqr": [
+        0.0,
+        0.1
+       ],
+       "mean": 0.04877,
+       "median": 0.0,
+       "n": 60,
+       "std": 0.084315
+      }
+     }
+    },
     "scorers_run": [
      "nli"
     ],
     "threshold": 0.5
    },
    "notes": [
-    "Automatic elaboration rate is an upper bound on real elaboration until the manual sample is annotated; entailment models degrade off-domain."
+    "Automatic elaboration rate is an upper bound on real elaboration until the manual sample is annotated; entailment models degrade off-domain.",
+    "document_level SummaC not requested (run.summac is false); its keys are null.",
+    "qafacteval_precision/recall not computed: QAFactEval is DEFERRED (its package fails to build against the core dependencies); keys are null.",
+    "rhetorical_roles uses a classifier trained on biomedical abstracts (PubMed-RCT); it is off-domain for news, Wikipedia and legal text."
    ],
    "params": {
     "aggregation": "max entailment over source sentences",
@@ -1079,6 +1656,21 @@
   },
   "length": {
    "corpus": {
+    "char_compression_ratio": {
+     "ci95": [
+      0.034775,
+      0.036728
+     ],
+     "extra": {},
+     "iqr": [
+      0.026046,
+      0.041691
+     ],
+     "mean": 0.035722,
+     "median": 0.03259,
+     "n": 1000,
+     "std": 0.015555
+    },
     "compression_bimodality": 0.499045,
     "compression_ratio": {
      "ci95": [
@@ -2772,14 +3364,64 @@
      "std": 0.087015
     },
     "bertscore_n_source_truncated": 60,
+    "blanc": {
+     "ci95": [
+      null,
+      null
+     ],
+     "extra": {},
+     "iqr": [
+      null,
+      null
+     ],
+     "mean": null,
+     "median": null,
+     "n": 0,
+     "std": null
+    },
     "bleu": 0.0,
-    "n": 60
+    "models_run": [],
+    "n": 60,
+    "summaqa": {
+     "ci95": [
+      null,
+      null
+     ],
+     "extra": {},
+     "iqr": [
+      null,
+      null
+     ],
+     "mean": null,
+     "median": null,
+     "n": 0,
+     "std": null
+    },
+    "supert": {
+     "ci95": [
+      null,
+      null
+     ],
+     "extra": {},
+     "iqr": [
+      null,
+      null
+     ],
+     "mean": null,
+     "median": null,
+     "n": 0,
+     "std": null
+    }
    },
    "notes": [
     "Neither metric is independent evidence of meaning preservation: BLEU is in the same n-gram-overlap family as M2's ROUGE recall, and BERTScore is in the same embedding-similarity family as M4's target groundedness. Read them alongside those, not as a second opinion.",
     "BLEU is corpus-level and has no confidence interval; averaging sentence BLEU would be a different and noisier quantity.",
     "3 of the paper's 5 metrics are cross-lingual or French-only and are structurally undefined here; see params.",
-    "BERTScore truncation: 60 of 60 sources exceed 512 tokens, so for those pairs the score compares the target against the *opening* of the source, not the whole document. On a corpus of 6,000-token articles this makes bertscore_f1 a measure of the abstract, not the article; read it with n and this count, or not at all."
+    "BERTScore truncation: 60 of 60 sources exceed 512 tokens, so for those pairs the score compares the target against the *opening* of the source, not the whole document. On a corpus of 6,000-token articles this makes bertscore_f1 a measure of the abstract, not the article; read it with n and this count, or not at all.",
+    "BERTScore: 60 of 60 pairs served from cache.",
+    "BLANC is DEFERRED: blanc 0.3.4 requires torch<2.0 and numpy<2.0, against the core pin torch>=2.0. Its key is null.",
+    "SUPERT is DEFERRED: the official repository is not an installable package and pins torch==1.5.0 and pytorch-transformers==1.2.0. Its key is null.",
+    "SummaQA is DEFERRED: the official repository requires transformers==2.1.1, against the core pin transformers>=4.35. Its key is null."
    ],
    "params": {
     "bertscore_max_tokens": 512,
@@ -3131,6 +3773,53 @@
        "median": 0.021277,
        "n": 1000,
        "std": 0.0262
+      }
+     },
+     "lexical_complexity": {
+      "delta": {
+       "ci95": [
+        -4.616907,
+        -4.00863
+       ],
+       "extra": {},
+       "iqr": [
+        -6.965395,
+        -1.314786
+       ],
+       "mean": -4.296431,
+       "median": -4.181597,
+       "n": 1000,
+       "std": 4.791783
+      },
+      "source": {
+       "ci95": [
+        77.994621,
+        78.738113
+       ],
+       "extra": {},
+       "iqr": [
+        73.686954,
+        83.27683
+       ],
+       "mean": 78.376476,
+       "median": 79.555637,
+       "n": 1000,
+       "std": 6.21283
+      },
+      "target": {
+       "ci95": [
+        73.679381,
+        74.468469
+       ],
+       "extra": {},
+       "iqr": [
+        69.159008,
+        78.832835
+       ],
+       "mean": 74.080045,
+       "median": 74.003036,
+       "n": 1000,
+       "std": 6.793747
       }
      },
      "mean_dependency_distance": {
@@ -3507,6 +4196,53 @@
        "median": 1.930143,
        "n": 1000,
        "std": 0.124759
+      }
+     },
+     "wordrank": {
+      "delta": {
+       "ci95": [
+        -0.523835,
+        -0.46928
+       ],
+       "extra": {},
+       "iqr": [
+        -0.764577,
+        -0.227721
+       ],
+       "mean": -0.495647,
+       "median": -0.485768,
+       "n": 1000,
+       "std": 0.444377
+      },
+      "source": {
+       "ci95": [
+        9.11496,
+        9.171487
+       ],
+       "extra": {},
+       "iqr": [
+        8.829434,
+        9.493479
+       ],
+       "mean": 9.143531,
+       "median": 9.229472,
+       "n": 1000,
+       "std": 0.466923
+      },
+      "target": {
+       "ci95": [
+        8.61538,
+        8.676226
+       ],
+       "extra": {},
+       "iqr": [
+        8.272048,
+        9.005217
+       ],
+       "mean": 8.647884,
+       "median": 8.643659,
+       "n": 1000,
+       "std": 0.527158
       }
      }
     },
@@ -4142,6 +4878,75 @@
       }
      }
     },
+    "m3d_model_based": {
+     "models_run": [
+      "sle",
+      "coherence"
+     ],
+     "n": 60,
+     "semantic_coherence": {
+      "ci95": [
+       0.977303,
+       1.0
+      ],
+      "extra": {},
+      "iqr": [
+       1.0,
+       1.0
+      ],
+      "mean": 0.991204,
+      "median": 1.0,
+      "n": 60,
+      "std": 0.046168
+     },
+     "sle_doc": {
+      "source": {
+       "ci95": [
+        0.956551,
+        1.128559
+       ],
+       "extra": {},
+       "iqr": [
+        0.854633,
+        1.281651
+       ],
+       "mean": 1.03959,
+       "median": 0.980868,
+       "n": 60,
+       "std": 0.328969
+      },
+      "target": {
+       "ci95": [
+        0.211846,
+        0.466184
+       ],
+       "extra": {},
+       "iqr": [
+        -0.04463,
+        0.718942
+       ],
+       "mean": 0.33121,
+       "median": 0.283367,
+       "n": 60,
+       "std": 0.519179
+      }
+     },
+     "sle_gain": {
+      "ci95": [
+       -0.844566,
+       -0.57538
+      ],
+      "extra": {},
+      "iqr": [
+       -1.026412,
+       -0.405509
+      ],
+      "mean": -0.708381,
+      "median": -0.663105,
+      "n": 60,
+      "std": 0.533707
+     }
+    },
     "n": 1000
    },
    "notes": [],
@@ -4178,8 +4983,8 @@
  "n_full": 1000,
  "n_sample": 60,
  "provenance": {
-  "git_commit": "d074d73",
-  "run_dir": "plos_20260920T120140Z",
-  "source_file": "runs/plos_20260920T120140Z/metrics.json"
+  "git_commit": "55a5b38",
+  "run_dir": "plos_20261009T213055Z",
+  "source_file": "runs/plos_20261009T213055Z/metrics.json"
  }
 }
