@@ -75,6 +75,31 @@ NAMES = {
     "alignment.entity_preservation.entity_precision": "Entity precision",
     "alignment.entity_preservation.entity_recall": "Entity recall",
     "alignment.entity_preservation.entity_f1": "Entity F1",
+    # Labelled by the 2026-10 citation audit.
+    "length.mean_src_sent_len": "Mean source sentence length",
+    "length.mean_tgt_sent_len": "Mean target sentence length",
+    "abstractiveness.rouge1_recall": "ROUGE-1 recall of the source",
+    "abstractiveness.rouge2_recall": "ROUGE-2 recall of the source",
+    "abstractiveness.rougeL_recall": "ROUGE-L recall of the source",
+    "abstractiveness.content_type_overlap": "Content-type overlap",
+    "readability.m3a_surface.ari": "ARI",
+    "pair_similarity.bertscore_f1": "BERTScore F1(target, source)",
+    **{
+        f"linguistic_features.{f}": "M7 " + f.replace("_", " ")
+        for f in (
+            "appositions_ratio", "avg_same_entity_distance", "avg_word_length",
+            "conditional_clauses_ratio", "conjunctions_ratio", "consecutive_entity_distance",
+            "content_words_ratio", "entity_to_token_ratio", "flesch_kincaid_grade",
+            "flesch_reading_ease", "infrequent_words_ratio", "lexical_richness",
+            "long_words_ratio", "max_same_entity_distances", "modifiers_ratio",
+            "negations_ratio", "noun_phrases_ratio", "passive_voice_ratio",
+            "past_perfect_verbs", "past_tense_verbs", "punctuation_ratio",
+            "relative_clauses_ratio", "sentences_number", "short_sentences_ratio",
+            "syllables_ratio", "syntactic_tree_depth", "third_person_pronouns_ratio",
+            "unique_entities", "unique_entities_average", "unique_entities_to_total_entities",
+            "words_before_main_verb", "words_over_8_chars", "words_per_sentence",
+        )
+    },
     "elaboration.per_scorer.summac_conv": "SummaC-Conv (sentence)",
     "elaboration.per_scorer.alignscore": "AlignScore (sentence)",
     "elaboration.document_level.summac_precision": "SummaC precision (document)",

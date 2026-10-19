@@ -75,9 +75,13 @@ def test_label_integrity(m):
 
 
 def test_literature_rows_as_in_prd():
+    # The PRD's rows, with the corrections of the 2026-10 citation audit
+    # (docs/metrics.md): sentence_ratio gains SUM (Bommasani & Cardie's CMP_s),
+    # FRE cites Martin et al. 2018, document-level recall is introduced, and
+    # source-side ROUGE recall is a DS metric (Martin et al. 2018).
     expected = {
         "length.compression_ratio": {"SUM", "DS"},
-        "length.sentence_ratio": {"DS"},
+        "length.sentence_ratio": {"SUM", "DS"},
         "length.src_tokens": {"DS"},
         "length.tgt_tokens": {"DS"},
         "abstractiveness.coverage": {"SUM"},
@@ -96,7 +100,10 @@ def test_literature_rows_as_in_prd():
         assert label_for(key).tasks == tasks, key
     assert label_for("readability.m3a_surface.fkgl").contested_by
     assert label_for("elaboration.per_scorer.summac_conv").evidence == "validated"
-    assert label_for("abstractiveness.rouge1_recall").tasks == frozenset()
+    assert label_for("abstractiveness.rouge1_recall").tasks == frozenset({"DS"})
+    assert label_for("elaboration.document_level.summac_recall").evidence == "introduced"
+    assert "https://aclanthology.org/2021.cl-4.28" not in {p.url for p in label_for("readability.m3a_surface.fre").papers}
+    assert label_for("abstractiveness.novel_content_1gram").tasks == frozenset()
 
 
 def test_wildcards_match_decimal_tau_keys():

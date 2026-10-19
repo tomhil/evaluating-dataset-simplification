@@ -20,7 +20,8 @@ Every alignment metric is reported once per τ in the sweep.
 - [**Target groundedness**](../metrics.md#alignmentby_tautarget_groundedness--target-groundedness) (project-specific) — how much of the target traces back to the source.
 - [**Kendall's tau (reordering)**](../metrics.md#alignmentby_taukendall_tau--kendalls-tau-reordering) (project-specific) — whether the target keeps the source's order.
 - [**Alignment type counts and distribution**](../metrics.md#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) (project-specific) — one-to-one, split, merge, deletion and insertion counts.
-- [**Entity matching**](../metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching) (DS) — entity precision, recall and F1 of the target against the source.
+- [**Entity precision**](../metrics.md#alignmententity_preservationentity_precision--entity-precision) (SUM, DS) — the share of the target's named entities found in the source.
+- [**Entity recall and F1**](../metrics.md#alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-recall-and-f1) (DS) — how many of the source's entities the target keeps, and the balance of the two.
 
 ## Module-level material
 
@@ -106,4 +107,4 @@ moves every number below — which is exactly why it is swept rather than fixed.
 | [`n_0_1_insertion`](../metrics.md#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Target sentences with no source counterpart — added material, or a matching failure. | More added or unmatched text |
 | `alignment_type_counts` | The raw counts of the five categories above. | — |
 | `alignment_type_distribution` | Those counts as shares. Useful for comparing shape between corpora; **not a clean proportion**, since the five categories are counted over different things. | — |
-| [`entity_precision` / `entity_recall` / `entity_f1`](../metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching) | Whether the target's named entities come from the source (precision), and how many of the source's it keeps (recall). | Fewer invented / more kept entities |
+| [`entity_precision`](../metrics.md#alignmententity_preservationentity_precision--entity-precision) / [`entity_recall` / `entity_f1`](../metrics.md#alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-recall-and-f1) | Whether the target's named entities come from the source (precision), and how many of the source's it keeps (recall). | Fewer invented / more kept entities |

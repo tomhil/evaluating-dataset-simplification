@@ -17,7 +17,7 @@ depends on no other module.
 Each name links to its full entry in [the metric reference](../metrics.md).
 
 - [**BLEU(target, source)**](../metrics.md#pair_similaritybleu--bleutarget-source) (DS) — corpus-level n-gram overlap of the target with its source; collapses under heavy compression.
-- [**BERTScore F1**](../metrics.md#pair_similaritybertscore_f1--bertscore-f1) (project-specific) — embedding similarity of the pair.
+- [**BERTScore F1**](../metrics.md#pair_similaritybertscore_f1--bertscore-f1) (DS) — embedding similarity of the pair.
 - [**BLANC**](../metrics.md#pair_similarityblanc--blanc) (SUM) — how much the target helps a language model understand the source. Deferred; always null.
 - [**SUPERT**](../metrics.md#pair_similaritysupert--supert) (SUM) — similarity to a pseudo-reference of salient source sentences. Deferred; always null.
 - [**SummaQA**](../metrics.md#pair_similaritysummaqa--summaqa) (SUM) — cloze questions from the source, answered from the target. Deferred; always null.

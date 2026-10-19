@@ -31,8 +31,8 @@ Each name links to its full entry in [the metric reference](../metrics.md).
 - [**Addition and deletion proportions**](../metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) (DS) — words added and words deleted.
 - [**ROUGE(abstract, target)**](../metrics.md#abstractivenessrouge_abstract_target--rougeabstract-target) (PLS) — how close the target is to the source's abstract.
 - [**Abstract content-word overlap by rarity**](../metrics.md#abstractivenessabstract_content_overlap--abstract-content-word-overlap-by-rarity) (PLS) — which abstract terms reach the target, by how common they are.
-- [**ROUGE recall of the source**](../metrics.md#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) (project-specific) — how much of the source's n-grams survive; tracks compression.
-- [**Content-type overlap**](../metrics.md#abstractivenesscontent_type_overlap--content-type-overlap) (project-specific) — the share of the target's content vocabulary found in the source.
+- [**ROUGE recall of the source**](../metrics.md#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) (DS) — how much of the source's n-grams survive; tracks compression.
+- [**Content-type overlap**](../metrics.md#abstractivenesscontent_type_overlap--content-type-overlap) (DS) — the share of the target's content vocabulary found in the source.
 
 ## Module-level material
 

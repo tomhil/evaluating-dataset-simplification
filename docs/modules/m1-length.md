@@ -20,9 +20,9 @@ Each name links to its full entry in [the metric reference](../metrics.md).
 
 - [**Compression ratio (tokens)**](../metrics.md#lengthcompression_ratio--compression-ratio-tokens) (SUM, DS) — what fraction of the source's length the target keeps.
 - [**Compression ratio (characters)**](../metrics.md#lengthchar_compression_ratio--compression-ratio-characters) (DS) — the same, counted in characters, as EASSE does.
-- [**Sentence split ratio**](../metrics.md#lengthsentence_ratio--sentence-split-ratio) (DS) — target sentences per source sentence; above 1 means splitting.
+- [**Sentence split ratio**](../metrics.md#lengthsentence_ratio--sentence-split-ratio) (SUM, DS) — target sentences per source sentence; above 1 means splitting.
 - [**Length**](../metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) (DS) — source and target lengths in tokens.
-- [**Mean sentence length**](../metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) (project-specific) — average sentence length on each side.
+- [**Mean sentence length**](../metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) (DS) — average sentence length on each side.
 - [**Expansion rate**](../metrics.md#lengthexpansion_rate--expansion-rate) (project-specific) — the share of documents that got longer.
 - [**Compression bimodality**](../metrics.md#lengthcompression_bimodality--compression-bimodality) (project-specific) — a warning light for a mixed corpus.
 

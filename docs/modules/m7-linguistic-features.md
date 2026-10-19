@@ -25,7 +25,10 @@ from summarization.
 ## Metrics in this module
 
 Each name links to its full entry in [the metric reference](../metrics.md). All
-33 are project-specific labels carrying the source repository as their reference.
+33 carry the DS label: Dahan et al. (2026) list every one of them and adopt most
+of the BATS feature set (Kreutz et al. 2024), which compares simplification
+datasets on these features. The source repository stays cited as the code's
+origin.
 
 - [**Lexical features**](../metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) — nine word-level features: variety, rarity, length, word class.
 - [**Syntactic and sentence features**](../metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) — fifteen features: structure, embedding, voice, tense, reference.

@@ -6,19 +6,61 @@ computed, how to read it, and which papers establish it. The module pages in
 here for the detail.
 
 **Labels.** SUM is generic summarization, PLS is plain-language (lay)
-summarization, DS is document simplification. A label records which task's
-literature uses a metric, per this project's literature review; it is never a
-statement about the corpus being profiled. A metric no reviewed paper uses is
-marked *project-specific*. Labels are defined once, in
-`profiler/metric_registry.py`, and `tests/test_metrics_doc.py` checks this page
-against it.
+summarization, DS is document simplification; sentence-simplification papers
+(Martin et al. 2018, ASSET, EASSE) are filed under DS. A label records which
+task's literature uses a metric, as a corpus statistic or an evaluation metric,
+per this project's literature review; it is never a statement about the corpus
+being profiled. A metric no reviewed paper uses for one of these tasks is marked
+*project-specific*; its **Papers** line may still name the paper a method comes
+from (a bimodality statistic, an ordering measure, a published analogue). Labels
+are defined once, in `profiler/metric_registry.py`, and
+`tests/test_metrics_doc.py` checks this page against it.
 
-Each section header line gives the label, the evidence (*introduced* for a
-descriptive statistic, *validated* where a linked paper tests the metric against
-human judgments or a benchmark), what the metric needs (source and target, the
-target only, or an abstract) and the module that emits it. Keys are paths under
-`modules.<module>.corpus` in `metrics.json`; `*` stands for one parametrised
-key, such as a τ value.
+Each section header line gives the label, the evidence, what the metric needs
+(source and target, the target only, or an abstract) and the module that emits
+it. **Evidence** is *validated* where a linked paper proposes the metric as an
+evaluation metric and shows it agrees with human judgments; *introduced* where
+the metric is used descriptively, including when a paper reports how well it
+correlates with human ratings as one feature among many. Each section's
+**Human-judgment evidence** paragraph says what has actually been measured: the
+level (sentence or document), the human dimension (meaning preservation,
+simplicity, factual consistency) and the figure, or that nothing was found.
+Keys are paths under `modules.<module>.corpus` in `metrics.json`; `*` stands
+for one parametrised key, such as a τ value.
+
+**Caveats** are meta-evaluation papers, listed only where that meta-evaluation
+tested this metric. **Contested by** names a paper arguing the metric should not
+be used for the task.
+
+## Literature status at a glance
+
+This page was corrected against a citation audit (October 2026) that read each
+cited paper and searched for literature behind the project-specific metrics.
+Three findings shape how every section below should be read.
+
+- **What the literature validates is change, not simplicity.** Edit-distance,
+  overlap and source-side BERTScore measures correlate with human
+  meaning-preservation ratings (Martin et al. 2018; ASSET; REFeREE). Readability
+  formulas and linguistic features correlate poorly with human simplicity
+  ratings. Sentence length is among the strongest simple simplicity cues found
+  (r ≈ −0.5 at sentence level, Martin et al. 2018).
+- **Almost nothing is validated at the document level.** Every
+  simplification human-correlation figure on this page is sentence-level
+  (SummEval's are system-level, for summarization), except Cardon & Doğruöz
+  (2025), who found readability formulas and 1,066 linguistic features all at
+  or below |r| 0.30 against simplification ratings on D-Wikipedia, at both
+  levels.
+- **The meaning measures reward copying.** Martin et al. 2018, ASSET and
+  Cripwell et al. 2024 all find meaning scores fall as rewriting rises, so in
+  this profiler those measures read as "how much changed", not "how good the
+  change was".
+
+| Status | Sections |
+|---|---|
+| Literature metric, validated against human judgments | SLE (sentence level), SummaC-Conv, AlignScore, document-level faithfulness precision, BLANC, SUPERT, SummaQA |
+| Literature metric, used descriptively | compression, sentence ratio, length, mean sentence length, coverage/density, novel n-grams, abstractivity, redundancy, topic similarity, edit features, ROUGE recall of the source, content-type overlap, ROUGE(abstract, target), abstract content overlap, FKGL, FRE, CLI/DCRS, ARI, WordRank, lexical complexity, semantic coherence, entity matching, document-level faithfulness recall, rhetorical roles, all of M7, BLEU and BERTScore against the source |
+| Project-specific, with a related paper | compression bimodality, SMOG, M3b measures, length-matched decomposition, alignment statistics, NLI and lexical grounding, pattern breakdown, deletion profile |
+| Project-specific, no direct literature | expansion rate, novel content words, not-entailed rate by document, scorer agreement, corrected not-entailed rate |
 
 ## Index
 
@@ -26,11 +68,11 @@ key, such as a τ value.
 |---|---|---|---|---|
 | [`length.compression_ratio`](#lengthcompression_ratio--compression-ratio-tokens) | Compression ratio (tokens) | SUM, DS | introduced | M1 |
 | [`length.char_compression_ratio`](#lengthchar_compression_ratio--compression-ratio-characters) | Compression ratio (characters) | DS | introduced | M1 |
-| [`length.sentence_ratio`](#lengthsentence_ratio--sentence-split-ratio) | Sentence split ratio | DS | introduced | M1 |
+| [`length.sentence_ratio`](#lengthsentence_ratio--sentence-split-ratio) | Sentence split ratio | SUM, DS | introduced | M1 |
 | [`length.src_tokens`](#lengthsrc_tokens-lengthtgt_tokens--length) | Length | DS | introduced | M1 |
 | [`length.tgt_tokens`](#lengthsrc_tokens-lengthtgt_tokens--length) | Length | DS | introduced | M1 |
-| [`length.mean_src_sent_len`](#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) | Mean sentence length | project-specific | project-specific | M1 |
-| [`length.mean_tgt_sent_len`](#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) | Mean sentence length | project-specific | project-specific | M1 |
+| [`length.mean_src_sent_len`](#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) | Mean sentence length | DS | introduced | M1 |
+| [`length.mean_tgt_sent_len`](#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) | Mean sentence length | DS | introduced | M1 |
 | [`length.expansion_rate`](#lengthexpansion_rate--expansion-rate) | Expansion rate | project-specific | project-specific | M1 |
 | [`length.compression_bimodality`](#lengthcompression_bimodality--compression-bimodality) | Compression bimodality | project-specific | project-specific | M1 |
 | [`abstractiveness.coverage`](#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) | Coverage and density | SUM | introduced | M2 |
@@ -49,16 +91,16 @@ key, such as a τ value.
 | [`abstractiveness.deletions_proportion`](#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) | Addition and deletion proportions | DS | introduced | M2 |
 | [`abstractiveness.rouge_abstract_target`](#abstractivenessrouge_abstract_target--rougeabstract-target) | ROUGE(abstract, target) | PLS | introduced | M2 |
 | [`abstractiveness.abstract_content_overlap`](#abstractivenessabstract_content_overlap--abstract-content-word-overlap-by-rarity) | Abstract content-word overlap by rarity | PLS | introduced | M2 |
-| [`abstractiveness.rouge1_recall`](#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) | ROUGE recall of the source | project-specific | project-specific | M2 |
-| [`abstractiveness.rouge2_recall`](#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) | ROUGE recall of the source | project-specific | project-specific | M2 |
-| [`abstractiveness.rougeL_recall`](#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) | ROUGE recall of the source | project-specific | project-specific | M2 |
-| [`abstractiveness.content_type_overlap`](#abstractivenesscontent_type_overlap--content-type-overlap) | Content-type overlap | project-specific | project-specific | M2 |
+| [`abstractiveness.rouge1_recall`](#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) | ROUGE recall of the source | DS | introduced | M2 |
+| [`abstractiveness.rouge2_recall`](#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) | ROUGE recall of the source | DS | introduced | M2 |
+| [`abstractiveness.rougeL_recall`](#abstractivenessrouge1_recall-abstractivenessrouge2_recall-abstractivenessrougel_recall--rouge-recall-of-the-source) | ROUGE recall of the source | DS | introduced | M2 |
+| [`abstractiveness.content_type_overlap`](#abstractivenesscontent_type_overlap--content-type-overlap) | Content-type overlap | DS | introduced | M2 |
 | [`readability.m3a_surface.fkgl`](#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) | Flesch–Kincaid Grade Level | PLS, DS | introduced | M3 |
 | [`readability.m3a_surface.fre`](#readabilitym3a_surfacefre--flesch-reading-ease) | Flesch Reading Ease | DS | introduced | M3 |
 | [`readability.m3a_surface.cli`](#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) | Coleman–Liau Index and Dale–Chall Readability Score | PLS | introduced | M3 |
 | [`readability.m3a_surface.dcrs`](#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) | Coleman–Liau Index and Dale–Chall Readability Score | PLS | introduced | M3 |
-| [`readability.m3a_surface.ari`](#readabilitym3a_surfaceari-readabilitym3a_surfacesmog--automated-readability-index-and-smog) | Automated Readability Index and SMOG | project-specific | project-specific | M3 |
-| [`readability.m3a_surface.smog`](#readabilitym3a_surfaceari-readabilitym3a_surfacesmog--automated-readability-index-and-smog) | Automated Readability Index and SMOG | project-specific | project-specific | M3 |
+| [`readability.m3a_surface.ari`](#readabilitym3a_surfaceari--automated-readability-index) | Automated Readability Index | PLS | introduced | M3 |
+| [`readability.m3a_surface.smog`](#readabilitym3a_surfacesmog--smog) | SMOG | project-specific | project-specific | M3 |
 | [`readability.m3b_length_invariant.jargon_rate`](#readabilitym3b_length_invariantmean_zipf-and-related--lexical-length-invariant-measures) | Lexical length-invariant measures | project-specific | project-specific | M3 |
 | [`readability.m3b_length_invariant.mean_zipf`](#readabilitym3b_length_invariantmean_zipf-and-related--lexical-length-invariant-measures) | Lexical length-invariant measures | project-specific | project-specific | M3 |
 | [`readability.m3b_length_invariant.mtld`](#readabilitym3b_length_invariantmean_zipf-and-related--lexical-length-invariant-measures) | Lexical length-invariant measures | project-specific | project-specific | M3 |
@@ -87,9 +129,9 @@ key, such as a τ value.
 | [`alignment.by_tau.*.alignment_type_distribution.n_n_1_merge`](#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Alignment type counts and distribution | project-specific | project-specific | M4 |
 | [`alignment.by_tau.*.alignment_type_distribution.n_1_0_deletion`](#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Alignment type counts and distribution | project-specific | project-specific | M4 |
 | [`alignment.by_tau.*.alignment_type_distribution.n_0_1_insertion`](#alignmentby_taualignment_type_countsn_1_1-and-related--alignment-type-counts-and-distribution) | Alignment type counts and distribution | project-specific | project-specific | M4 |
-| [`alignment.entity_preservation.entity_precision`](#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching) | Entity matching | DS | introduced | M4 |
-| [`alignment.entity_preservation.entity_recall`](#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching) | Entity matching | DS | introduced | M4 |
-| [`alignment.entity_preservation.entity_f1`](#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching) | Entity matching | DS | introduced | M4 |
+| [`alignment.entity_preservation.entity_precision`](#alignmententity_preservationentity_precision--entity-precision) | Entity precision | SUM, DS | introduced | M4 |
+| [`alignment.entity_preservation.entity_recall`](#alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-recall-and-f1) | Entity recall and F1 | DS | introduced | M4 |
+| [`alignment.entity_preservation.entity_f1`](#alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-recall-and-f1) | Entity recall and F1 | DS | introduced | M4 |
 | [`elaboration.per_scorer.lexical_grounding`](#elaborationper_scorernli-elaborationper_scorerlexical_grounding--nli-and-lexical-grounding-scores) | NLI and lexical grounding scores | project-specific | project-specific | M5 |
 | [`elaboration.per_scorer.heuristic_grounding`](#elaborationper_scorernli-elaborationper_scorerlexical_grounding--nli-and-lexical-grounding-scores) | NLI and lexical grounding scores | project-specific | project-specific | M5 |
 | [`elaboration.per_scorer.nli`](#elaborationper_scorernli-elaborationper_scorerlexical_grounding--nli-and-lexical-grounding-scores) | NLI and lexical grounding scores | project-specific | project-specific | M5 |
@@ -101,45 +143,45 @@ key, such as a τ value.
 | [`elaboration.corrected_not_entailed_rate`](#elaborationcorrected_not_entailed_rate--corrected-not-entailed-rate) | Corrected not-entailed rate | project-specific | project-specific | M5 |
 | [`elaboration.document_level.summac_precision`](#elaborationdocument_levelsummac_precision-elaborationdocument_levelqafacteval_precision--document-level-faithfulness-precision) | Document-level faithfulness, precision | SUM, DS | validated | M5 |
 | [`elaboration.document_level.qafacteval_precision`](#elaborationdocument_levelsummac_precision-elaborationdocument_levelqafacteval_precision--document-level-faithfulness-precision) | Document-level faithfulness, precision | SUM, DS | validated | M5 |
-| [`elaboration.document_level.summac_recall`](#elaborationdocument_levelsummac_recall-elaborationdocument_levelqafacteval_recall--document-level-faithfulness-recall) | Document-level faithfulness, recall | DS | validated | M5 |
-| [`elaboration.document_level.qafacteval_recall`](#elaborationdocument_levelsummac_recall-elaborationdocument_levelqafacteval_recall--document-level-faithfulness-recall) | Document-level faithfulness, recall | DS | validated | M5 |
+| [`elaboration.document_level.summac_recall`](#elaborationdocument_levelsummac_recall-elaborationdocument_levelqafacteval_recall--document-level-faithfulness-recall) | Document-level faithfulness, recall | DS | introduced | M5 |
+| [`elaboration.document_level.qafacteval_recall`](#elaborationdocument_levelsummac_recall-elaborationdocument_levelqafacteval_recall--document-level-faithfulness-recall) | Document-level faithfulness, recall | DS | introduced | M5 |
 | [`elaboration.rhetorical_roles`](#elaborationrhetorical_roles--rhetorical-role-distribution) | Rhetorical role distribution | PLS | introduced | M5 |
 | [`deletion_profile.features.*`](#deletion_profilefeatures--deleted-versus-retained-feature-effects) | Deleted-versus-retained feature effects | project-specific | project-specific | M6 |
-| [`linguistic_features.avg_word_length`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
-| [`linguistic_features.content_words_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
-| [`linguistic_features.infrequent_words_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
-| [`linguistic_features.lexical_richness`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
-| [`linguistic_features.long_words_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
-| [`linguistic_features.modifiers_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
-| [`linguistic_features.negations_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
-| [`linguistic_features.syllables_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
-| [`linguistic_features.words_over_8_chars`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | project-specific | project-specific | M7 |
-| [`linguistic_features.appositions_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.conditional_clauses_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.conjunctions_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.noun_phrases_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.passive_voice_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.past_perfect_verbs`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.past_tense_verbs`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.punctuation_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.relative_clauses_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.sentences_number`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.short_sentences_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.syntactic_tree_depth`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.third_person_pronouns_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.words_before_main_verb`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.words_per_sentence`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | project-specific | project-specific | M7 |
-| [`linguistic_features.avg_same_entity_distance`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
-| [`linguistic_features.consecutive_entity_distance`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
-| [`linguistic_features.entity_to_token_ratio`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
-| [`linguistic_features.max_same_entity_distances`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
-| [`linguistic_features.unique_entities`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
-| [`linguistic_features.unique_entities_average`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
-| [`linguistic_features.unique_entities_to_total_entities`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | project-specific | project-specific | M7 |
-| [`linguistic_features.flesch_kincaid_grade`](#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | Flesch readability, M7 copies | project-specific | project-specific | M7 |
-| [`linguistic_features.flesch_reading_ease`](#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | Flesch readability, M7 copies | project-specific | project-specific | M7 |
+| [`linguistic_features.avg_word_length`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | DS | introduced | M7 |
+| [`linguistic_features.content_words_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | DS | introduced | M7 |
+| [`linguistic_features.infrequent_words_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | DS | introduced | M7 |
+| [`linguistic_features.lexical_richness`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | DS | introduced | M7 |
+| [`linguistic_features.long_words_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | DS | introduced | M7 |
+| [`linguistic_features.modifiers_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | DS | introduced | M7 |
+| [`linguistic_features.negations_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | DS | introduced | M7 |
+| [`linguistic_features.syllables_ratio`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | DS | introduced | M7 |
+| [`linguistic_features.words_over_8_chars`](#linguistic_featureslexical_richness-and-related--lexical-features) | Lexical features | DS | introduced | M7 |
+| [`linguistic_features.appositions_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.conditional_clauses_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.conjunctions_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.noun_phrases_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.passive_voice_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.past_perfect_verbs`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.past_tense_verbs`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.punctuation_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.relative_clauses_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.sentences_number`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.short_sentences_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.syntactic_tree_depth`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.third_person_pronouns_ratio`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.words_before_main_verb`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.words_per_sentence`](#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | Syntactic and sentence features | DS | introduced | M7 |
+| [`linguistic_features.avg_same_entity_distance`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | DS | introduced | M7 |
+| [`linguistic_features.consecutive_entity_distance`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | DS | introduced | M7 |
+| [`linguistic_features.entity_to_token_ratio`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | DS | introduced | M7 |
+| [`linguistic_features.max_same_entity_distances`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | DS | introduced | M7 |
+| [`linguistic_features.unique_entities`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | DS | introduced | M7 |
+| [`linguistic_features.unique_entities_average`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | DS | introduced | M7 |
+| [`linguistic_features.unique_entities_to_total_entities`](#linguistic_featuresunique_entities-and-related--entity-coherence-features) | Entity coherence features | DS | introduced | M7 |
+| [`linguistic_features.flesch_kincaid_grade`](#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | Flesch readability, M7 copies | DS | introduced | M7 |
+| [`linguistic_features.flesch_reading_ease`](#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | Flesch readability, M7 copies | DS | introduced | M7 |
 | [`pair_similarity.bleu`](#pair_similaritybleu--bleutarget-source) | BLEU(target, source) | DS | introduced | M8 |
-| [`pair_similarity.bertscore_f1`](#pair_similaritybertscore_f1--bertscore-f1) | BERTScore F1 | project-specific | project-specific | M8 |
+| [`pair_similarity.bertscore_f1`](#pair_similaritybertscore_f1--bertscore-f1) | BERTScore F1 | DS | introduced | M8 |
 | [`pair_similarity.blanc`](#pair_similarityblanc--blanc) | BLANC | SUM | validated | M8 |
 | [`pair_similarity.supert`](#pair_similaritysupert--supert) | SUPERT | SUM | validated | M8 |
 | [`pair_similarity.summaqa`](#pair_similaritysummaqa--summaqa) | SummaQA | SUM | validated | M8 |
@@ -191,6 +233,20 @@ summarises it well.
 corpus-level ratio-of-sums; when you need one, compute it from
 `src_tokens`/`tgt_tokens` (or from `per_pair.parquet`).
 
+*Which statistic each reference value uses.* The published numbers are not all
+the same aggregate. Bommasani & Cardie (2020) define `CMP_w = 1 − |S|/|D|` per
+example and average over examples, so their figures compare with **one minus
+this metric's mean**. Sun et al. (2021)'s 0.55 for D-Wikipedia is a ratio of
+means, comparable with the corpus-level ratio above. Grusky et al. (2018)
+report compression as article-to-summary word ratio, the inverse of this one.
+State the aggregate whenever a reference value is quoted.
+
+**Human-judgment evidence.** None for compression as a quality signal.
+Bommasani & Cardie inspected the most and least compressed examples and found
+the extremes flag low-quality pairs; SummEval reports how compression relates
+to human ratings of summarization systems (system level), which says how
+system output tracks it, not whether the corpus statistic is valid.
+
 **Papers.** [Grusky et al. 2018](https://aclanthology.org/N18-1065/); [Bommasani & Cardie 2020](https://aclanthology.org/2020.emnlp-main.649/). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
 
 **Implementation notes.** Token counts come from the shared `Processor` (spaCy
@@ -208,9 +264,14 @@ EASSE's compression ratio; summarised exactly like `compression_ratio`.
 
 **How to read it.** 1.0 means the same length; lower means shorter. It moves
 with the token ratio but also with word length, so a target that swaps long
-words for short ones compresses more by characters than by tokens.
+words for short ones compresses more by characters than by tokens. EASSE lists
+it as a quality-estimation feature; ASSET defines its "compression level" the
+same way.
 
-**Papers.** [EASSE 2019](https://aclanthology.org/D19-3009.pdf).
+**Human-judgment evidence.** Sentence level (ASSET): r 0.46 with meaning
+preservation, 0.04 with simplicity. A meaning proxy, not a simplicity one.
+
+**Papers.** [EASSE 2019](https://aclanthology.org/D19-3009.pdf); [ASSET 2020](https://arxiv.org/html/2005.00481).
 
 **Implementation notes.** EASSE computes it per sentence pair after sacrebleu
 13a normalisation; here it runs on whole documents with no normalisation, so
@@ -218,7 +279,7 @@ values are not comparable with sentence-level figures in the literature.
 
 ### `length.sentence_ratio` — Sentence split ratio
 
-**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M1 — Length and compression](modules/m1-length.md)
+**Label:** SUM, DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M1 — Length and compression](modules/m1-length.md)
 
 **What it does.** Target sentences per source sentence.
 
@@ -231,7 +292,15 @@ shorter ones. This is the main sentence-level simplification operation visible
 without alignment; M4's `n_1_n_split` measures it directly. Like
 `compression_ratio` it is a per-pair ratio, so prefer the median.
 
-**Papers.** [EASSE 2019](https://aclanthology.org/D19-3009.pdf).
+In summarization, Bommasani & Cardie (2020)'s sentence-level compression
+`CMP_s = 1 − |S|/|D|` in sentences is one minus this ratio, which is why the
+label includes SUM. EASSE lists sentence splits as a feature; ASSET counts
+splits as a difference rather than a ratio.
+
+**Human-judgment evidence.** Sentence level (ASSET): no significant correlation
+with any rating (r −0.06 with meaning, −0.08 with simplicity).
+
+**Papers.** [EASSE 2019](https://aclanthology.org/D19-3009.pdf); [Bommasani & Cardie 2020](https://aclanthology.org/2020.emnlp-main.649/); [ASSET 2020](https://arxiv.org/html/2005.00481).
 
 **Implementation notes.** Document level, not EASSE's sentence-pair level.
 
@@ -244,7 +313,11 @@ without alignment; M4's `n_1_n_split` measures it directly. Like
 **How it works.** Token counts per side, summarised over pairs.
 
 **How to read it.** Raw length distributions. Their means are what you compare
-against the published corpus statistics in `profiler/reference.py`.
+against the published corpus statistics in `profiler/reference.py`. Cripwell et
+al. (2024) report output length in tokens and sentences to flag conservative
+systems that change little.
+
+**Human-judgment evidence.** None; descriptive.
 
 **Papers.** [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278).
 
@@ -252,7 +325,7 @@ against the published corpus statistics in `profiler/reference.py`.
 
 ### `length.mean_src_sent_len`, `length.mean_tgt_sent_len` — Mean sentence length
 
-**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M1 — Length and compression](modules/m1-length.md)
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M1 — Length and compression](modules/m1-length.md)
 
 **What it does.** Average sentence length on each side, in tokens.
 
@@ -260,7 +333,17 @@ against the published corpus statistics in `profiler/reference.py`.
 
 **How to read it.** A large drop indicates syntactic simplification, but *only*
 read it next to M3b's parse-depth and subordinate-clause deltas — truncation
-shortens sentences too.
+shortens sentences too. Tanprasert & Kauchak (2021) recommend reporting words
+per sentence (and syllables per word) instead of FKGL, which combines the two,
+and APPLS finds it falls as text is simplified.
+
+**Human-judgment evidence.** Sentence level, simplicity: Martin et al. (2018)
+find words per output sentence among the strongest single simplicity cues on
+QATS (r −0.51 train, −0.39 test), ahead of FKGL (−0.36, −0.37). For grade-level
+prediction of school texts, Feng et al. (2010) find average sentence length
+does better than their parse features. No document-level validation was found.
+
+**Papers.** [Martin et al. 2018](https://aclanthology.org/W18-7005/); [Tanprasert & Kauchak 2021](https://aclanthology.org/2021.gem-1.1). **Caveats.** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
 
 **Implementation notes.** None.
 
@@ -275,6 +358,12 @@ shortens sentences too.
 **How to read it.** Not derivable from mean compression: a corpus can average
 below 1 while a substantial minority of pairs expand. A high rate with low mean
 compression is strong evidence of a **mixed corpus**.
+
+**Literature.** No paper reports the share of pairs whose target is longer.
+Elaborative simplification (Srikanth & Li 2021) motivates it: simplified texts
+that add explanations get longer.
+
+**Human-judgment evidence.** None.
 
 **Implementation notes.** A rate, not a `Summary`: it has `n` but no CI.
 
@@ -292,6 +381,17 @@ emits a note. `None` for too few pairs.
 **How to read it.** A bimodal corpus is a mixed corpus, and its mean compression
 describes no actual document in it. Read it against `compression_histogram`;
 treat it as a prompt to investigate, never as a verdict.
+
+The statistic is Pfister et al. (2013)'s subject: the 5/9 ≈ 0.555 threshold is
+theirs, and so is the warning that skewness alone raises the coefficient, and
+that neither it nor Hartigan's dip test is both sensitive and specific.
+Per-pair compression ratios are right-skewed, so a value above 0.555 can come
+from a long right tail with one mode. Reporting a dip test beside it would
+separate the two.
+
+**Human-judgment evidence.** Not applicable; a distributional statistic.
+
+**Papers.** [Pfister et al. 2013](https://www.frontiersin.org/articles/10.3389/fpsyg.2013.00700/full).
 
 **Implementation notes.** The module page used to describe this indicator as
 `compression_dip_statistic`, a maximum ECDF-to-uniform gap with a 0.1 threshold;
@@ -329,6 +429,11 @@ High coverage with low density is the profile of genuine rewriting that reuses
 vocabulary. `density_histogram` shows the shape of the density distribution; a
 bimodal shape means a mixed corpus and makes the means unsafe to quote.
 
+**Human-judgment evidence.** No correlation with ratings of the corpus itself.
+SummEval, at system level, finds density tracks human consistency ratings
+(τ 0.65): it measures how extractive a system is, and extractive output is
+rarely inconsistent.
+
 **Papers.** [Grusky et al. 2018](https://aclanthology.org/N18-1065/). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
 
 **Implementation notes.** Lowercased `Processor` tokens, so case-insensitive.
@@ -353,8 +458,14 @@ steeply with n in any corpus — a target can reuse every word while recombining
 them into new phrases — so compare like with like. XSum's reported 36% novel
 unigrams is the usual reference point for a highly abstractive corpus.
 `novel_1gram_histogram` gives the shape of the unigram rate across documents.
+Goldsack et al. (2022) find lay summaries more novel than abstracts, and eLife's
+more novel than PLOS's.
 
-**Papers.** [Narayan et al. 2018](https://aclanthology.org/D18-1206/); [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626); [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
+**Human-judgment evidence.** None for the corpus statistic. SummEval, at system
+level, finds novel bigrams (τ −0.54) and trigrams (τ −0.57) anti-correlated
+with human consistency ratings: abstractive systems hallucinate more.
+
+**Papers.** [Narayan et al. 2018](https://aclanthology.org/D18-1206/); [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
 
 **Implementation notes.** Token-level, case-insensitive.
 
@@ -370,6 +481,12 @@ pure digits removed) absent from the source's content words.
 **How to read it.** Removes the function-word floor that makes raw unigram
 novelty look low even in heavy rewriting. For simplification corpora this is
 usually the more informative of the two.
+
+**Literature.** None direct; a variant of novel n-grams. The nearest test is
+Bommasani & Cardie (2020), who tried content-word-only compression and found it
+tracked the all-word version.
+
+**Human-judgment evidence.** None.
 
 **Implementation notes.** Content words from the shared `Processor`.
 
@@ -387,11 +504,17 @@ fragment matcher as `coverage`.
 **How to read it.** 0 = the target is entirely copied spans; 1 = nothing is
 copied. Higher is more abstractive.
 
+**Human-judgment evidence.** None for abstractivity itself. Because ABS₁ is
+`1 − coverage`, SummEval's system-level coverage results apply.
+
 **Papers.** [Bommasani & Cardie 2020](https://aclanthology.org/2020.emnlp-main.649/). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
 
 **Implementation notes.** Only p = 1 is emitted, because the paper fixes it
-("We set p = 1"); `abstractivity_p2` is deferred pending a decision on the
-PRD's open question 1. `params.abstractivity_p` records the value.
+("We set p = 1"). `params.abstractivity_p` records the value. The PRD's open
+question 1 (whether to add `abstractivity_p2`) is closed by the paper itself:
+Bommasani & Cardie tested p from 1 to 4 and found p ≥ 2 dominated by the
+denominator. ABS₂ ranges only 0.76–0.995 across their datasets, and p = 3 or 4
+gives about 1 everywhere, so p2 would not discriminate between corpora.
 
 ### `abstractiveness.redundancy` — Redundancy
 
@@ -404,10 +527,15 @@ sentences (Bommasani & Cardie 2020), with F1 = `2·LCS / (|a| + |b|)` on
 lowercased tokens. `None` below two sentences.
 
 **How to read it.** 0 = no shared subsequences between sentences; 1 = repeated
-sentences. The paper finds redundancy anti-correlated with abstractivity:
-redundant summaries tend to be extractive.
+sentences. The paper finds redundancy anti-correlated with abstractivity
+(ρ −0.43 across ten datasets): redundant summaries tend to be extractive. It
+uses the mean, not the max, over sentence pairs because max-pooling tracked
+summary length exactly.
 
-**Papers.** [Bommasani & Cardie 2020](https://aclanthology.org/2020.emnlp-main.649/). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
+**Human-judgment evidence.** None. SummEval's "repeated n-grams" is a different
+quantity.
+
+**Papers.** [Bommasani & Cardie 2020](https://aclanthology.org/2020.emnlp-main.649/).
 
 **Implementation notes.** Quadratic in the number of target sentences; pairs
 whose LCS table exceeds M2's size cap are skipped. Cheap for short summaries,
@@ -426,16 +554,24 @@ inferred topic mixtures of source and target.
 **How to read it.** 1 = the same topic mixture. LDA is fit per corpus, so the
 score compares across corpora as a similarity, but the topics themselves do
 not. The paper notes it correlates with extraction, since LDA works on unigram
-counts.
+counts. **Values here are not comparable with the paper's Table 1** (e.g.
+CNN/DailyMail 0.634): the preprocessing, library and log base all differ (see
+the implementation notes).
 
-**Papers.** [Bommasani & Cardie 2020](https://aclanthology.org/2020.emnlp-main.649/). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
+**Human-judgment evidence.** None.
+
+**Papers.** [Bommasani & Cardie 2020](https://aclanthology.org/2020.emnlp-main.649/).
 
 **Implementation notes.** scikit-learn `LatentDirichletAllocation` (batch,
-seed 13) over a lowercased `CountVectorizer` with English stop words removed;
-the paper used gensim and gives no log base or preprocessing, so base 2 (keeping
-TS in [0, 1]) and the stop-word list are choices recorded in
-`params.topic_similarity`. The PRD said "divergence"; the paper uses the
-distance, which is implemented. A source or target with no in-vocabulary word
+seed 13) over a lowercased `CountVectorizer` with scikit-learn's English stop
+words removed, and Jensen–Shannon distance in base 2 (keeping TS in [0, 1]);
+these choices are recorded in `params.topic_similarity`. The paper does specify
+its preprocessing (its Appendix B.3), and it differs: lowercase, NLTK stop
+words removed, spaCy lemmas, only nouns, adjectives, verbs and adverbs kept,
+gensim LDA with default settings on at most 20,000 training documents, and
+SciPy's Jensen–Shannon distance, whose default is the natural log. To reproduce
+the paper's numbers, match all of these. The PRD said "divergence"; the paper
+uses the distance, which is implemented. A source or target with no in-vocabulary word
 (e.g. only stop words) gets LDA's prior rather than a topic mix, so that pair's
 value is `None`.
 
@@ -454,7 +590,13 @@ ratio that the `Levenshtein.ratio` call in EASSE's reference code computes:
 addition, deletion). On documents it falls with any length difference, so read
 it next to compression.
 
-**Papers.** [Martin et al. 2018](https://aclanthology.org/W18-7005/); [ASSET 2020](https://arxiv.org/html/2005.00481).
+**Human-judgment evidence.** Sentence level (ASSET): Levenshtein distance
+correlates with meaning preservation (|r| 0.67) and not significantly with
+simplicity (0.18). It measures how much changed, and more change costs meaning.
+Martin et al. 2018 has this feature only in its tseval code, not in the paper,
+so the paper is not cited for it.
+
+**Papers.** [ASSET 2020](https://arxiv.org/html/2005.00481); [EASSE 2019](https://aclanthology.org/D19-3009.pdf).
 
 **Implementation notes.** Whole documents on raw text, not EASSE's normalised
 sentence pairs; not comparable with sentence-level figures.
@@ -469,9 +611,13 @@ sentence pairs; not comparable with sentence-level figures.
 share of source sentences (stripped) found exactly among the target's sentences.
 
 **How to read it.** 1 = every source sentence survives unchanged; 0 = none does.
-Truncation scores high here, rewriting low.
+Truncation scores high here, rewriting low. For scale, ASSET reports exact-copy
+rates of 16.3% for TurkCorpus, 26.5% for HSplit and 0.4% for ASSET, at sentence
+level.
 
-**Papers.** [Martin et al. 2018](https://aclanthology.org/W18-7005/); [EASSE 2019](https://aclanthology.org/D19-3009.pdf).
+**Human-judgment evidence.** None; descriptive.
+
+**Papers.** [EASSE 2019](https://aclanthology.org/D19-3009.pdf); [ASSET 2020](https://arxiv.org/html/2005.00481).
 
 **Implementation notes.** EASSE scores whole sentence pairs as copied or not;
 this adapts it to documents.
@@ -489,7 +635,11 @@ deletions) over `max(|source words|, |target words|)`.
 **How to read it.** 0–1. Deletions dominate summarization; additions mark
 elaboration. Both are bag-of-words counts, so a reordering adds nothing.
 
-**Papers.** [Martin et al. 2018](https://aclanthology.org/W18-7005/); [EASSE 2019](https://aclanthology.org/D19-3009.pdf); [ASSET 2020](https://arxiv.org/html/2005.00481).
+**Human-judgment evidence.** Sentence level (ASSET), meaning preservation:
+deleted-word share r −0.67, added-word share r −0.38. Neither correlates
+significantly with simplicity.
+
+**Papers.** [ASSET 2020](https://arxiv.org/html/2005.00481); [EASSE 2019](https://aclanthology.org/D19-3009.pdf).
 
 **Implementation notes.** Case-preserving `Processor` words rather than
 sacrebleu 13a tokens; whole documents. ASSET defines its own variants (deleted
@@ -507,8 +657,12 @@ follow the EASSE reference code.
 `{rouge1_f1, rouge2_f1, rougeL_f1}`: Goldsack et al.'s ABSTRACT baseline.
 
 **How to read it.** High = the lay summary resembles the abstract; Goldsack
-et al. find PLOS summaries much closer to their abstracts than eLife's. Null
-for pairs without an abstract; a note counts them.
+et al. find PLOS summaries much closer to their abstracts than eLife's
+(ROUGE-1 47.07 against 28.92). Null for pairs without an abstract; a note
+counts them.
+
+**Human-judgment evidence.** None for this use. APPLS meta-evaluates ROUGE for
+plain-language summarization, which is why it is the caveat here.
 
 **Papers.** [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/). **Caveats.** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
 
@@ -530,7 +684,9 @@ abstracts) and `by_type`.
 and the shared share rising with how many abstracts use the word: rare,
 article-specific terms are dropped. Null without an abstract or a POS tagger.
 
-**Papers.** [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/). **Caveats.** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
+**Human-judgment evidence.** None; descriptive.
+
+**Papers.** [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/).
 
 **Implementation notes.** spaCy `en_core_web_sm` stands in for ScispaCy
 (`en_core_sci_scibert`). The paper pools the shared share over all words of a
@@ -538,7 +694,7 @@ type; here each pair gets a share and the corpus reports their `Summary`.
 
 ### `abstractiveness.rouge1_recall`, `abstractiveness.rouge2_recall`, `abstractiveness.rougeL_recall` — ROUGE recall of the source
 
-**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M2 — Abstractiveness](modules/m2-abstractiveness.md)
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M2 — Abstractiveness](modules/m2-abstractiveness.md)
 
 **What it does.** How much of the source's n-grams survive into the target.
 
@@ -568,13 +724,23 @@ construction.** A target that is 3% of its source's length cannot have high
 source-recall no matter how faithfully it copies. Do not read a low ROUGE recall
 on PLOS or eLife as evidence of rewriting — read it as evidence of compression,
 and get the rewriting signal from `density` and the novel n-gram rates instead.
-The module's own docstring flags this as descriptive-only.
+The module's own docstring flags this as descriptive-only. Sun et al. (2019)
+show that ROUGE varies non-linearly with output length, so even a length ratio
+does not cleanly remove the effect.
+
+**Human-judgment evidence.** Sentence level, meaning preservation: Martin et al.
+(2018) use ROUGE between source and output as a quality-estimation feature on
+QATS, r 0.55 train and 0.47 test with meaning ratings (0.29 with
+grammaticality). The paper does not say which ROUGE variant or orientation it
+used, so treat these three keys as the same family, not the same number.
+
+**Papers.** [Martin et al. 2018](https://aclanthology.org/W18-7005/). **Caveats.** [Sun et al. 2019](https://aclanthology.org/W19-2303/).
 
 **Implementation notes.** No stemming; lowercased tokens.
 
 ### `abstractiveness.content_type_overlap` — Content-type overlap
 
-**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M2 — Abstractiveness](modules/m2-abstractiveness.md)
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M2 — Abstractiveness](modules/m2-abstractiveness.md)
 
 **What it does.** The share of the target's distinct content vocabulary that
 also occurs in the source.
@@ -592,6 +758,14 @@ never used — which is either genuine elaboration or paraphrase into simpler
 words. **This metric cannot tell those apart**; M5 is what separates added
 content from reworded content.
 
+**Human-judgment evidence.** Sentence level, meaning preservation, for a close
+relative: Martin et al. (2018)'s WordsInCommon, the percentage of words source
+and output share, correlates r 0.55 train and 0.50 test with meaning ratings.
+Their version counts all words; this one counts distinct content words over the
+target's vocabulary, so the figure is indicative, not transferable.
+
+**Papers.** [Martin et al. 2018](https://aclanthology.org/W18-7005/).
+
 **Implementation notes.** None.
 
 ## M3 — Readability
@@ -607,13 +781,23 @@ syllables per word, with sentences segmented by the shared `Processor`.
 Reported as `source`, `target`, and a **paired** `delta` (target − source, with
 a paired bootstrap that resamples rows jointly). `None` for empty text.
 
-**How to read it.** US grade; **lower = easier**. It takes sentence length as a
-direct input, so it falls when a text is merely shortened, with no lexical or
-syntactic simplification (Tanprasert & Kauchak 2021). A negative FKGL delta on
-its own demonstrates nothing; read it against M3c's decomposition. The
-literature table quotes FKGL for Cochrane, PLOS and eLife.
+**How to read it.** US grade; **lower = easier**. Its inputs are words per
+sentence and syllables per word, not document length, so truncating a document
+moves it only through which sentences survive. It falls when sentences are
+shortened or split, or long words replaced, with no real simplification:
+Tanprasert & Kauchak (2021) drive it down by inserting periods and swapping in
+shorter words. A negative FKGL delta on its own demonstrates nothing; read it
+against M1's mean sentence length, M3b's `syllables_per_word` and M3c's
+decomposition. The literature table quotes FKGL for Cochrane, PLOS and eLife;
+Devaraj et al. (2021) also report it on Cochrane.
 
-**Papers.** [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/); [BioLaySumm 2024](https://arxiv.org/pdf/2408.08566); [Cripwell et al. 2023](https://arxiv.org/pdf/2305.06274). **Contested by.** [Tanprasert & Kauchak 2021](https://aclanthology.org/2021.gem-1.1). **Caveats.** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
+**Human-judgment evidence.** Poor, sentence level, simplicity: r 0.117 with
+Simplicity-DA ratings (Alva-Manchego et al. 2021); r −0.36 train and −0.37 test
+on QATS (Martin et al. 2018), weaker than words per sentence alone. On
+D-Wikipedia, at sentence and document level, Cardon & Doğruöz (2025) find no
+readability formula above |r| 0.30.
+
+**Papers.** [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/); [BioLaySumm 2024](https://arxiv.org/pdf/2408.08566); [Cripwell et al. 2023](https://arxiv.org/pdf/2305.06274); [Devaraj et al. 2021](https://arxiv.org/pdf/2104.05767). **Contested by.** [Tanprasert & Kauchak 2021](https://aclanthology.org/2021.gem-1.1). **Caveats.** [Alva-Manchego et al. 2021](https://aclanthology.org/2021.cl-4.28); [Cardon & Doğruöz 2025](https://arxiv.org/html/2511.09536v1).
 
 **Implementation notes.** `textstat` is pinned to 0.7.3; see the module page.
 
@@ -626,9 +810,17 @@ literature table quotes FKGL for Cochrane, PLOS and eLife.
 **How it works.** `textstat`'s FRE; source, target and paired delta, as for FKGL.
 
 **How to read it.** 0–100; **higher = easier** (inverted vs. the other
-formulas). Shares FKGL's inputs and its length confound.
+formulas). Shares FKGL's inputs and its sentence-length confound, which is why
+Tanprasert & Kauchak's critique applies to it too.
 
-**Papers.** [Alva-Manchego et al. 2021](https://aclanthology.org/2021.cl-4.28). **Contested by.** [Tanprasert & Kauchak 2021](https://aclanthology.org/2021.gem-1.1).
+**Human-judgment evidence.** Weak, sentence level, simplicity: r 0.16 train and
+0.27 test on QATS (Martin et al. 2018). Engelmann et al.'s ARTS study, as
+reported by Cardon & Doğruöz (2025), found FRE the formula furthest from human
+pairwise rankings. Alva-Manchego et al. (2021), previously cited here, does not
+evaluate FRE; its meta-evaluation covers BLEU, SARI, SAMSA, FKGL, FKBLEU, iBLEU
+and BERTScore.
+
+**Papers.** [Martin et al. 2018](https://aclanthology.org/W18-7005/). **Contested by.** [Tanprasert & Kauchak 2021](https://aclanthology.org/2021.gem-1.1). **Caveats.** [Cardon & Doğruöz 2025](https://arxiv.org/html/2511.09536v1).
 
 **Implementation notes.** As for FKGL.
 
@@ -643,23 +835,57 @@ in characters, DCRS from the share of words outside a familiar-word list.
 `dale_chall_readability_score`; source, target and paired delta.
 
 **How to read it.** **Lower = easier** for both. Goldsack et al. report DCRS as
-their measure of lexical complexity and CLI alongside FKGL.
+their measure of lexical complexity and CLI alongside FKGL, all lower in lay
+summaries than in abstracts (Mann–Whitney p < 0.05). BioLaySumm 2024 scores
+readability with both.
 
-**Papers.** [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/); [BioLaySumm 2024](https://arxiv.org/pdf/2408.08566). **Caveats.** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
+**Human-judgment evidence.** Mixed. Engelmann et al.'s ARTS study, as reported
+by Cardon & Doğruöz (2025), found Dale–Chall the formula closest to human
+pairwise rankings; Cardon & Doğruöz's own D-Wikipedia results put every formula
+at or below |r| 0.30. CLI has no positive result in the reviewed papers.
+
+**Papers.** [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/); [BioLaySumm 2024](https://arxiv.org/pdf/2408.08566). **Caveats.** [Cardon & Doğruöz 2025](https://arxiv.org/html/2511.09536v1).
 
 **Implementation notes.** As for FKGL.
 
-### `readability.m3a_surface.ari`, `readability.m3a_surface.smog` — Automated Readability Index and SMOG
+### `readability.m3a_surface.ari` — Automated Readability Index
+
+**Label:** PLS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** Another surface grade estimate, from characters per word and
+words per sentence.
+
+**How it works.** `textstat`'s `automated_readability_index`; source, target and
+paired delta.
+
+**How to read it.** Grade; **lower = easier**. Like FKGL it takes words per
+sentence as a direct input, so it shares FKGL's sentence-length confound.
+Devaraj et al. (2021) report it with FK on Cochrane plain-language summaries,
+where both move little (ARI 15.5 → 14.9, FK 14.4 → 12.9) next to their
+masked-language-model measure.
+
+**Human-judgment evidence.** Poor: Cardon & Doğruöz (2025) include ARI among
+eight formulas that correlate weakly with human simplification ratings on
+D-Wikipedia (no formula above |r| 0.30).
+
+**Papers.** [Devaraj et al. 2021](https://arxiv.org/pdf/2104.05767). **Caveats.** [Cardon & Doğruöz 2025](https://arxiv.org/html/2511.09536v1).
+
+**Implementation notes.** As for FKGL.
+
+### `readability.m3a_surface.smog` — SMOG
 
 **Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
 
-**What it does.** Two more surface grade estimates: ARI from characters per word
-and words per sentence, SMOG from multi-syllable words.
+**What it does.** A surface grade estimate from the density of words with three
+or more syllables.
 
-**How it works.** `textstat`'s `automated_readability_index` and `smog_index`;
-source, target and paired delta.
+**How it works.** `textstat`'s `smog_index`; source, target and paired delta.
 
-**How to read it.** Grade; **lower = easier**.
+**How to read it.** Grade; **lower = easier**. No reviewed simplification or
+summarization paper uses SMOG as a corpus or evaluation metric; Cardon &
+Doğruöz (2025) only meta-evaluate it, with the same weak result as ARI.
+
+**Human-judgment evidence.** Poor (Cardon & Doğruöz 2025).
 
 **SMOG's minimum length.** `textstat.smog_index` returns `0.0`, not an error,
 for text with fewer than three sentences. 0.0 is a valid SMOG grade, so that
@@ -669,6 +895,8 @@ improvement, which M3c then decomposed. `smog` is now `None` below three
 sentences, so a corpus of single-sentence targets reports no SMOG rather than a
 wrong one, and `n` on the smog fields will be lower than on the other measures.
 Cochrane loses 31 of 1000 pairs this way and its delta moves from −1.85 to −1.40.
+
+**Caveats.** [Cardon & Doğruöz 2025](https://arxiv.org/html/2511.09536v1).
 
 **Implementation notes.** As for FKGL.
 
@@ -707,8 +935,28 @@ as input, each reported as `source`, `target`, `delta`.
 `jargon_rate`: for cross-corpus comparison, supply one shared list to every
 corpus rather than tuning per domain.
 
+**Literature.** None of the five is used exactly this way in the reviewed task
+papers, but each has a source. Frequency is the best single cue to word
+complexity (Paetzold & Specia 2016, as cited by ASSET, whose lexical complexity
+is a frequency-rank measure). APPLS finds the share of the 1,000 commonest
+words rises as text is simplified. Tanprasert & Kauchak (2021) recommend
+reporting syllables per word on its own. MTLD is McCarthy & Jarvis's (2010)
+length-robust lexical diversity measure. Devaraj et al. (2021) penalize jargon
+in medical plain-language simplification.
+
+**Human-judgment evidence.** Weak. On D-Wikipedia, word-frequency features are
+the next-best correlates of simplification ratings after word count (r 0.30),
+at |r| ≤ 0.27 (Cardon & Doğruöz 2025). No sentence-level validation of these
+exact measures was found.
+
+**Papers.** [ASSET 2020](https://arxiv.org/html/2005.00481); [Tanprasert & Kauchak 2021](https://aclanthology.org/2021.gem-1.1); [Devaraj et al. 2021](https://arxiv.org/pdf/2104.05767). **Caveats.** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/); [Cardon & Doğruöz 2025](https://arxiv.org/html/2511.09536v1).
+
 **Implementation notes.** `mean_zipf`, `syllables_per_word`, `mtld` and
-`rare_word_rate` also feed M3c's decomposition.
+`rare_word_rate` also feed M3c's decomposition. **MTLD's minimum length is
+low.** It returns `None` only below 10 tokens. TAALED's documentation sets 50
+tokens as the minimum, citing Zenker & Kyle (2021), who found MTLD stabilizes
+near 100 words; single-sentence targets (XSum) fall well short, so their MTLD
+is unstable. Raising the threshold is a code change in the readability module.
 
 ### `readability.m3b_length_invariant.mean_dependency_distance` and related — Syntactic length-invariant measures
 
@@ -738,6 +986,18 @@ of the core sentence-level simplification operations. These four plus M1's
 `sentence_ratio` are where sentence-level simplification shows up in a
 document-level profile.
 
+**Literature.** ASSET measures a dependency-tree depth ratio (the maximum over
+sentences, not this mean), which is why ASSET is cited for `mean_parse_depth`.
+The rewriting rules ASSET cites (Aluísio et al. 2008) split subordinate clauses
+and turn passive into active, the operations `subordinate_clause_ratio` and
+`passive_rate` look for. No reviewed paper uses these four as corpus statistics.
+
+**Human-judgment evidence.** Weak. ASSET's depth ratio correlates r 0.06 with
+simplicity at sentence level, not significant; Cardon & Doğruöz (2025) find
+syntactic features weak on D-Wikipedia.
+
+**Papers.** [ASSET 2020](https://arxiv.org/html/2005.00481). **Caveats.** [Cardon & Doğruöz 2025](https://arxiv.org/html/2511.09536v1).
+
 **Implementation notes.** None.
 
 ### `readability.m3b_length_invariant.wordrank` — WordRank
@@ -754,7 +1014,15 @@ sentences. Reported as `source`, `target`, `delta`.
 delta means the target uses commoner words. Not a length input, so it does not
 fall with truncation.
 
-**Papers.** [Martin et al. 2020](https://aclanthology.org/2020.lrec-1.577/); [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/). **Caveats.** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
+**WordRank was never an evaluation metric.** Martin et al. (2020) introduce it
+as a control attribute for their ACCESS model, a knob for generation, not a
+score validated against readers. Goldsack et al. (2022) compute it through
+EASSE as a corpus statistic, which is the use that gives it its PLS label.
+
+**Human-judgment evidence.** None in favour. ASSET's word-rank ratio shows no
+correlation with human simplicity ratings (r −0.05, not significant).
+
+**Papers.** [Martin et al. 2020](https://aclanthology.org/2020.lrec-1.577/); [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/).
 
 **Implementation notes.** Ranks come from `wordfreq.top_n_list("en", 100_000)`
 (rank 1 = most frequent; unknown words rank 100,001; lowercased; natural log),
@@ -774,12 +1042,16 @@ pipeline but not with published numbers. Not in M3c's decomposition.
 **How to read it.** Lower = simpler vocabulary. Squaring makes a few very rare
 words count heavily.
 
-**Papers.** [Martin et al. 2018](https://aclanthology.org/W18-7005/); [ASSET 2020](https://arxiv.org/html/2005.00481).
+**Human-judgment evidence.** None in favour: in ASSET the frequency-rank
+features do not correlate with human simplicity ratings (see WordRank).
+
+**Papers.** [ASSET 2020](https://arxiv.org/html/2005.00481).
 
 **Implementation notes.** wordfreq ranks as for WordRank (ASSET used the 50k
 most frequent FastText words). The definition is ASSET's; Martin et al. 2018 has
-no feature of this form, and EASSE's reference "lexical complexity score" is a
-WordRank-style quantile instead. Not in M3c's decomposition.
+no feature of this form, so it is no longer cited here, and EASSE's reference
+"lexical complexity score" is a WordRank-style quantile instead. Not in M3c's
+decomposition.
 
 ### `readability.m3c_decomposition.*` — Length-matched decomposition
 
@@ -825,6 +1097,21 @@ a length artifact; an extractive system of the same length scores the same.
 *wrong* way and rewriting overcame it. **<0** — total and attributable have
 opposite signs.
 
+*What `length_artifact` actually isolates.* For the ratio formulas (FKGL and
+its relatives take words per sentence and syllables per word, not total
+length), EXT-ORACLE-k differs from the source not in length as such but in
+**which sentences were kept**. So `length_artifact` is better read as a
+*selection effect*: the readability change bought by choosing sentences,
+without rewriting them. The key name is unchanged; a rename (for example to
+`selection_effect`) would be a code change.
+
+**Literature.** No paper computes this decomposition. The closest ideas are
+Sun et al. (2019), who compare summarizers against a random system of the same
+length, Goldsack et al. (2022)'s greedy extractive oracle, and Tanprasert &
+Kauchak (2021)'s advice to report the components of a formula separately.
+
+**Human-judgment evidence.** None.
+
 *Its instability, which is not a minor caveat.* `share_attributable` is a
 **ratio with a difference in the denominator**, and `total` is near zero
 whenever a corpus barely changes readability. The code guards exact
@@ -851,6 +1138,8 @@ denominator of its own. It is `None` when the totals cancel — the share is
 genuinely undefined then, not large. It is a corpus-level quantity, so it has
 no CI: for spread, read the per-pair median and IQR alongside it.
 
+**Papers.** [Sun et al. 2019](https://aclanthology.org/W19-2303/).
+
 **Implementation notes.** The `*` is one of `DECOMP_MEASURES`. WordRank and
 lexical complexity are deliberately not decomposed.
 
@@ -870,7 +1159,19 @@ target − source difference. Computed on the pipeline sample.
 A positive gain means the target reads as simpler. Unlike the surface formulas,
 it is not a direct function of sentence length.
 
-**Papers.** [Cripwell et al. 2023 (SLE)](https://aclanthology.org/2023.emnlp-main.739/); [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278). **Contested by.** [REFeREE 2024](https://arxiv.org/html/2403.17640v1).
+**Validated at sentence level only.** SLE is a sentence model. Cripwell et al.
+(2024) define the document score as the mean of sentence scores, as here, and
+report that their paragraph-level human study could not be correlated with the
+automatic scores. So the *validated* label belongs to the sentence model; the
+document mean is unvalidated.
+
+**Human-judgment evidence.** Sentence level, simplicity, mixed. REFeREE reports
+SLE at Kendall-like τ 0.295 on SimpEval2022 and r 0.532 on Human-Likert
+simplicity ratings, but r 0.018 on unfiltered Simplicity-DA. That is mixed
+evidence rather than a refutation, so REFeREE is now listed as a caveat, not as
+contesting the metric. Document level: none.
+
+**Papers.** [Cripwell et al. 2023 (SLE)](https://aclanthology.org/2023.emnlp-main.739/); [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278). **Caveats.** [REFeREE 2024](https://arxiv.org/html/2403.17640v1).
 
 **Implementation notes.** The released checkpoint `liamcripwell/sle-base`,
 loaded through `transformers` exactly as the reference `SLEScorer` does
@@ -896,7 +1197,9 @@ Computed on the pipeline sample.
 **How to read it.** 0–1; higher = more coherent. The paper finds it patterns
 with redundancy, suggesting BERT leans on word overlap for its judgement.
 
-**Papers.** [Bommasani & Cardie 2020](https://aclanthology.org/2020.emnlp-main.649/). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
+**Human-judgment evidence.** None.
+
+**Papers.** [Bommasani & Cardie 2020](https://aclanthology.org/2020.emnlp-main.649/).
 
 **Implementation notes.** `bert-base-uncased`. The paper averages the NSP
 *prediction* (an indicator), which is implemented; the PRD's wording
@@ -921,6 +1224,17 @@ mean/median/IQR/CI, once per τ in the sweep.
 content-preserving; low = selective retention. A lower τ links more and inflates
 it, so check the sweep.
 
+**Literature.** The complement, the share of source sentences dropped, is a
+studied quantity: Zhong et al. (2020) find 17.2–44.8% of Newsela sentences
+deleted, depending on reading level, and Petersen & Ostendorf's (2007)
+alignment categories (as summarized by ASSET) include dropped sentences. It
+stays project-specific because its value depends on this project's aligner and
+τ, so it is not the same number as those published rates.
+
+**Human-judgment evidence.** None; it inherits the aligner's accuracy.
+
+**Papers.** [Zhong et al. 2020](https://ojs.aaai.org/index.php/AAAI/article/view/6520).
+
 **Implementation notes.** See the module page for how links are made.
 
 ### `alignment.by_tau.*.target_groundedness` — Target groundedness
@@ -938,6 +1252,14 @@ alignment failures — M5 exists to tell those apart, and it cannot do so
 perfectly, which is why `alignment_error` is one of its manual annotation
 categories.
 
+**Literature.** Target sentences with no source link are the insertions
+Srikanth & Li (2021) study as elaborative simplification. Project-specific for
+the same reason as source coverage: the value depends on this aligner and τ.
+
+**Human-judgment evidence.** None.
+
+**Papers.** [Srikanth & Li 2021](https://aclanthology.org/2021.findings-acl.455/).
+
 **Implementation notes.** None.
 
 ### `alignment.by_tau.*.kendall_tau` — Kendall's tau (reordering)
@@ -954,6 +1276,16 @@ order; lower = content reordered. `None` when fewer than two target sentences
 are aligned, so its `n` is often well below the pair count — check it before
 reading the value. Note the name collision: this is Kendall's τ, unrelated to
 the alignment threshold τ.
+
+**Literature.** Lapata (2006) proposed Kendall's τ for evaluating information
+ordering. No reviewed simplification or summarization paper reports it as a
+corpus statistic.
+
+**Human-judgment evidence.** For ordering quality, not simplification: Lapata
+(2006) finds τ correlates with human comprehensibility ratings of sentence
+orders (r 0.45) and with reading times (r −0.48).
+
+**Papers.** [Lapata 2006](https://aclanthology.org/J06-4002/).
 
 **Implementation notes.** None.
 
@@ -989,34 +1321,69 @@ summarization. **`n_1_0_deletion` high** = content selection. **`n_0_1_insertion
 high** = added material, or alignment failure. **`n_1_1` high** = sentence-level
 correspondence, i.e. content-preserving rewriting.
 
+**Literature.** These are Petersen & Ostendorf's (2007) categories, as
+summarized by ASSET: dropped (1-to-0), split (1-to-N), total (1-to-1) and
+merged (2-to-1). ASSET reports 17,245 one-to-one against 6,345
+one-to-many instances. Project-specific because the counts depend on this
+aligner and τ; the mixed-units warning above still applies.
+
+**Human-judgment evidence.** None.
+
+**Papers.** [ASSET 2020](https://arxiv.org/html/2005.00481).
+
 **Implementation notes.** Counts are metrics, not bookkeeping: each has a
 registry entry.
 
-### `alignment.entity_preservation.entity_precision`, `alignment.entity_preservation.entity_recall`, `alignment.entity_preservation.entity_f1` — Entity matching
+### `alignment.entity_preservation.entity_precision` — Entity precision
 
-**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M4 — Alignment and content preservation](modules/m4-alignment.md)
+**Label:** SUM, DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M4 — Alignment and content preservation](modules/m4-alignment.md)
 
-**What it does.** Whether the target keeps the source's named entities and
-avoids introducing new ones.
+**What it does.** Whether the target avoids introducing named entities its
+source never mentions.
 
 **How it works.** Cripwell et al. (2024): named entities are extracted from
 source and target with spaCy, lowercased and compared as sets. Precision = the
-share of the target's distinct entities also in the source; recall = the share
-of the source's distinct entities kept in the target; F1 their harmonic mean.
-Reported once at the top of M4's corpus block, not per τ.
+share of the target's distinct entities also in the source. Reported once at
+the top of M4's corpus block, not per τ. Nan et al. (2021) define the same
+quantity for summarization as prec_s, also with spaCy NER, though they count an
+entity as matched when any of its n-grams appears in the source and ignore
+dates, times and numerals.
 
 **How to read it.** Low precision flags entities the source never mentioned — a
-faithfulness warning. Low recall means entities were dropped, which is expected
-under heavy compression. A side with no entities gives `None` for the ratio that
-needs it, but F1 (`2·shared / (|source| + |target|)`) is 0 whenever either side
-has entities and none are shared, so a target that drops every entity still
-counts; F1 is `None` only when neither side has any.
+faithfulness warning. A target with no entities gives `None`.
 
-**Papers.** [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278).
+**Human-judgment evidence.** None reported for the metric itself. Cripwell et
+al.'s human study found that the automatic faithfulness metrics did not pick
+out the systems humans rated most meaning-preserving out of domain.
+
+**Papers.** [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278); [Nan et al. 2021](https://aclanthology.org/2021.eacl-main.235).
 
 **Implementation notes.** Uses the `Processor`'s NER, whose results are cached
 per text, so with M7 enabled each text goes through NER once. Without an NER model every value is `None` and a note says so, never
 zero.
+
+### `alignment.entity_preservation.entity_recall`, `alignment.entity_preservation.entity_f1` — Entity recall and F1
+
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M4 — Alignment and content preservation](modules/m4-alignment.md)
+
+**What it does.** Whether the target keeps the source's named entities.
+
+**How it works.** As for entity precision (Cripwell et al. 2024): recall = the
+share of the source's distinct entities kept in the target; F1 the harmonic
+mean of precision and recall. Nan et al. (2021)'s recall and F1 compare against
+a reference summary, not the source, so they are a different quantity.
+
+**How to read it.** Low recall means entities were dropped, which is expected
+under heavy compression. A source with no entities gives `None` for recall, but
+F1 (`2·shared / (|source| + |target|)`) is 0 whenever either side has entities
+and none are shared, so a target that drops every entity still counts; F1 is
+`None` only when neither side has any.
+
+**Human-judgment evidence.** None reported.
+
+**Papers.** [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278).
+
+**Implementation notes.** As for entity precision.
 
 ## M5 — Content addition (elaboration)
 
@@ -1055,6 +1422,20 @@ this caveat as a note whenever it scores fewer than 2,000 sentences. A score
 histogram split into two clumps means the threshold is doing real work; one
 smear means it is cutting arbitrarily.
 
+**Literature.** `nli` is a SummaC-ZS-style scorer: the maximum entailment over
+source sentences is the sentence step of SummaC-ZS (Laban et al. 2022), which
+builds on Falke et al.'s (2019) NLI reranking. `lexical_grounding` matches
+Martin et al. (2018)'s WordsInCommon in spirit. Neither is a published metric
+as configured here, so the section stays project-specific.
+
+**Human-judgment evidence.** `nli`: SummaC-ZS is validated on summarization
+consistency benchmarks, not on simplification, and Devaraj et al. (2022) find
+factuality metrics transfer poorly to simplification. `lexical_grounding`: the
+WordsInCommon figure (sentence level, meaning, r 0.55 train) applies to the
+whole pair, not to one target sentence.
+
+**Papers.** [Laban et al. 2022 (SummaC)](https://aclanthology.org/2022.tacl-1.10/); [Martin et al. 2018](https://aclanthology.org/W18-7005/). **Caveats.** [Devaraj et al. 2022](https://aclanthology.org/2022.acl-long.506).
+
 **Implementation notes.** Scores are cached by content hash of (model, source
 sentences, target sentence).
 
@@ -1075,7 +1456,17 @@ block has the same shape as the other scorers (`score`, `score_histogram`,
 **How to read it.** Higher = better supported. As a second scorer it also feeds
 `pairwise_agreement`, which is where its value as a cross-check shows.
 
-**Papers.** [Laban et al. 2022 (SummaC)](https://aclanthology.org/2022.tacl-1.10/); [BioLaySumm 2024](https://arxiv.org/pdf/2408.08566); [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626); [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/); [Devaraj et al. 2022](https://aclanthology.org/2022.acl-long.506).
+**Which papers support which claim.** Laban et al. (2022) define and validate
+SummaC-Conv; Cripwell et al. (2024) use the Conv variant for simplification.
+BioLaySumm 2024 uses "SummaC" without naming a variant, so it supports only
+"used in the PLS shared task", not the Conv configuration.
+
+**Human-judgment evidence.** Validated on summarization consistency benchmarks
+(Laban et al. 2022), not on simplification or lay summaries. BioLaySumm 2024
+observes that SummaC and AlignScore favour extractive outputs, so they trade off
+against relevance and readability: a heavily copied target scores well.
+
+**Papers.** [Laban et al. 2022 (SummaC)](https://aclanthology.org/2022.tacl-1.10/); [BioLaySumm 2024](https://arxiv.org/pdf/2408.08566); [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278). **Caveats.** [Devaraj et al. 2022](https://aclanthology.org/2022.acl-long.506).
 
 **Implementation notes.** Optional: loaded lazily when `run.summac` is set and
 **skipped gracefully** if absent, with a note; a skipped scorer gets no
@@ -1095,7 +1486,11 @@ with the whole source as context; same block shape as the other scorers.
 
 **How to read it.** Higher = better supported.
 
-**Papers.** [Zha et al. 2023 (AlignScore)](https://aclanthology.org/2023.acl-long.634); [BioLaySumm 2024](https://arxiv.org/pdf/2408.08566). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626); [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
+**Human-judgment evidence.** Validated on summarization consistency benchmarks
+(Zha et al. 2023); BioLaySumm 2024 scores factuality with it. It shares
+SummaC's bias toward extractive outputs noted there.
+
+**Papers.** [Zha et al. 2023 (AlignScore)](https://aclanthology.org/2023.acl-long.634); [BioLaySumm 2024](https://arxiv.org/pdf/2408.08566).
 
 **Implementation notes.** Optional, loaded when `run.alignscore` is set; skipped
 with a note and no `per_scorer` entry when absent.
@@ -1116,6 +1511,11 @@ SWiPE's annotated subset held 32% of the sentence pool and moved the rate from
 answers "what share of sentences are unsupported", this one "what does a
 typical document look like".
 
+**Literature.** None; macro instead of micro averaging is a statistical choice.
+
+**Human-judgment evidence.** Not applicable; an aggregation of the scorer's
+output.
+
 **Implementation notes.** None.
 
 ### `elaboration.pairwise_agreement` — Scorer agreement
@@ -1132,6 +1532,12 @@ the above/below-threshold label) and `pearson` (correlation of raw scores,
 diverging on your corpus is direct evidence that the automatic rate is
 unreliable there. With only one scorer configured this block is empty — which is
 itself worth noticing, because you then have no cross-check at all.
+
+**Literature.** None as a corpus statistic. SummEval's pairwise correlations
+between metrics are the nearest precedent, used there as a meta-evaluation
+check.
+
+**Human-judgment evidence.** Not applicable.
 
 **Implementation notes.** Keyed `<a>_vs_<b>`.
 
@@ -1158,6 +1564,15 @@ exclusive and partition the set. `n_not_entailed` is the count they are over.
 **How to read it.** These are **surface cues for triage**, not labels — the
 names say "candidate" for that reason.
 
+**Literature.** The categories follow Srikanth & Li (2021): only some
+elaborations are definitions; many are contextual explanations, which they
+sort by contextual specificity. APPLS simulates added background by inserting
+definitions. The regex cues themselves are unvalidated.
+
+**Human-judgment evidence.** None.
+
+**Papers.** [Srikanth & Li 2021](https://aclanthology.org/2021.findings-acl.455/).
+
 **Implementation notes.** None.
 
 ### `elaboration.corrected_not_entailed_rate` — Corrected not-entailed rate
@@ -1176,8 +1591,21 @@ excluded, since they were never additions:
 corrected_not_entailed_rate = automatic_rate × (P(grounded_elaboration) + P(hallucination))
 ```
 
-**How to read it.** **The trustworthy version**; null until annotations are
-ingested. Until then, treat the automatic rate as a ceiling.
+**How to read it.** **The more trustworthy version**; null until annotations
+are ingested. Until then, treat the automatic rate as a ceiling.
+
+**It corrects in one direction only.** The formula multiplies the flagged rate
+by the share of *flagged* sentences that are genuine, which removes false
+positives. Genuine additions the scorer called entailed (false negatives) are
+never sampled, so they stay uncounted and the corrected rate can still be
+biased low. Annotating a sample of entailed sentences as well would allow a
+prevalence estimate that uses both error rates (the Rogan–Gladen correction is
+the standard form).
+
+**Literature.** None; a project design.
+
+**Human-judgment evidence.** It *is* a human-judgment correction, so its
+quality depends on the size and agreement of the annotated sample.
 
 **Implementation notes.** Per-category estimated rates are written back too.
 
@@ -1192,8 +1620,15 @@ QAFactEval generates questions from the target and answers them against the
 source.
 
 **How to read it.** Higher = the target makes fewer unsupported claims.
+Cripwell et al. (2024) warn that precision favours short, conservative outputs:
+a target that says little says little that is wrong.
 
-**Papers.** [Laban et al. 2022 (SummaC)](https://aclanthology.org/2022.tacl-1.10/); [Fabbri et al. 2022 (QAFactEval)](https://aclanthology.org/2022.naacl-main.187); [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626); [Devaraj et al. 2022](https://aclanthology.org/2022.acl-long.506).
+**Human-judgment evidence.** Validated for summarization (Laban et al. 2022;
+Fabbri et al. 2022), not for simplification. In Cripwell et al.'s
+simplification study, human ratings disagreed with the automatic faithfulness
+ranking.
+
+**Papers.** [Laban et al. 2022 (SummaC)](https://aclanthology.org/2022.tacl-1.10/); [Fabbri et al. 2022 (QAFactEval)](https://aclanthology.org/2022.naacl-main.187); [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278). **Caveats.** [Devaraj et al. 2022](https://aclanthology.org/2022.acl-long.506).
 
 **Implementation notes.** SummaC runs when `run.summac` is set, with the same
 configuration as the sentence-level scorer, released weights included, and the
@@ -1205,7 +1640,7 @@ dependencies, so its keys are null with a note in every run.
 
 ### `elaboration.document_level.summac_recall`, `elaboration.document_level.qafacteval_recall` — Document-level faithfulness, recall
 
-**Label:** DS · **Evidence:** validated · **Needs:** source+target · **Module:** [M5 — Content addition](modules/m5-elaboration.md)
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M5 — Content addition](modules/m5-elaboration.md)
 
 **What it does.** How much of the source's content the target keeps.
 
@@ -1216,6 +1651,12 @@ source instead of the output.
 
 **How to read it.** Higher = more of the source is recoverable from the target.
 Expected to be low under heavy compression, so read it next to M1.
+
+**Human-judgment evidence.** None. The recall variants are Cripwell et al.'s
+own adaptation, with no human correlation reported, so the evidence is
+*introduced*, not *validated* as this page previously said. Validation of
+SummaC and QAFactEval as precision metrics does not carry over to the swapped
+direction.
 
 **Papers.** [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278). **Caveats.** [Devaraj et al. 2022](https://aclanthology.org/2022.acl-long.506).
 
@@ -1234,10 +1675,14 @@ per label, the `Summary` of per-pair shares, under `target` and `abstract`.
 
 **How to read it.** Goldsack et al. find a much greater share of lay-summary
 sentences explaining background than abstract sentences, at the expense of
-results and, to a lesser extent, methods. A shift toward
-background is one form of elaboration, which is why this lives in M5.
+results and, to a lesser extent, methods (background is 58.1% of PLOS and 55.0%
+of eLife lay-summary sentences, against 35.4% and 41.1% of abstract sentences).
+A shift toward background is one form of elaboration, which is why this lives
+in M5.
 
-**Papers.** [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/). **Caveats.** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
+**Human-judgment evidence.** None; descriptive.
+
+**Papers.** [Goldsack et al. 2022](https://aclanthology.org/2022.emnlp-main.724/).
 
 **Implementation notes.** `gubartz/cls_scibert_pubmed_rct` with the
 `allenai/scibert_scivocab_uncased` tokenizer, which labels each sentence on its
@@ -1314,6 +1759,21 @@ its own document's sentence count at **ρ = −0.92**; `centroid_sim` at −0.43
 `max_sim_other` at +0.31. On a 20-document probe the correction moved
 `centroid_sim` from −1.34 pooled to −0.49 stratified.
 
+**Literature.** Zhong et al. (2020) study which sentences Newsela editors delete
+when simplifying. They find document characteristics matter more than position,
+and that at the elementary level editors drop sentences near the end; their
+deletion classifier reaches F1 65.2 (elementary) and 59.7 (middle school). The
+finding that the document matters most is independent support for computing
+the effect within each document. The salience features are standard signals:
+TextRank (Mihalcea & Tarau 2004), lead bias in news, and redundancy in the MMR
+sense (Carbonell & Goldstein 1998). The section stays project-specific because
+no paper reports these deleted-versus-retained effect sizes as corpus
+statistics.
+
+**Human-judgment evidence.** None for the features.
+
+**Papers.** [Zhong et al. 2020](https://ojs.aaai.org/index.php/AAAI/article/view/6520).
+
 **Implementation notes.** Standardising within each document and then pooling
 the z-scores was tried first and abandoned: the guards were per document while
 the z-scores were per feature over non-null values, so a document could pass
@@ -1327,11 +1787,22 @@ All 33 features are reproduced from `linguistic_features.py` in the
 Each is reported as `source`, `target` and a paired `delta` = **target −
 source**, the opposite sign to that project's tables (see the module page).
 
+**Where the feature set comes from.** No paper with the repository's title was
+found. The published match is Dahan et al. (2026, BGU, "Translate or Simplify
+First"), whose Table 2 lists every feature here and which compares them between
+prompting strategies with t-tests. Dahan et al. say they adopt the majority of
+the 37 literature-derived features of BATS (Kreutz et al. 2024), which compares
+simplification datasets on them across 15 corpora. That is the use this module
+makes of them, so the features carry the DS label. Neither paper correlates the
+features with human ratings, and Dahan et al.'s annotators agree only weakly on
+simplicity (weighted κ 0.216). Cardon & Doğruöz (2025) find linguistic features
+of this kind at or below |r| 0.30 against simplification ratings.
+
 ### `linguistic_features.lexical_richness` and related — Lexical features
 
 **Keys:** `linguistic_features.lexical_richness`, `linguistic_features.infrequent_words_ratio`, `linguistic_features.long_words_ratio`, `linguistic_features.words_over_8_chars`, `linguistic_features.avg_word_length`, `linguistic_features.syllables_ratio`, `linguistic_features.content_words_ratio`, `linguistic_features.modifiers_ratio`, `linguistic_features.negations_ratio`
 
-**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M7 — Adopted linguistic feature set](modules/m7-linguistic-features.md)
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M7 — Adopted linguistic feature set](modules/m7-linguistic-features.md)
 
 **What it does.** Nine word-level features: vocabulary variety, rarity, length
 and word class.
@@ -1356,7 +1827,11 @@ at similar lengths; M3b `mtld` is not length-sensitive. `infrequent_words_ratio`
 is "unattested in any corpus", unlike M3b `rare_word_rate` ("outside the top
 3000"). `syllables_ratio` is **the same value** as M3b `syllables_per_word`.
 
-**Papers.** [NLU-BGU, Simplicity is Not Simple (repository)](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification).
+**Human-judgment evidence.** Weak. Per Cardon & Doğruöz (2025), type-token-ratio
+variants track meaning preservation (|r| up to 0.43) more than simplicity
+(≤ 0.20).
+
+**Papers.** [Dahan et al. 2026](https://arxiv.org/html/2604.23844); [Kreutz et al. 2024 (BATS)](https://aclanthology.org/2024.findings-acl.712/); [NLU-BGU, Simplicity is Not Simple (repository)](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification). **Caveats.** [Cardon & Doğruöz 2025](https://arxiv.org/html/2511.09536v1).
 
 **Implementation notes.** Two deviations from the source implementation, both
 in `params.deviations_from_paper`. **`syllables_ratio` counts vowel groups, not
@@ -1371,7 +1846,7 @@ usage but no dictionary entry.
 
 **Keys:** `linguistic_features.syntactic_tree_depth`, `linguistic_features.noun_phrases_ratio`, `linguistic_features.words_before_main_verb`, `linguistic_features.words_per_sentence`, `linguistic_features.punctuation_ratio`, `linguistic_features.relative_clauses_ratio`, `linguistic_features.short_sentences_ratio`, `linguistic_features.sentences_number`, `linguistic_features.conditional_clauses_ratio`, `linguistic_features.conjunctions_ratio`, `linguistic_features.passive_voice_ratio`, `linguistic_features.appositions_ratio`, `linguistic_features.past_tense_verbs`, `linguistic_features.past_perfect_verbs`, `linguistic_features.third_person_pronouns_ratio`
 
-**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M7 — Adopted linguistic feature set](modules/m7-linguistic-features.md)
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M7 — Adopted linguistic feature set](modules/m7-linguistic-features.md)
 
 **What it does.** Fifteen sentence- and clause-level features: structure,
 embedding, voice, tense and reference.
@@ -1418,7 +1893,13 @@ document, where M3b `mean_parse_depth` is a mean over sentences;
 `passive_voice_ratio`'s denominator is verb tokens, where M3b `passive_rate`
 uses sentences.
 
-**Papers.** [NLU-BGU, Simplicity is Not Simple (repository)](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification).
+**Direction is not settled for every feature.** APPLS finds conjunctions fall as
+texts get simpler, the opposite of earlier guidance it cites (Kauchak 2017), so
+do not read a `conjunctions_ratio` delta as simpler or harder on its own.
+
+**Human-judgment evidence.** Weak (Cardon & Doğruöz 2025).
+
+**Papers.** [Dahan et al. 2026](https://arxiv.org/html/2604.23844); [Kreutz et al. 2024 (BATS)](https://aclanthology.org/2024.findings-acl.712/); [NLU-BGU, Simplicity is Not Simple (repository)](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification). **Caveats.** [Cardon & Doğruöz 2025](https://arxiv.org/html/2511.09536v1).
 
 **Implementation notes.** Deviations, in `params.deviations_from_paper`:
 **`past_tense_verbs` / `past_perfect_verbs` read spaCy's `tag_`**, not
@@ -1432,7 +1913,7 @@ total, mixing two tokenizations in a single fraction.
 
 **Keys:** `linguistic_features.unique_entities`, `linguistic_features.max_same_entity_distances`, `linguistic_features.avg_same_entity_distance`, `linguistic_features.consecutive_entity_distance`, `linguistic_features.unique_entities_average`, `linguistic_features.entity_to_token_ratio`, `linguistic_features.unique_entities_to_total_entities`
 
-**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M7 — Adopted linguistic feature set](modules/m7-linguistic-features.md)
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M7 — Adopted linguistic feature set](modules/m7-linguistic-features.md)
 
 **What it does.** How named referents are introduced, repeated and spaced — a
 discourse-level property the rest of the pipeline has no equivalent for.
@@ -1488,7 +1969,17 @@ pooled `textrank` (ρ = −0.92 with its document's sentence count), M6's `fkgl`
 double-counting sentence length, and M4's deletion-count correlation with human
 labels. See [the index](modules/README.md#document-length-confounds-anything-pooled-across-documents).
 
-**Papers.** [NLU-BGU, Simplicity is Not Simple (repository)](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification).
+**Literature.** Feng et al. (2010) define entity-density features of this kind
+(entity mentions and unique entities per document and per sentence). They were
+the strongest discourse family for predicting the grade level of school texts,
+but highly correlated with noun counts — the same confound the table above
+measures. BATS was not confirmed to include these seven, so Feng et al. are
+cited in its place.
+
+**Human-judgment evidence.** Validated for grade-level prediction of school
+texts (Feng et al. 2010), not for simplification.
+
+**Papers.** [Dahan et al. 2026](https://arxiv.org/html/2604.23844); [Feng et al. 2010](https://aclanthology.org/C10-2032/); [NLU-BGU, Simplicity is Not Simple (repository)](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification). **Caveats.** [Cardon & Doğruöz 2025](https://arxiv.org/html/2511.09536v1).
 
 **Implementation notes.** NER is built lazily on first use and cached. If NER is
 unavailable but a parser is present, these seven read `0.0`, which is
@@ -1498,7 +1989,7 @@ stderr. M4's entity matching reuses the same NER.
 
 ### `linguistic_features.flesch_reading_ease`, `linguistic_features.flesch_kincaid_grade` — Flesch readability, M7 copies
 
-**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M7 — Adopted linguistic feature set](modules/m7-linguistic-features.md)
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M7 — Adopted linguistic feature set](modules/m7-linguistic-features.md)
 
 **What it does.** The two Flesch scores, as the source feature set includes them.
 
@@ -1506,9 +1997,11 @@ stderr. M4's entity matching reuses the same NER.
 
 **How to read it.** **The same value** as M3a `fre` and `fkgl`; FRE is
 **higher = easier**, unlike every grade-level metric here. Do not count them as
-extra evidence.
+extra evidence. Dahan et al. (2026) report both.
 
-**Papers.** [NLU-BGU, Simplicity is Not Simple (repository)](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification).
+**Human-judgment evidence.** As for M3a FKGL and FRE: poor.
+
+**Papers.** [Dahan et al. 2026](https://arxiv.org/html/2604.23844); [Kreutz et al. 2024 (BATS)](https://aclanthology.org/2024.findings-acl.712/); [NLU-BGU, Simplicity is Not Simple (repository)](https://github.com/NLU-BGU/Simplicity-is-Not-Simple-Analyzing-the-Dimensions-of-Cross-lingual-Text-Simplification). **Contested by.** [Tanprasert & Kauchak 2021](https://aclanthology.org/2021.gem-1.1). **Caveats.** [Cardon & Doğruöz 2025](https://arxiv.org/html/2511.09536v1).
 
 **Implementation notes.** **`flesch_*` use our corrected segmentation.** The
 source calls `textstat.flesch_kincaid_grade(text)` directly, which takes
@@ -1569,9 +2062,17 @@ collapse is entirely predictable from a number the pipeline already publishes:
 **Read `bleu` only for corpora compressing above roughly 0.2.** Below that it
 reports the compression ratio, not the wording overlap. M2's `rouge1_recall`
 and `coverage` measure the same overlap without a length penalty and are the
-right instruments for the heavily-compressing corpora.
+right instruments for the heavily-compressing corpora. (This brevity-penalty
+analysis is the project's own; the papers below compare sentence pairs of
+similar length, where the penalty is near 1.)
 
-**Papers.** [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278).
+**Human-judgment evidence.** Sentence level, meaning preservation: smoothed
+BLEU between source and output correlates r 0.59 train and 0.52 test with
+meaning ratings on QATS (Martin et al. 2018). Cripwell et al. (2024) report
+BLEU against the input to flag conservative systems. Like the other overlap
+measures it rises with copying, so it reads as "how much was kept".
+
+**Papers.** [Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278); [Martin et al. 2018](https://aclanthology.org/W18-7005/).
 
 **Implementation notes.** BLEU via `sacrebleu`, not the M7/M8 source project's
 `easse.bleu`. EASSE is unmaintained and does not expose its tokenisation, and an
@@ -1580,7 +2081,7 @@ names it, and the name is recorded in `params.bleu_tokenizer`.
 
 ### `pair_similarity.bertscore_f1` — BERTScore F1
 
-**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M8 — Pair similarity](modules/m8-pair-similarity.md)
+**Label:** DS · **Evidence:** introduced · **Needs:** source+target · **Module:** [M8 — Pair similarity](modules/m8-pair-similarity.md)
 
 **What it does.** How close the target's meaning is to the source's, judged by a
 language model rather than by shared words.
@@ -1598,6 +2099,18 @@ alongside M4 and M5, not as a second opinion. Long sources are truncated at the
 model's token limit; `bertscore_n_source_truncated` counts them, and on
 long-document corpora the score then describes the opening of the source.
 
+**Read it as a meaning proxy that penalizes simplification.** REFeREE (Huang &
+Kochmar 2024) reports this same output-against-source comparison as
+"self-BERTScore". APPLS finds BERTScore falls when definitions are added, so
+helpful elaboration lowers it.
+
+**Human-judgment evidence.** Sentence level. Meaning (adequacy): r 0.727 on
+Simplicity-DA, 0.421 on Human-Likert. Simplicity: r −0.385 on Human-Likert,
+τ −0.300 on SimpEval2022 (all from REFeREE). It is among the best-validated
+meaning-preservation measures here, and it moves against simplicity.
+
+**Papers.** [REFeREE 2024](https://arxiv.org/html/2403.17640v1). **Caveats.** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/).
+
 **Implementation notes.** From the M7/M8 source project's `automatic_metrics.py`.
 
 ### `pair_similarity.blanc` — BLANC
@@ -1614,6 +2127,10 @@ treated as the summary. BLANC-help is the default variant.
 
 **How to read it.** Higher = a more helpful summary. **Currently always null**
 (see below).
+
+**Human-judgment evidence.** Validated for summarization. SummEval, system
+level: τ 0.56 with consistency, 0.26 with relevance; SummEval notes that BLANC
+and SUPERT may favour longer summaries.
 
 **Papers.** [Vasilyev et al. 2020 (BLANC)](https://aclanthology.org/2020.eval4nlp-1.2). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
 
@@ -1634,6 +2151,9 @@ embeddings.
 
 **How to read it.** Higher = a better summary. **Currently always null.**
 
+**Human-judgment evidence.** Validated for summarization. SummEval, system
+level: τ 0.59 with consistency, 0.24 with relevance.
+
 **Papers.** [Gao et al. 2020 (SUPERT)](https://aclanthology.org/2020.acl-main.124). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
 
 **Implementation notes.** **Deferred.** The official repository is not an
@@ -1651,6 +2171,9 @@ sentences to make cloze questions and answers them from the target, reporting
 answer F1 and confidence.
 
 **How to read it.** Higher = a better summary. **Currently always null.**
+
+**Human-judgment evidence.** SummEval, system level: τ 0.60 with consistency,
+0.22 with relevance.
 
 **Papers.** [Scialom et al. 2019 (SummaQA)](https://aclanthology.org/D19-1320/). **Caveats.** [SummEval 2021](https://arxiv.org/pdf/2007.12626).
 

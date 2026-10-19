@@ -68,7 +68,9 @@ def test_report_ends_with_metric_labels_section(tmp_path):
     assert "contested: [Tanprasert & Kauchak 2021]" in section
     # A τ-parametrised metric is listed once, by its registry key.
     assert section.count("alignment.by_tau.*.source_coverage") == 1
-    assert "| `abstractiveness.rouge1_recall` | project-specific | — |" in section
+    assert "| `abstractiveness.novel_content_1gram` | project-specific | — |" in section
+    # Relabelled by the 2026-10 citation audit (Martin et al. 2018).
+    assert "| `abstractiveness.rouge1_recall` | DS | [Martin et al. 2018]" in section
 
 
 def test_stand_in_values_are_marked_in_metric_labels(metrics):

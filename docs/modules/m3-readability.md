@@ -31,7 +31,8 @@ Each name links to its full entry in [the metric reference](../metrics.md).
 - [**Flesch–Kincaid Grade Level**](../metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) (PLS, DS; contested) — the US grade needed to read the text.
 - [**Flesch Reading Ease**](../metrics.md#readabilitym3a_surfacefre--flesch-reading-ease) (DS; contested) — reading ease on 0–100, higher is easier.
 - [**Coleman–Liau Index and Dale–Chall Readability Score**](../metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) (PLS) — character-based grade, and familiar-word difficulty.
-- [**Automated Readability Index and SMOG**](../metrics.md#readabilitym3a_surfaceari-readabilitym3a_surfacesmog--automated-readability-index-and-smog) (project-specific) — two more grade estimates; SMOG needs three sentences.
+- [**Automated Readability Index**](../metrics.md#readabilitym3a_surfaceari--automated-readability-index) (PLS) — a grade estimate from characters per word and words per sentence.
+- [**SMOG**](../metrics.md#readabilitym3a_surfacesmog--smog) (project-specific) — a grade estimate from multi-syllable words; needs three sentences.
 
 **M3b — length-invariant measures**
 
@@ -101,8 +102,8 @@ gives the formulas; this is the one-line version to keep beside a results table.
 | [`dcrs`](../metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) | Difficulty based on how many words fall outside a familiar-word list. | Lower |
 | [`cli`](../metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) | Difficulty from word length and sentence length in characters. | Lower |
 | [`fre`](../metrics.md#readabilitym3a_surfacefre--flesch-reading-ease) | Reading ease on a 0–100 scale. **The one that runs the other way.** | Higher |
-| [`ari`](../metrics.md#readabilitym3a_surfaceari-readabilitym3a_surfacesmog--automated-readability-index-and-smog) | Another character-based grade estimate. | Lower |
-| [`smog`](../metrics.md#readabilitym3a_surfaceari-readabilitym3a_surfacesmog--automated-readability-index-and-smog) | Grade estimate driven by multi-syllable words. Needs at least 3 sentences; `None` below that. | Lower |
+| [`ari`](../metrics.md#readabilitym3a_surfaceari--automated-readability-index) | Another character-based grade estimate. | Lower |
+| [`smog`](../metrics.md#readabilitym3a_surfacesmog--smog) | Grade estimate driven by multi-syllable words. Needs at least 3 sentences; `None` below that. | Lower |
 
 ### M3b — the length-invariant measures
 
