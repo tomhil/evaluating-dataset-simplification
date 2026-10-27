@@ -2,8 +2,8 @@
 incomplete fixes from earlier in this loop.
 
 The SMOG guard checked the wrong sentence count, so the sentinel it was written
-to stop still reached metrics.json. The `_corpus_share` cancellation guard was
-three orders of magnitude too tight to do what its docstring claimed. And the
+to stop still reached metrics.json. (The `_corpus_share` cancellation-guard
+tests went with the M3c decomposition in the October 2026 metric revision.) And the
 document-stratified annotation draw silently invalidated the estimator that
 consumes it.
 """
@@ -17,7 +17,6 @@ import numpy as np
 import pytest
 
 from profiler import readability as rd
-from profiler.modules.m3_readability import _corpus_share
 from profiler.stats import histogram, summarize
 
 
@@ -55,48 +54,6 @@ def test_smog_is_reported_when_textstat_also_sees_three_sentences():
 
 def test_smog_guard_holds_without_an_explicit_segmentation():
     assert rd.surface_scores("One short line.")["smog"] is None
-
-
-# --------------------------------------------------------------------------
-# _corpus_share: the guard must fire on a directionless corpus
-
-
-def _rows(totals, attributable=1.0):
-    return [{"attributable_fkgl": attributable, "total_fkgl": t} for t in totals]
-
-
-def test_corpus_share_is_none_when_the_corpus_has_no_net_direction():
-    """1000 pairs of magnitude ~1 that nearly cancel.
-
-    `max(1e-6 * scale, 1e-6)` gives a threshold of 1e-3 here, so a net of 0.05
-    passed and published num/0.05 as the bold headline in report.md -- the
-    per-pair instability relocated to the corpus level, which is what this
-    function exists to remove. Measured sign-coherence on the real Cochrane run
-    ranges from 0.031 (mtld) to 0.861 (mean_zipf), so a 1%-of-magnitude floor
-    nulls nothing legitimate.
-    """
-    totals = [1.0] * 500 + [-1.0] * 500 + [0.05]
-    den, scale = sum(totals), sum(abs(t) for t in totals)
-    assert abs(den) == pytest.approx(0.05)
-    assert abs(den) / scale < 1e-4, "fixture is not actually directionless"
-    assert _corpus_share(_rows(totals), "fkgl") is None
-
-
-def test_corpus_share_survives_a_real_sign_coherence_ratio():
-    """mtld's 0.031 on Cochrane is the tightest real case; it must not null."""
-    n = 1000
-    totals = [1.0] * int(n * 0.5155) + [-1.0] * (n - int(n * 0.5155))
-    ratio = abs(sum(totals)) / sum(abs(t) for t in totals)
-    assert 0.02 < ratio < 0.05, ratio
-    assert _corpus_share(_rows(totals), "fkgl") is not None
-
-
-def test_corpus_share_still_returns_the_ratio_of_sums():
-    rows = [
-        {"attributable_fkgl": 1.0, "total_fkgl": 2.0},
-        {"attributable_fkgl": 3.0, "total_fkgl": 6.0},
-    ]
-    assert _corpus_share(rows, "fkgl") == pytest.approx(0.5)
 
 
 # --------------------------------------------------------------------------

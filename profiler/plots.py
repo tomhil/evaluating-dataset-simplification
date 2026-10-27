@@ -14,8 +14,6 @@ import matplotlib
 matplotlib.use("Agg")  # headless, deterministic
 import matplotlib.pyplot as plt  # noqa: E402
 
-from . import readability as rd  # noqa: E402
-
 
 def generate_all(results: dict, out_dir: str | Path) -> list[str]:
     out = Path(out_dir)
@@ -24,8 +22,6 @@ def generate_all(results: dict, out_dir: str | Path) -> list[str]:
 
     if "length" in results:
         written += _compression_histogram(results["length"].corpus, out)
-    if "readability" in results:
-        written += _readability_decomposition(results["readability"].corpus, out)
     if "alignment" in results:
         written += _alignment_types(results["alignment"].corpus, out)
     if "deletion_profile" in results:
@@ -64,48 +60,6 @@ def _compression_histogram(corpus: dict, out: Path) -> list[str]:
     ax.set_xlabel("compression ratio")
     ax.set_ylabel("pairs")
     return _save(fig, out / "compression_histogram.png")
-
-
-def _decomp_measures(decomp: dict) -> list[str]:
-    """M3c measures with both components actually computed.
-
-    ``mean or 0.0`` mapped a ``None`` mean -- the measure had no data, e.g.
-    SMOG below three sentences or MTLD on short text -- onto the same bar as a
-    genuine 0.0, so the figure asserted "this measure did not change" for a
-    measure that could not be computed. Drop it from the chart instead; a
-    missing bar reads as missing, a zero bar does not.
-    """
-
-    out = []
-    for m in rd.SURFACE_MEASURES:
-        d = decomp.get(m)
-        if not d:
-            continue
-        if d.get("attributable_to_rewriting", {}).get("mean") is None:
-            continue
-        if d.get("length_artifact", {}).get("mean") is None:
-            continue
-        out.append(m)
-    return out
-
-
-def _readability_decomposition(corpus: dict, out: Path) -> list[str]:
-    decomp = corpus.get("m3c_decomposition")
-    if not decomp:
-        return []
-    measures = _decomp_measures(decomp)
-    if not measures:
-        return []
-    attributable = [decomp[m]["attributable_to_rewriting"]["mean"] for m in measures]
-    artifact = [decomp[m]["length_artifact"]["mean"] for m in measures]
-    fig, ax = plt.subplots(figsize=(8, 4.5))
-    ax.bar(measures, artifact, label="length artifact (EXT-ORACLE−source)", color="#C44E52")
-    ax.bar(measures, attributable, bottom=artifact, label="attributable to rewriting (target−EXT-ORACLE)", color="#4C72B0")
-    ax.axhline(0, color="black", linewidth=0.8)
-    ax.set_title("M3c readability change decomposition (mean Δ)")
-    ax.set_ylabel("Δ readability (source→target)")
-    ax.legend(fontsize=8)
-    return _save(fig, out / "readability_decomposition.png")
 
 
 def _alignment_types(corpus: dict, out: Path) -> list[str]:

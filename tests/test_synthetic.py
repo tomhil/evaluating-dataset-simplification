@@ -53,8 +53,8 @@ def test_identity_pair(ctx):
 
 
 def test_pure_truncation_pair(ctx):
-    """Pure truncation: target is leading source sentences verbatim, so the
-    readability change is a length artifact and share_attributable ~ 0."""
+    """Pure truncation: target is leading source sentences verbatim, so
+    nothing in it is novel and the source covers all of it."""
     target = (
         "The scientists discovered a new species of frog in the rainforest. "
         "The frog has bright blue skin and lives near streams."
@@ -64,11 +64,11 @@ def test_pure_truncation_pair(ctx):
     assert m2["coverage"] == 1.0  # target fully copied from source
     assert m2["novel_1gram"] == 0.0
 
+    # M3 no longer computes the M3c decomposition (October 2026 metric
+    # revision), which this pair used to exercise: no control or share column.
     row = _run(m3_readability, [p], ctx).per_pair[0]
-    share = row["share_attributable_fkgl"]
-    # EXT-ORACLE reconstructs the copied sentences, so nothing is attributable
-    # to rewriting: share is ~0 (or None if total change was ~0).
-    assert share is None or abs(share) < 0.15
+    removed = ("lead_", "oracle_", "total_", "attributable_", "artifact_", "share_attributable_")
+    assert not [k for k in row if k.startswith(removed)]
 
 
 def test_pure_paraphrase_pair(ctx):

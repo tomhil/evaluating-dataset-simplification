@@ -235,30 +235,6 @@ def test_optional_scorer_failure_note_carries_no_machine_specific_text():
 # plots must not draw an undefined value as zero
 
 
-def test_undefined_m3c_component_is_not_plotted_as_a_zero_bar():
-    """`mean or 0.0` mapped None (measure had no data -- SMOG under three
-    sentences, MTLD on short text) onto the same bar as a genuine 0.0, so the
-    figure asserted 'this did not change' for something not computed."""
-    import matplotlib
-
-    matplotlib.use("Agg")
-    from profiler import plots as pl
-
-    decomp = {
-        "fkgl": {
-            "attributable_to_rewriting": {"mean": -1.5},
-            "length_artifact": {"mean": 0.3},
-        },
-        "smog": {
-            "attributable_to_rewriting": {"mean": None},
-            "length_artifact": {"mean": None},
-        },
-    }
-    measures = pl._decomp_measures(decomp)
-    assert "fkgl" in measures
-    assert "smog" not in measures, "an undefined measure was kept for plotting"
-
-
 def test_hist_from_dict_ignores_a_missing_histogram():
     """Unit-level companion to the overlay test above."""
     import matplotlib

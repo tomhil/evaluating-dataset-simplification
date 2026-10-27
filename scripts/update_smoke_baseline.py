@@ -59,6 +59,14 @@ REMOVED_BOOKKEEPING: tuple[tuple[str, ...], ...] = (
     # Item 9: the orientation of the removed source ROUGE recalls
     # (rouge1/2/L_recall); no kept metric is a recall against the source.
     ("modules", "abstractiveness", "params", "rouge_orientation"),
+    # Item 10: the parameters of the removed M3c decomposition
+    # (readability.m3c_decomposition.*): its measure list, its LEAD-k and
+    # EXT-ORACLE-k controls, and the description of its share_attributable
+    # headline. No kept metric reads them.
+    ("modules", "readability", "params", "decomposition_measures"),
+    ("modules", "readability", "params", "controls"),
+    ("modules", "readability", "params", "headline"),
+    ("modules", "readability", "params", "why"),
 )
 
 Path_ = tuple[str, ...]

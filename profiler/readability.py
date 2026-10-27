@@ -1,9 +1,9 @@
 """Readability primitives used by M3.
 
 Surface formulas come from ``textstat`` (a pure-Python, offline-at-runtime
-dependency). Length-invariant measures (Zipf frequency, rare-word rate, lexical
-diversity) are implemented here so they are deterministic and do not depend on
-formula libraries.
+dependency). Length-invariant measures (Zipf frequency, rare-word rate,
+syllables per word, WordRank, lexical complexity) are implemented here so they
+are deterministic and do not depend on formula libraries.
 """
 
 from __future__ import annotations
@@ -66,7 +66,7 @@ def surface_scores(
     ARI, and SMOG for one text. ``None`` for empty text.
 
     ``sentences`` is the caller's own segmentation (spaCy, via ``Processor``).
-    Supply it so these formulas agree with M1/M3b/M3c on how many sentences the
+    Supply it so these formulas agree with M1 and M3b on how many sentences the
     text has; omit it only where no segmentation is available, which leaves
     textstat's period-splitting heuristic in charge.
     """
@@ -179,44 +179,6 @@ def is_unknown_word(word: str) -> bool:
     except ImportError:  # pragma: no cover - environment dependent
         raise ImportError("M7 infrequent_words_ratio requires 'wordfreq'")
     return zipf_frequency(word.lower(), "en") == 0.0
-
-
-def mtld(tokens: list[str], threshold: float = 0.72) -> float | None:
-    """Measure of Textual Lexical Diversity (McCarthy & Jarvis 2010).
-
-    Length-robust unlike raw TTR. Returns ``None`` for texts too short to
-    produce a single factor.
-    """
-
-    tokens = [t.lower() for t in tokens]
-    if len(tokens) < 10:
-        return None
-
-    def _one_pass(seq: list[str]) -> float:
-        factors = 0.0
-        types: set[str] = set()
-        count = 0
-        for tok in seq:
-            types.add(tok)
-            count += 1
-            ttr = len(types) / count
-            if ttr <= threshold:
-                factors += 1
-                types = set()
-                count = 0
-        if count > 0:
-            # Partial factor for the trailing segment.
-            ttr = len(types) / count
-            denom = 1 - threshold
-            factors += (1 - ttr) / denom if denom > 0 else 0
-        return len(seq) / factors if factors > 0 else float("nan")
-
-    forward = _one_pass(tokens)
-    backward = _one_pass(list(reversed(tokens)))
-    vals = [v for v in (forward, backward) if v == v]  # drop NaN
-    if not vals:
-        return None
-    return sum(vals) / len(vals)
 
 
 def jargon_rate(content_words: list[str], terms: list[str]) -> float | None:

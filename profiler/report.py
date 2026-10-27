@@ -72,7 +72,7 @@ def build_report(config, results: dict[str, ModuleResult], meta: dict) -> str:
         + "\n"
     )
 
-    # Length-invariant / decomposition evidence is presented before the surface
+    # Length-invariant evidence is presented before the surface
     # formulas, per the PRD (readability formulas are weak instruments).
     if "length" in results:
         parts.append(_m1(results["length"]))
@@ -167,40 +167,10 @@ def _m2(r: ModuleResult) -> str:
 
 def _m3(r: ModuleResult) -> str:
     c = r.corpus
-    out = [_h(2, "M3 — Readability, decomposed against length")]
+    out = [_h(2, "M3 — Readability")]
     out.append(
-        "_Length-invariant (M3b) and length-matched (M3c) evidence carry the "
-        "weight; the surface formulas (M3a) are reported for comparability only._\n"
-    )
-
-    # The headline is the corpus-level ratio of sums, matching what
-    # m3_readability declares in params. The per-pair mean is kept in the last
-    # column but must not lead: its denominator is a difference of readability
-    # scores and goes to zero whenever a pair changed little, so one
-    # CNN/DailyMail pair scoring 6388.9 supplied 6.39 of a reported mean of
-    # 6.87. The report used to print only that mean, under a heading naming it
-    # the headline, while metrics.json already carried the stable figure.
-    out.append(
-        _h(3, "M3c — Length-matched decomposition (headline: share (corpus))")
-    )
-    decomp = c.get("m3c_decomposition", {})
-    out.append(
-        "| measure | total Δ | attributable to rewriting | length artifact "
-        "| **share (corpus)** | share per-pair (median; mean unstable) |"
-        "\n|---|---|---|---|---|---|"
-    )
-    for m, d in decomp.items():
-        corpus_share = d.get("share_attributable_corpus")
-        cs = "—" if corpus_share is None else f"**{corpus_share:.3f}**"
-        out.append(
-            f"| {m} | {_summary(d['total'])} | {_summary(d['attributable_to_rewriting'])} "
-            f"| {_summary(d['length_artifact'])} | {cs} | {_summary(d['share_attributable'])} |"
-        )
-    out.append(
-        "\n_`share (corpus)` is Σattributable / Σtotal over the corpus, so no "
-        "single near-zero denominator can dominate it; `—` means the totals "
-        "cancel and the share is undefined. Read the per-pair column's median, "
-        "never its mean._\n"
+        "_Length-invariant (M3b) evidence carries the weight; the surface "
+        "formulas (M3a) are reported for comparability only._\n"
     )
 
     out.append("\n" + _h(3, "M3b — Length-invariant measures (source → target)"))
@@ -468,7 +438,7 @@ def _caveats(config, results: dict[str, ModuleResult], meta: dict) -> str:
     # Fixed known confounds (PRD s10) always surfaced.
     items.append(
         "**Readability formulas are weak instruments** — reported for comparability "
-        "with prior work only; M3b and M3c carry the actual evidence."
+        "with prior work only; M3b carries the actual evidence."
     )
     items.append(
         "**Entailment models degrade off-domain**, particularly on legal and "

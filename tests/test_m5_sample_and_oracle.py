@@ -13,15 +13,15 @@
    biomedical sets where an MNLI-trained model is furthest off-domain.
 
 3. ``_ext_oracle_k`` rebuilt a merged counter for every candidate on every
-   greedy iteration. Clipped recall admits an exact incremental gain, so the
-   merge is avoidable -- 0.82s per PLOS pair, ~14 min of a 1000-pair run.
+   greedy iteration. Its tests went with the M3c decomposition in the October
+   2026 metric revision; the ``words_fast`` tests it motivated stay, because
+   M3's WordRank tokenises with ``words_fast`` too.
 """
 
 import json
 
 import pytest
 
-from profiler.modules.m3_readability import _ext_oracle_k
 from profiler.modules.m5_elaboration import ANNOTATION_SAMPLE_SIZE, _annotation_sample
 
 
@@ -116,120 +116,13 @@ def test_upper_bound_caveat_survives_the_no_sentences_early_return(ctx):
     assert UPPER_BOUND_NOTE in result.notes
 
 
-# Multi-sentence documents with overlapping vocabulary, so the greedy oracle
-# makes non-trivial choices. Built in-process rather than read from data/,
-# which holds only smoke.jsonl on a clean checkout -- this comparison is the
-# only check that the rewritten _ext_oracle_k still selects what it used to,
-# and it silently skipped everywhere the corpora had not been fetched.
-_SYNTHETIC = [
-    (
-        "The trial enrolled 240 adult patients across twelve centres. "
-        "Participants received either the active drug or a matched placebo. "
-        "Symptom scores fell by 4.2 points in the treatment arm. "
-        "No serious adverse events were reported during follow-up. "
-        "The authors conclude the drug is effective and well tolerated. "
-        "Funding came from a national research council.",
-        "The drug reduced symptoms by 4.2 points and caused no serious harm.",
-    ),
-    (
-        "Rainfall in the catchment declined by 18% over three decades. "
-        "Groundwater extraction rose sharply after 1995. "
-        "Two of the four monitored wells are now dry each summer. "
-        "Restoration would require reducing extraction by a third.",
-        "Less rain and more pumping have dried the wells; extraction must fall.",
-    ),
-    (
-        "One sentence only, which the oracle must still handle.",
-        "A short target.",
-    ),
-]
-
-
-def _oracle_cases():
-    """Synthetic pairs always, plus real corpora when they have been fetched."""
-    cases = list(_SYNTHETIC)
-    for path in ("data/plos/train_1000.jsonl", "data/cochrane/train_1000.jsonl"):
-        try:
-            rows = [json.loads(line) for line in open(path)][:8]
-        except FileNotFoundError:
-            continue
-        cases += [(r["source"], r["target"]) for r in rows]
-    return cases
-
-
-def test_oracle_selection_is_unchanged_by_the_speedup():
-    """The fast path must pick the same sentences, not merely similar ones."""
-    from profiler.nlp import get_processor
-
-    proc = get_processor("en")
-    cases = _oracle_cases()
-    assert len(cases) >= len(_SYNTHETIC)
-
-    for source, target in cases:
-        sents = proc.sentences(source)
-        budget = len(proc.words(target))
-        assert _ext_oracle_k(sents, target, proc, budget) == _ext_oracle_k_reference(
-            sents, target, proc, budget
-        )
-
-
-def test_oracle_is_exercised_non_trivially_by_the_synthetic_fixture():
-    """Guards the fixture itself: a fixture where the oracle takes everything,
-    or nothing, would make the equivalence test above vacuous."""
-    from profiler.nlp import get_processor
-
-    proc = get_processor("en")
-    source, target = _SYNTHETIC[0]
-    sents = proc.sentences(source)
-    picked = _ext_oracle_k(sents, target, proc, len(proc.words(target)))
-    assert picked, "oracle selected nothing"
-    assert len(proc.sentences(picked)) < len(sents), "oracle selected everything"
-
-
-def _ext_oracle_k_reference(src_sents, target, proc, budget):
-    """The pre-speedup implementation, kept here as the oracle for the oracle."""
-    from profiler.modules.m3_readability import _counts, _merge
-
-    tgt_tokens = [t.lower() for t in proc.words(target)]
-    tgt_uni, tgt_bi = _counts(tgt_tokens, 1), _counts(tgt_tokens, 2)
-    tu = sum(tgt_uni.values()) or 1
-    tb = sum(tgt_bi.values()) or 1
-    sent_tokens = [[t.lower() for t in proc.words(s)] for s in src_sents]
-    remaining = set(range(len(src_sents)))
-    selected, sel_uni, sel_bi, total = [], {}, {}, 0
-
-    def rec(uni, bi):
-        u = sum(min(c, tgt_uni.get(g, 0)) for g, c in uni.items()) / tu
-        b = sum(min(c, tgt_bi.get(g, 0)) for g, c in bi.items()) / tb
-        return u + b
-
-    while remaining and total < budget:
-        best_gain, best_idx = 0.0, None
-        base = rec(sel_uni, sel_bi)
-        for idx in remaining:
-            gain = rec(
-                _merge(sel_uni, _counts(sent_tokens[idx], 1)),
-                _merge(sel_bi, _counts(sent_tokens[idx], 2)),
-            ) - base
-            if gain > best_gain:
-                best_gain, best_idx = gain, idx
-        if best_idx is None:
-            break
-        selected.append(best_idx)
-        remaining.discard(best_idx)
-        sel_uni = _merge(sel_uni, _counts(sent_tokens[best_idx], 1))
-        sel_bi = _merge(sel_bi, _counts(sent_tokens[best_idx], 2))
-        total += len(sent_tokens[best_idx])
-    return " ".join(src_sents[i] for i in sorted(selected))
-
-
 def test_words_fast_matches_words_on_real_corpus_text():
-    """The oracle's tokens must not depend on skipping the pipeline.
+    """``words_fast``'s tokens must not depend on skipping the pipeline.
 
-    ``_ext_oracle_k`` and ``_lead_k`` call the tokenizer once per source
-    sentence, which is a cache miss every time: profiling ten PLOS articles
-    showed 2,844 full pipeline runs consuming 8.3 of the oracle's 8.6 seconds.
-    Skipping the pipeline is only safe because token boundaries come from the
+    Callers that tokenise once per sentence (M3's WordRank; formerly the
+    removed M3c ``_ext_oracle_k`` and ``_lead_k``) miss the document cache
+    every time: profiling ten PLOS articles showed 2,844 full pipeline runs
+    consuming 8.3 of the oracle's 8.6 seconds. Skipping the pipeline is only safe because token boundaries come from the
     tokenizer and ``is_space``/``is_punct`` are lexeme attributes. This pins
     that, so a future pipeline component that retokenises fails here rather
     than silently shifting every n-gram count.

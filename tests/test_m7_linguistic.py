@@ -10,8 +10,9 @@ design, so a silent divergence between M7's `flesch_kincaid_grade` and M3a's
 Three definitions are easy to get wrong and are pinned individually:
 
 * `punctuation_ratio` is the only feature whose denominator is *all* tokens.
-* `syntactic_tree_depth` is a **max** over the document; M3b's
-  `mean_parse_depth` is a mean over sentences.
+* `syntactic_tree_depth` is a **max** over the document, not a mean over
+  sentences (what M3b's `mean_parse_depth` was, before the October 2026
+  metric revision removed it).
 * entity distances are **token indices**, not sentence indices.
 """
 
@@ -21,7 +22,7 @@ import pytest
 
 from profiler import readability as rd
 from profiler.modules import m7_linguistic as m7
-from profiler.modules.m3_readability import _syntactic_features
+from profiler.modules.m3_readability import _tree_depth
 from profiler.nlp import SimpleProcessor, get_processor
 
 
@@ -69,7 +70,16 @@ def test_punctuation_ratio_denominator_is_all_tokens_not_clean_tokens(proc):
     assert got != pytest.approx(n_punct / n_clean)
 
 
-def test_syntactic_tree_depth_is_a_max_where_m3b_uses_a_mean(proc):
+def _mean_sentence_depth(text, proc):
+    depths = []
+    for sent in proc.sentences(text):
+        toks = proc.analyze_sentence(sent)
+        if toks:
+            depths.append(_tree_depth({t.i: t.head_i for t in toks}))
+    return sum(depths) / len(depths)
+
+
+def test_syntactic_tree_depth_is_a_max_not_a_mean(proc):
     """One deep sentence and one flat one must give max > mean."""
     text = (
         "Cats sleep. "
@@ -77,9 +87,9 @@ def test_syntactic_tree_depth_is_a_max_where_m3b_uses_a_mean(proc):
         "commissioned was finally published after considerable delay."
     )
     m7_max = m7._features(text, proc)["syntactic_tree_depth"]
-    m3b_mean = _syntactic_features(text, proc)["mean_parse_depth"]
+    mean = _mean_sentence_depth(text, proc)
 
-    assert m7_max > m3b_mean, "M7 must be the max, not the mean"
+    assert m7_max > mean, "M7 must be the max, not the mean"
     assert m7_max == int(m7_max), "a depth is a whole number of links"
 
 
@@ -143,12 +153,11 @@ def test_flesch_uses_our_corrected_segmentation_not_textstats(proc):
 # the related-but-different fields must stay different
 
 
-def test_lexical_richness_is_ttr_not_mtld(proc):
+def test_lexical_richness_is_ttr(proc):
     text = "the cat sat on the mat and the cat sat again on the mat today"
     got = m7._features(text, proc)["lexical_richness"]
     words = proc.words(text)
     assert got == pytest.approx(len({w.lower() for w in words}) / len(words))
-    assert got != pytest.approx(rd.mtld(words) or -1)
 
 
 def test_infrequent_words_ratio_differs_from_m3b_rare_word_rate(proc):
