@@ -48,3 +48,14 @@ Starting point: branch `refactor/paper-supported-metrics`, after the commit that
 - **Gates applied:** none.
 - **Next item:** 5, per-key label tables in `tests/test_metrics_doc.py`; drop M6 from `MODULE_PAGES`.
 - **DEFERRED:** none.
+
+## 2026-10-27 — Phase B, item 5: per-key label tables in the doc tests
+
+- **Commit:** this commit on refactor/paper-supported-metrics.
+- **Item:** `tests/test_metrics_doc.py` now reads label, evidence and needs from a section's `**Label:** … · **Module:**` header line when present, otherwise from the row of its `| Key | Label | Evidence | Needs |` table whose `Key` cell is the key's suffix (the key equals the cell or ends with `.` + cell; exactly one row must match). PRD 5.3. Helpers `table_rows` and `section_label` live in the test file; the table is read up to the first blank line after its header. `M6` dropped from `MODULE_PAGES`, so `m6-deletion-profile.md` is no longer link-checked or URL-checked (the page itself is deleted in item 6). No doc, code or registry change.
+- **Removed leaves and notes:** n/a (Phase B; no output change).
+- **Tests:** `test_section_label_matches_registry` uses `section_label` (the 8 table-section failures are gone: entity precision/recall/F1, SummaC conv/precision/recall, QAFactEval precision/recall). Added `test_table_section_is_well_formed` (parametrised over the sections with no header line: each has a table, every row's suffix matches exactly one of the section's keys, and a `**Module:**` line links an M1–M5/M7/M8 page), `test_table_sections_exist` (exactly the three table sections: entity matching, SummaC, QAFactEval) and `test_per_key_table_parses` (synthetic section: rows, suffix lookup, unknown key fails, only the first table is read, header line wins over a table). `test_module_page_links_each_key[M6]` and `test_external_urls_are_allowed[m6-deletion-profile.md]` no longer exist.
+- **Result:** `pytest -q`: 6 failed, 879 passed, 2 skipped. Remaining failures, all expected: `test_module_page_links_each_key[M1–M5]` (item 6) and `tests/test_label_tables.py::test_committed_results_block_is_current` (item 7). Smoke byte-identical: yes (sha1 `d59f089cdc52ea3ebf970d6166e8c78f6fb21d95` twice, unchanged from item 4). Kept-value guard: pass (0 changes).
+- **Gates applied:** none.
+- **Next item:** 6, rewrite the M1–M5 module pages and `docs/modules/README.md`, delete `m6-deletion-profile.md`, adjust M7/M8 pages only where they point to removed metrics.
+- **DEFERRED:** none.
