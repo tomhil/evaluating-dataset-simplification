@@ -1,5 +1,7 @@
 # Datasets
 
+> **2026-10-27:** this page quotes metrics removed from the profiler on 2026-10-27 (listed under "Removed" in [the metric reference](metrics.md#literature-status-at-a-glance)). The vocabulary result's two measures, `mean_zipf` and `rare_word_rate`, are kept. The narrative has not been rewritten yet.
+
 Every corpus this pipeline has profiled: its full size, the subset actually
 used, which split that came from, its domain, and its paper.
 

@@ -71,3 +71,14 @@ Starting point: branch `refactor/paper-supported-metrics`, after the commit that
 - **For later items (not deferred here):** `docs/metrics.md` itself still mentions removed quantities that are spec text, so this item left them: the SummaC and AlignScore sections say the `per_scorer` block holds `not_entailed_rate` (share below `nli_threshold`), which G6 removes in item 13; the mean sentence length section says to read it next to "M3b's parse-depth and subordinate-clause deltas". Items 13 and 18 will meet these; changing them touches the specification (hard rule 1), so Tom may need to decide.
 - **Next item:** 7, regenerate the `RESULTS.md` label-tables block and apply the G2 banner.
 - **DEFERRED:** none.
+
+## 2026-10-27 — Phase B, item 7: `RESULTS.md` label tables regenerated, G2 banner
+
+- **Commit:** this commit on refactor/paper-supported-metrics.
+- **Item:** ran `venv/bin/python scripts/label_tables.py --write RESULTS.md`; only the block between the `label-tables` markers changed: rows for the retired `exact_copies`, the three source ROUGE recalls and `content_type_overlap` are gone, a "Syllables per word" row (DS, from item 4's relabel) is added, and the coverage, density, CLI, DCRS and entity precision/recall/F1 links point to the current `docs/metrics.md` anchors (coverage and density, CLI and DCRS now have separate sections; entity matching is one table section). Values in the block are unchanged (archives untouched, G1). G2 default: one dated blockquote line added under the H1 of `RESULTS.md` and `docs/DATASETS.md` saying the page quotes metrics removed on 2026-10-27 (linking the "Removed" list in `docs/metrics.md#literature-status-at-a-glance`) and that the vocabulary result's two measures, `mean_zipf` and `rare_word_rate`, are kept. No other narrative text, `scripts/derived_stats.py`, `scripts/validate_against_swipe.py` or their tests touched.
+- **Removed leaves and notes:** n/a (Phase B; no output change).
+- **Tests:** none changed. `tests/test_label_tables.py::test_committed_results_block_is_current` now passes; every doc test passes.
+- **Result:** `pytest -q`: 885 passed, 2 skipped, 0 failed (skips: `tests/test_inventory.py:85`, summac_conv and alignscore did not run, as in item 1). Smoke byte-identical: yes (sha1 `d59f089cdc52ea3ebf970d6166e8c78f6fb21d95` twice, unchanged). Kept-value guard: pass (0 changes).
+- **Gates applied:** G2 default (narrative and the two scripts untouched, dated line at the top of each file).
+- **Next item:** 8, M1: remove `expansion_rate`, `compression_bimodality`, the note, unused stats helpers, `test_bimodality`.
+- **DEFERRED:** none.
