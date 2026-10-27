@@ -167,3 +167,14 @@ Starting point: branch `refactor/paper-supported-metrics`, after the commit that
 - **For Tom (optional, not deferred):** the interpretation guide now has two axes. If he wants readability change, content preservation and content addition back as axes, they need new high/low readings on kept metrics (e.g. M3b deltas, entity recall, SummaC/AlignScore scores), which is new interpretive text for him to write.
 - **Next item:** 15, config: removed keys and `deletion_profile` fail loudly; update every `configs/*.yaml`.
 - **DEFERRED:** none.
+
+## 2026-10-28 — Phase C, item 15: config (DEFERRED, not started)
+
+- **Commit:** none for the item; this log entry is committed on its own.
+- **Item:** not started. Section 5.4 makes `parse_config()` reject `nli_backend` and `heuristic_only`, and Section 4 removes them, but they are still the only switch that selects the offline stand-ins (`profiler/model_metrics.py` `use_stand_ins` / `stand_in_reason`) for M3d, M5's document level and roles, and M8. `configs/smoke.yaml` and `tests/conftest.py` `make_config` set `nli_backend: lexical`; the other 18 `configs/*.yaml` set `nli_backend: nli`. Three kept smoke notes (M3d, M5 document level, M5 roles) contain "(nli_backend=lexical)" and are compared by the guard, which forbids rewording a note (hard rule 2), and M8's stand-in selection is frozen behaviour (hard rule 3). No gate in Section 6 covers this, so the loop stops here (hard rule 6).
+- **Removed leaves and notes:** none.
+- **Tests:** none changed.
+- **Result:** state after item 14 (`2bea941`): `pytest -q`: 815 passed, 2 skipped, 0 failed. Smoke byte-identical: yes. Kept-value guard: pass.
+- **Gates applied:** none.
+- **Next item:** 15, once Tom decides; then 16–19.
+- **DEFERRED:** how should the offline stand-ins be selected once `nli_backend` and `heuristic_only` are removed? Options: (a) a new run key (e.g. `run.stand_ins: true`) and a one-off re-bless of the three notes' wording; (b) keep `nli_backend` accepted with only the value `lexical` (or keep `heuristic_only`) as the stand-in switch, an exception to 5.4; (c) something else Tom specifies. The other removed keys (`tau_sweep`, `m6_tau`, `embedder`, `embed_model`, `nli_model`, `nli_threshold`, `jargon_terms`, module `deletion_profile`) have no such conflict.
