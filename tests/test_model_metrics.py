@@ -92,12 +92,8 @@ def test_document_level_stand_in():
 def test_document_level_summac_skips_when_package_missing(monkeypatch):
     monkeypatch.setitem(sys.modules, "summac", None)
     monkeypatch.setitem(sys.modules, "summac.model_summac", None)
-    # Real-model mode with SummaC requested; NLI replaced by the offline scorer
-    # so the test downloads nothing.
-    import profiler.modules.m5_elaboration as m5
-    from profiler.scorers import LexicalGrounding
-
-    monkeypatch.setattr(m5, "get_primary_scorer", lambda config, cache: LexicalGrounding())
+    # Real-model mode with SummaC requested; the blocked import means the
+    # test downloads nothing.
     ctx = _ctx(nli_backend="nli", summac=True)
     with pytest.warns(RuntimeWarning):
         res = _m5([Pair("same", TEXT_A, TEXT_A)], ctx)
@@ -105,8 +101,9 @@ def test_document_level_summac_skips_when_package_missing(monkeypatch):
     assert dl["scorers_run"] == []
     assert dl["summac_precision"]["median"] is None and dl["summac_recall"]["n"] == 0
     assert any("SummaC (document level) unavailable" in n for n in res.notes)
-    # Existing behaviour unchanged: a skipped SummaC gets no per_scorer entry.
-    assert "summac_conv" not in res.corpus["per_scorer"]
+    # A skipped SummaC gets no per_scorer entry, and scorers_run says so.
+    assert res.corpus["scorers_run"] == [] and res.corpus["per_scorer"] == {}
+    assert any("_load_summac unavailable" in n for n in res.notes)
 
 
 # --------------------------------------------------------------------------
@@ -136,10 +133,6 @@ def test_rhetorical_roles_stand_in_with_abstract():
 
 def test_rhetorical_roles_skip_when_model_cannot_load(monkeypatch):
     monkeypatch.setitem(sys.modules, "transformers", None)
-    import profiler.modules.m5_elaboration as m5
-    from profiler.scorers import LexicalGrounding
-
-    monkeypatch.setattr(m5, "get_primary_scorer", lambda config, cache: LexicalGrounding())
     ctx = _ctx(nli_backend="nli")
     with pytest.warns(RuntimeWarning):
         res = _m5([Pair("a", TEXT_A, TEXT_B)], ctx)
@@ -230,10 +223,6 @@ def test_model_metrics_flag_disables_m3d_and_roles(monkeypatch):
     assert any("run.model_metrics is false" in n for n in res3.notes)
     assert not any("unavailable" in n for n in res3.notes)
 
-    import profiler.modules.m5_elaboration as m5
-    from profiler.scorers import LexicalGrounding
-
-    monkeypatch.setattr(m5, "get_primary_scorer", lambda config, cache: LexicalGrounding())
     res5 = _m5([Pair("a", TEXT_A, TEXT_B)], ctx)
     assert res5.corpus["rhetorical_roles"]["models_run"] == []
     assert any("rhetorical_roles not computed: run.model_metrics is false" in n for n in res5.notes)
@@ -292,3 +281,38 @@ def test_rct_loader_refuses_unexpected_labels(monkeypatch):
         mm.load_rct("cpu")
     model, note = mm.try_load("PubMed-RCT classifier", lambda: mm.load_rct("cpu"))
     assert model is None and "unavailable (ValueError)" in note
+
+
+# --------------------------------------------------------------------------
+# M5 sentence-level scorers after the October 2026 metric revision (gate G6)
+# --------------------------------------------------------------------------
+def test_m5_per_scorer_block_is_score_and_histogram_only(monkeypatch):
+    import profiler.modules.m5_elaboration as m5
+
+    class FakeAlignScore:
+        name = "alignscore"
+
+        def score(self, target_sents, source_sents):
+            return [0.25] * len(target_sents)
+
+    monkeypatch.setattr(m5, "optional_scorers", lambda config, cache: ([FakeAlignScore()], []))
+    res = _m5([Pair("a", TEXT_A, TEXT_B), Pair("b", TEXT_A, TEXT_A)], _ctx(alignscore=True))
+    c = res.corpus
+    assert c["scorers_run"] == ["alignscore"]
+    assert set(c["per_scorer"]) == {"alignscore"}
+    assert set(c["per_scorer"]["alignscore"]) == {"score", "score_histogram"}
+    assert c["per_scorer"]["alignscore"]["score"]["median"] == 0.25
+    assert res.params == {"scorers": ["alignscore"]}
+    for gone in ("threshold", "heuristic_only", "primary_scorer", "n_not_entailed_primary",
+                 "pairwise_agreement", "not_entailed_pattern_breakdown",
+                 "not_entailed_rate_by_document", "corrected_not_entailed_rate"):
+        assert gone not in c, gone
+    assert not any("not_entailed" in k for row in res.per_pair for k in row)
+
+
+def test_m5_without_a_requested_scorer_has_no_sentence_level_block():
+    res = _m5([Pair("a", TEXT_A, TEXT_B)], _ctx())
+    assert "scorers_run" not in res.corpus and "per_scorer" not in res.corpus
+    assert res.params == {}
+    assert res.corpus["n_target_sentences"] == 2
+    assert not any("upper bound" in n for n in res.notes)

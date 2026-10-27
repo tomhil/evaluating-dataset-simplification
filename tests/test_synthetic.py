@@ -33,7 +33,7 @@ def _run(mod, pairs, ctx):
 
 
 def test_identity_pair(ctx):
-    """Identity: compression 1.0, novelty 0, coverage 1.0, not-entailed 0."""
+    """Identity: compression 1.0, novelty 0, coverage 1.0, document-level support 1.0."""
     p = Pair("id", IDENTITY_TEXT, IDENTITY_TEXT)
     m1 = _run(m1_length, [p], ctx).per_pair[0]
     assert m1["compression_ratio"] == 1.0
@@ -46,10 +46,17 @@ def test_identity_pair(ctx):
     assert m2["coverage"] == 1.0
     assert m2["levenshtein_similarity"] == 1.0
 
-    # M5 needs M4's alignment in shared state.
+    # M5 needs M4's sentence lists in shared state. No sentence-level scorer is
+    # requested offline, so M5 reports its document level (here the offline
+    # SummaC stand-in, which is exact on an identity pair) and nothing per scorer.
     _run(m4_alignment, [p], ctx)
     m5 = _run(m5_elaboration, [p], ctx).corpus
-    assert m5["per_scorer"]["lexical_grounding"]["not_entailed_rate"]["rate"] == 0.0
+    assert m5["n_target_sentences"] == 3
+    assert "per_scorer" not in m5 and "scorers_run" not in m5
+    dl = m5["document_level"]
+    assert dl["scorers_run"] == ["summac:stand-in"]
+    assert dl["summac_precision"]["median"] == 1.0
+    assert dl["summac_recall"]["median"] == 1.0
 
 
 def test_pure_truncation_pair(ctx):

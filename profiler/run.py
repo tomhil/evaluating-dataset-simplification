@@ -2,13 +2,13 @@
 
 Ingests pairs, validates loudly, splits cheap (full-corpus) from expensive
 (sampled) modules, runs them in dependency order (M4 before M5), and writes
-the five outputs. ``metrics.json`` is deterministic and free of wall-clock/paths
-so two runs of one config produce byte-identical output (acceptance criterion 3).
+the outputs (metrics.json, per_pair.parquet, report.md, plots/).
+``metrics.json`` is deterministic and free of wall-clock/paths so two runs of
+one config produce byte-identical output (acceptance criterion 3).
 """
 
 from __future__ import annotations
 
-import csv
 import json
 import re
 import time
@@ -187,9 +187,9 @@ def run(config: Config, output_dir: str | Path | None = None) -> Path:
         msg = (
             f"{len(degenerate)} degenerate pair(s) flagged -- a long target that "
             f"mostly repeats itself, e.g. {degenerate[0]['id']}: "
-            f"{degenerate[0]['reason']}. Nothing was dropped, but a corpus rate "
-            f"that pools sentences can rest heavily on such a pair; compare "
-            f"elaboration.not_entailed_rate_by_document."
+            f"{degenerate[0]['reason']}. Nothing was dropped, but a corpus figure "
+            f"that pools sentences (M5's per_scorer scores) can rest heavily on "
+            f"such a pair."
         )
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
         corpus_warnings = list(corpus_warnings) + [msg]
@@ -236,7 +236,6 @@ def run(config: Config, output_dir: str | Path | None = None) -> Path:
 
     _write_metrics(base / "metrics.json", config, results, meta)
     _write_per_pair(base / "per_pair.parquet", results)
-    _write_annotations(base / "annotation_sample.csv", results)
     plots = _write_plots(base / "plots", results)
     meta["plots"] = [str(Path(p).relative_to(base)) for p in plots]
     report_text = report_mod.build_report(config, results, meta)
@@ -296,24 +295,6 @@ def _write_per_pair(path: Path, results: dict) -> None:
         return
     df = pd.DataFrame(list(merged.values())).sort_values("id").reset_index(drop=True)
     df.to_parquet(path, index=False)
-
-
-def _write_annotations(path: Path, results: dict) -> None:
-    rows = []
-    if "elaboration" in results:
-        rows = results["elaboration"].exports.get("annotation_sample", [])
-    if not rows:
-        # Still emit the file with headers so the ingest path is stable.
-        from .modules.m5_elaboration import ANNOTATION_COLUMNS
-
-        header = ["pair_id", "sent_idx", "target_sentence", "primary_score", "source_context"] + ANNOTATION_COLUMNS
-        with path.open("w", newline="", encoding="utf-8") as fh:
-            csv.DictWriter(fh, fieldnames=header).writeheader()
-        return
-    with path.open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
-        writer.writeheader()
-        writer.writerows(rows)
 
 
 def _write_plots(path: Path, results: dict) -> list[str]:

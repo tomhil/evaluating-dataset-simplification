@@ -81,7 +81,8 @@ def test_section_4_has_44_keys():
 def test_key_labelled_and_present(metrics, key):
     assert label_for(key) is not None and label_for(key).tasks, key
     if key in MAY_BE_ABSENT:
-        scorers = metrics["modules"]["elaboration"]["corpus"]["scorers_run"]
+        # scorers_run is absent when no sentence-level scorer was requested.
+        scorers = metrics["modules"]["elaboration"]["corpus"].get("scorers_run", [])
         name = key.rsplit(".", 1)[1]
         if name not in scorers:
             pytest.skip(f"{name} did not run; recorded in scorers_run")

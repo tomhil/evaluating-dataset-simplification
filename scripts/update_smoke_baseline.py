@@ -7,7 +7,9 @@ Runs ``configs/smoke.yaml`` into a temporary directory and compares its
 2. every leaf that disappeared sits under a key in
    ``profiler.metric_registry.RETIRED_KEYS`` or under a path in
    ``REMOVED_BOOKKEEPING`` below;
-3. no new leaf appears.
+3. no new leaf appears. (A dict all of whose baseline leaves were removed
+   under rule 2 is left as an empty dict, which serialises as a leaf at the
+   dict's own path; it is reported as "emptied", not as new.)
 
 A module's ``notes`` list is compared as a list of strings: a note may be
 removed (it is reported), but no note may be added or reworded, and the kept
@@ -85,6 +87,24 @@ REMOVED_BOOKKEEPING: tuple[tuple[str, ...], ...] = (
     ("modules", "alignment", "params", "matching"),
     ("modules", "alignment", "params", "primary_tau_for_m5_m6"),
     ("modules", "alignment", "params", "tau_sweep"),
+    # Item 13: M5's primary NLI scorer and its content-word fallback are
+    # removed, with the not-entailed rate and its threshold (gate G6). Their
+    # metrics are the retired elaboration.per_scorer.{nli, lexical_grounding,
+    # heuristic_grounding} and the other retired M5 keys; these are the
+    # threshold, the heuristic_only flag, the primary scorer's name and its
+    # not-entailed count, and the "max entailment" aggregation of the NLI
+    # scorer. scorers_run and params.scorers are emitted only when run.summac
+    # or run.alignscore asks for a sentence-level scorer; the smoke config asks
+    # for neither, and their old value named only the removed
+    # lexical_grounding scorer. No kept metric reads any of them.
+    ("modules", "elaboration", "corpus", "threshold"),
+    ("modules", "elaboration", "corpus", "heuristic_only"),
+    ("modules", "elaboration", "corpus", "primary_scorer"),
+    ("modules", "elaboration", "corpus", "n_not_entailed_primary"),
+    ("modules", "elaboration", "corpus", "scorers_run"),
+    ("modules", "elaboration", "params", "threshold"),
+    ("modules", "elaboration", "params", "aggregation"),
+    ("modules", "elaboration", "params", "scorers"),
 )
 
 Path_ = tuple[str, ...]
@@ -96,6 +116,7 @@ class Report:
     removed: list[str] = field(default_factory=list)
     removed_unexplained: list[str] = field(default_factory=list)
     added: list[str] = field(default_factory=list)
+    emptied: list[str] = field(default_factory=list)
     notes_removed: list[str] = field(default_factory=list)
     notes_violations: list[str] = field(default_factory=list)
 
@@ -110,7 +131,7 @@ class Report:
 
     @property
     def n_changes(self) -> int:
-        return len(self.violations) + len(self.removed) + len(self.notes_removed)
+        return len(self.violations) + len(self.removed) + len(self.notes_removed) + len(self.emptied)
 
 
 def _fmt(path: Path_) -> str:
@@ -180,7 +201,22 @@ def compare(baseline: dict, current: dict) -> Report:
                 report.removed_unexplained.append(_fmt(path))
         elif new_leaves[path] != value:
             report.changed.append(_fmt(path))
-    report.added = [_fmt(p) for p in new_leaves if p not in old_leaves]
+    explained = {
+        p for p in old_leaves
+        if p not in new_leaves and (_under_retired_key(p) or _under_removed_bookkeeping(p))
+    }
+    for path in new_leaves:
+        if path in old_leaves:
+            continue
+        # A dict whose every baseline leaf was removed under rule 2 serialises
+        # as an empty-dict leaf at the dict's own path. It carries no value,
+        # so it is reported as emptied, not as a new leaf. Any other empty
+        # dict, or one that held a leaf removed without explanation, is new.
+        under = [p for p in old_leaves if p[: len(path)] == path and len(p) > len(path)]
+        if new_leaves[path] == "{}" and under and all(p in explained for p in under):
+            report.emptied.append(_fmt(path))
+        else:
+            report.added.append(_fmt(path))
     return report
 
 
@@ -205,6 +241,9 @@ def _summary(report: Report) -> str:
     if report.removed:
         lines.append(f"Removed leaves ({len(report.removed)}):")
         lines += [f"  - {p}" for p in report.removed]
+    if report.emptied:
+        lines.append(f"Emptied containers ({len(report.emptied)}; every leaf removed under rule 2):")
+        lines += [f"  - {p}" for p in report.emptied]
     if report.notes_removed:
         lines.append(f"Removed notes ({len(report.notes_removed)}):")
         lines += [f"  - {n}" for n in report.notes_removed]
@@ -214,7 +253,8 @@ def _summary(report: Report) -> str:
     lines.append(
         f"{report.n_changes} change(s): {len(report.changed)} changed, "
         f"{len(report.removed)} removed ({len(report.removed_unexplained)} not retired), "
-        f"{len(report.added)} new, {len(report.notes_removed)} notes removed, "
+        f"{len(report.added)} new, {len(report.emptied)} emptied, "
+        f"{len(report.notes_removed)} notes removed, "
         f"{len(report.notes_violations)} note violations."
     )
     return "\n".join(lines)

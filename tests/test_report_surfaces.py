@@ -92,3 +92,34 @@ def test_provenance_header_has_no_embedder_or_tau_line():
     header = text.split("## Run parameters", 1)[1].split("\n## ", 1)[0]
     assert "Embedder" not in header
     assert "τ sweep" not in header
+
+
+def test_m5_section_reports_kept_scorers_and_no_nli():
+    """M5's NLI scorer, not-entailed rate, scorer agreement, pattern breakdown
+    and annotation sample were removed in the October 2026 metric revision
+    (gate G6 removed the rate from the kept per_scorer blocks too)."""
+    cfg = make_config()
+    m5 = ModuleResult(
+        name="elaboration",
+        corpus={
+            "n_target_sentences": 4,
+            "scorers_run": ["summac_conv"],
+            "per_scorer": {"summac_conv": {"score": _summary(0.5), "score_histogram": {}}},
+            "document_level": {"summac_precision": _summary(0.5), "summac_recall": _summary(0.5)},
+        },
+        params={"scorers": ["summac_conv"]},
+        notes=[],
+        per_pair=[],
+    )
+    text = build_report(cfg, {"elaboration": m5}, {"n_full": 10, "n_sample": 10})
+    section = text.split("## M5 — ", 1)[1].split("\n## ", 1)[0]
+    assert "Sentence-level scorers run: summac_conv." in section
+    assert "| summac_conv | 0.500" in section
+    assert "- document-level summac_precision: 0.500" in section
+    for gone in ("not-entailed", "Threshold", "agreement", "annotation", "ingest"):
+        assert gone.lower() not in section.lower(), gone
+    header = text.split("## Run parameters", 1)[1].split("\n## ", 1)[0]
+    assert "NLI backend" not in header
+    caveats = text.split("## Caveats", 1)[1].split("\n## ", 1)[0]
+    for gone in ("upper bound", "annotation", "Heuristic-only", "Stand-in backends"):
+        assert gone.lower() not in caveats.lower(), gone

@@ -62,9 +62,6 @@ def build_report(config, results: dict[str, ModuleResult], meta: dict) -> str:
         f"- Sample size (M4–M6): {meta.get('n_sample', '—')} "
         f"(config sample_size={config.run.sample_size})\n"
         f"- Seed: {config.run.seed}; bootstrap resamples: {config.run.bootstrap_resamples}\n"
-        f"- NLI backend: {config.run.nli_backend}"
-        + (f" ({config.run.nli_model})" if config.run.nli_backend == "nli" else "")
-        + "\n"
     )
 
     # Length-invariant evidence is presented before the surface
@@ -196,36 +193,19 @@ def _m5(r: ModuleResult) -> str:
     out = [_h(2, "M5 — Content addition (elaboration)")]
     if c.get("n_target_sentences", 0) == 0:
         return "\n".join(out) + "\nNo target sentences.\n"
-    out.append(
-        f"Scorers run: {', '.join(c.get('scorers_run', []))}"
-        + (" (heuristic_only)" if c.get("heuristic_only") else "")
-        + f". Threshold: {c.get('threshold')}.\n"
-    )
-    out.append("| scorer | score mean (median) [CI] n | not-entailed rate |\n|---|---|---|")
-    for name, d in c.get("per_scorer", {}).items():
-        ne = d["not_entailed_rate"]
-        out.append(f"| {name} | {_summary(d['score'])} | {_fmt(ne['rate'])} (n={ne['n']}) |")
-
-    agr = c.get("pairwise_agreement", {})
-    if agr:
-        out.append("\n**Scorer agreement** (disagreement is itself information):\n")
-        out.append("| pair | label agreement | Pearson |\n|---|---|---|")
-        for k, v in agr.items():
-            out.append(f"| {k} | {_fmt(v.get('label_agreement'))} | {_fmt(v.get('pearson'))} |")
-
-    pb = c.get("not_entailed_pattern_breakdown", {})
-    if pb:
-        out.append(
-            f"\n**Not-entailed surface patterns** (n={pb.get('n_not_entailed')}, counts only): "
-            f"definitional={pb.get('definitional')}, example_marker={pb.get('example_marker')}, "
-            f"candidate_gloss={pb.get('candidate_gloss')}, "
-            f"candidate_new_background={pb.get('candidate_new_background')}.\n"
-        )
-    corrected = c.get("corrected_not_entailed_rate")
-    out.append(
-        f"Corrected not-entailed rate (from annotation): {_fmt(corrected) if corrected is not None else 'not yet ingested'}. "
-        "See `annotation_sample.csv` and `profiler ingest-annotations`.\n"
-    )
+    if "scorers_run" in c:
+        out.append(f"Sentence-level scorers run: {', '.join(c['scorers_run']) or 'none'}.\n")
+        if c.get("per_scorer"):
+            out.append("| scorer | score mean (median) [CI] n |\n|---|---|")
+            for name, d in c["per_scorer"].items():
+                out.append(f"| {name} | {_summary(d['score'])} |")
+    else:
+        out.append("No sentence-level scorer requested (run.summac and run.alignscore are false).\n")
+    dl = c.get("document_level", {})
+    for k in ("summac_precision", "summac_recall"):
+        if k in dl:
+            out.append(f"- document-level {k}: {_summary(dl[k])}")
+    out.append("")
     return "\n".join(out) + _notes(r)
 
 
@@ -324,50 +304,12 @@ def _caveats(config, results: dict[str, ModuleResult], meta: dict) -> str:
     out = [_h(2, "Caveats (confounds that apply to this run)")]
     items: list[str] = []
 
-    # Stand-in backends are not real semantics — flag loudly and first.
-    stand_in = []
-    if config.run.nli_backend != "nli" and "elaboration" in results and not config.run.heuristic_only:
-        stand_in.append(f"nli_backend='{config.run.nli_backend}' (not an entailment model)")
-    if stand_in:
-        items.append(
-            "**Stand-in backends — M4/M5/M6 semantics are NOT real.** This run used "
-            + " and ".join(stand_in)
-            + ". These are deterministic lexical/hashing placeholders, not semantic "
-            "models: alignment, content-preservation, elaboration and deletion-basis "
-            "numbers derived from them are structurally valid but semantically "
-            "unreliable. Re-run with embedder=sbert and nli_backend=nli for real values. "
-            "M1, M2 and M3 do not depend on these backends and are real."
-        )
-
     n_sample = meta.get("n_sample")
     if isinstance(n_sample, int) and n_sample < 1000:
         items.append(
             f"**Small sample.** M4–M6 ran on n={n_sample} (<1000); CIs may be too "
             "wide to distinguish this corpus from the reference values above."
         )
-    if "elaboration" in results:
-        c = results["elaboration"].corpus
-        agr = c.get("pairwise_agreement", {})
-        # `or 1.0` turned an agreement of 0.0 into 1.0, so total disagreement --
-        # the case this caveat exists for -- was the one value that produced no
-        # caveat, while 0.5 produced one. Missing values still skip.
-        low = [
-            k
-            for k, v in agr.items()
-            if v.get("label_agreement") is not None and v["label_agreement"] < 0.8
-        ]
-        if low:
-            items.append(
-                f"**NLI/scorer disagreement.** Low label agreement between {', '.join(low)}; "
-                "treat the elaboration rate as unreliable on this domain until annotated."
-            )
-        if c.get("corrected_not_entailed_rate") is None and not c.get("heuristic_only"):
-            items.append(
-                "**Missing annotation sample.** The automatic not-entailed rate is an "
-                "upper bound; annotate `annotation_sample.csv` and re-ingest for a corrected rate."
-            )
-        if c.get("heuristic_only"):
-            items.append("**Heuristic-only elaboration.** M5 used content-word grounding, not NLI.")
     if not config.language.lower().startswith("en"):
         items.append(
             f"**Non-English corpus** (language={config.language}): M3 and M5 were "
@@ -381,7 +323,7 @@ def _caveats(config, results: dict[str, ModuleResult], meta: dict) -> str:
     )
     items.append(
         "**Entailment models degrade off-domain**, particularly on legal and "
-        "biomedical text; the automatic elaboration rate is an upper bound."
+        "biomedical text."
     )
 
     out.append("\n".join(f"- {it}" for it in items) + "\n")

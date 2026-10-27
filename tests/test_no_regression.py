@@ -12,7 +12,9 @@ The checks are the script's ``compare``:
 - every baseline leaf that is still emitted is unchanged;
 - a baseline leaf may disappear only if it lies under a key in
   ``RETIRED_KEYS`` or under the script's ``REMOVED_BOOKKEEPING``;
-- no new leaf or note appears, and kept notes stay in order.
+- no new leaf or note appears, and kept notes stay in order (a dict left
+  empty because every baseline leaf under it was removed by the rule above is
+  reported as emptied, not new).
 
 ``config`` and ``metric_labels`` are outside the comparison (see the script).
 """
@@ -98,3 +100,22 @@ def test_compare_ignores_config_and_metric_labels():
     cur["config"] = {"y": 2}
     cur["metric_labels"] = {}
     assert compare(_mini({}), cur).n_changes == 0
+
+
+def test_compare_reports_a_dict_emptied_by_retired_removals():
+    # Every leaf of the old corpus is retired, so the dict left behind is empty;
+    # that empty dict is not a new leaf (item 13: M5's params lost all three).
+    r = compare(_mini({"expansion_rate": {"mean": 1.0}}), _mini({}))
+    assert r.emptied == ["modules.length.corpus"] and not r.added and not r.violations
+
+
+def test_compare_flags_an_emptied_dict_that_lost_a_kept_leaf():
+    r = compare(_mini({"compression_ratio": {"mean": 0.5}}), _mini({}))
+    assert r.removed_unexplained == ["modules.length.corpus.compression_ratio.mean"]
+    assert r.added == ["modules.length.corpus"] and not r.emptied
+
+
+def test_compare_flags_a_new_empty_dict():
+    old = _mini({"compression_ratio": {"mean": 0.5}})
+    r = compare(old, _mini({"compression_ratio": {"mean": 0.5}, "fresh": {}}))
+    assert r.added == ["modules.length.corpus.fresh"] and not r.emptied

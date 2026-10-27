@@ -160,54 +160,6 @@ def test_get_processor_refuses_a_language_it_cannot_handle():
 
 
 # --------------------------------------------------------------------------
-# report caveats
-
-
-def test_total_scorer_disagreement_produces_a_caveat():
-    """`(v.get("label_agreement") or 1.0) < 0.8` turned 0.0 into 1.0, so the
-    worst possible disagreement -- the case the caveat exists for -- was the
-    one case that produced no caveat, while 0.5 produced one."""
-    from profiler.report import _caveats
-
-    def caveats_for(agreement):
-        res = {
-            "elaboration": type(
-                "R",
-                (),
-                {
-                    "corpus": {"pairwise_agreement": {"a|b": {"label_agreement": agreement}}},
-                    "params": {},
-                    "notes": [],
-                    "per_pair": [],
-                },
-            )()
-        }
-        return _caveats(_cfg(language="en"), res, {})
-
-    assert "agreement" in caveats_for(0.0).lower(), "total disagreement was silent"
-    assert "agreement" in caveats_for(0.5).lower()
-    assert "agreement" not in caveats_for(0.95).lower()
-
-
-def test_missing_agreement_value_does_not_trigger_the_caveat():
-    from profiler.report import _caveats
-
-    res = {
-        "elaboration": type(
-            "R",
-            (),
-            {
-                "corpus": {"pairwise_agreement": {"a|b": {}}},
-                "params": {},
-                "notes": [],
-                "per_pair": [],
-            },
-        )()
-    }
-    assert "agreement" not in _caveats(_cfg(language="en"), res, {}).lower()
-
-
-# --------------------------------------------------------------------------
 # determinism: no exception text in metrics.json
 
 

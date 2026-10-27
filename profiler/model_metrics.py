@@ -173,7 +173,7 @@ def load_summac_doc(device: str = "auto"):  # noqa: ARG001 - see below
 
 def summac_doc_stand_in(original: str, generated: str) -> float | None:
     """Offline stand-in: mean share of each generated sentence's content words
-    found in the original (the lexical_grounding idea at document level)."""
+    found in the original (content-word grounding at document level)."""
 
     from .nlp import SimpleProcessor
 

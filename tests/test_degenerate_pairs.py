@@ -1,10 +1,13 @@
-"""Degenerate pairs must be flagged, and M5 must not be dominated by one document.
+"""Degenerate pairs must be flagged.
 
 SWiPE's annotated subset contains a vandalised Wikipedia revision: a 12-word
 source against a 2,488-word target that is almost entirely one sentence repeated
 hundreds of times. Because M5 pools every target sentence across documents, that
 single pair supplied 32% of the sentence pool and 61% of the not-entailed
-sentences, moving the corpus rate from 0.301 to 0.526.
+sentences, moving the corpus rate from 0.301 to 0.526. (M5's not-entailed
+rate and its document-averaged variant were removed in the October 2026 metric
+revision; the flag stays, since any statistic pooled over sentences can rest
+on such a pair.)
 """
 
 import pytest
@@ -48,35 +51,3 @@ def test_flag_records_why():
 
 def test_empty_corpus_is_not_an_error_here():
     assert find_degenerate_pairs([]) == []
-
-
-# --- M5 document-weighted rate ---------------------------------------------
-
-def test_m5_reports_both_weightings():
-    """Sentence-weighted lets one long document dominate; document-weighted does not."""
-    import numpy as np
-
-    from profiler.modules.m5_elaboration import _rate_by_document
-
-    # Three documents. The first is huge and almost entirely not-entailed.
-    per_pair = [
-        {"id": "big", "n_tgt_sents": 496, "n_not_entailed": 494,
-         "not_entailed_rate": 494 / 496},
-        {"id": "a", "n_tgt_sents": 10, "n_not_entailed": 2,
-         "not_entailed_rate": 0.2},
-        {"id": "b", "n_tgt_sents": 10, "n_not_entailed": 3,
-         "not_entailed_rate": 0.3},
-    ]
-    doc = _rate_by_document(per_pair)
-    pooled = sum(r["n_not_entailed"] for r in per_pair) / sum(
-        r["n_tgt_sents"] for r in per_pair
-    )
-    assert pooled > 0.9, "pooled rate is dominated by the big document"
-    assert doc["mean"] < 0.5, "document-weighted mean should resist it"
-    assert doc["n"] == 3
-
-
-def test_document_weighted_handles_empty():
-    from profiler.modules.m5_elaboration import _rate_by_document
-
-    assert _rate_by_document([])["n"] == 0

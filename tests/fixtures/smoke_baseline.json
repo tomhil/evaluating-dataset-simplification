@@ -1117,7 +1117,6 @@
     },
     "elaboration": {
       "corpus": {
-        "corrected_not_entailed_rate": null,
         "document_level": {
           "qafacteval_precision": {
             "ci95": [
@@ -1183,99 +1182,7 @@
             "std": 0.057272879546927564
           }
         },
-        "heuristic_only": false,
-        "n_not_entailed_primary": 7,
         "n_target_sentences": 25,
-        "not_entailed_pattern_breakdown": {
-          "candidate_gloss": 7,
-          "candidate_new_background": 0,
-          "definitional": 1,
-          "example_marker": 1,
-          "n_not_entailed": 7
-        },
-        "not_entailed_rate_by_document": {
-          "iqr": [
-            0.0,
-            0.5
-          ],
-          "mean": 0.2833333333333333,
-          "median": 0.3333333333333333,
-          "n": 10
-        },
-        "pairwise_agreement": {},
-        "per_scorer": {
-          "lexical_grounding": {
-            "not_entailed_rate": {
-              "n": 25,
-              "rate": 0.28,
-              "threshold": 0.5
-            },
-            "score": {
-              "ci95": [
-                0.4957341269841269,
-                0.6731970418470418
-              ],
-              "extra": {},
-              "iqr": [
-                0.42857142857142855,
-                0.6666666666666666
-              ],
-              "mean": 0.582978354978355,
-              "median": 0.6,
-              "n": 25,
-              "std": 0.2222662506045523
-            },
-            "score_histogram": {
-              "counts": [
-                2,
-                2,
-                0,
-                0,
-                0,
-                3,
-                0,
-                2,
-                1,
-                4,
-                1,
-                4,
-                0,
-                0,
-                0,
-                3,
-                0,
-                2,
-                0,
-                1
-              ],
-              "edges": [
-                0.2,
-                0.24000000000000002,
-                0.28,
-                0.32,
-                0.36,
-                0.4,
-                0.44,
-                0.48000000000000004,
-                0.52,
-                0.56,
-                0.6000000000000001,
-                0.64,
-                0.6799999999999999,
-                0.72,
-                0.76,
-                0.8,
-                0.8400000000000001,
-                0.8800000000000001,
-                0.9199999999999999,
-                0.96,
-                1.0
-              ],
-              "n": 25
-            }
-          }
-        },
-        "primary_scorer": "lexical_grounding",
         "rhetorical_roles": {
           "abstract": {
             "background": {
@@ -1434,26 +1341,15 @@
               "std": 0.18002057495577392
             }
           }
-        },
-        "scorers_run": [
-          "lexical_grounding"
-        ],
-        "threshold": 0.5
+        }
       },
       "notes": [
-        "Automatic elaboration rate is an upper bound on real elaboration until the manual sample is annotated; entailment models degrade off-domain.",
         "document_level SummaC uses an offline content-word stand-in (nli_backend=lexical); it is not the published metric.",
         "qafacteval_precision/recall not computed: QAFactEval is DEFERRED (its package fails to build against the core dependencies); keys are null.",
         "rhetorical_roles uses an offline keyword stand-in (nli_backend=lexical); it is not the published classifier.",
         "rhetorical_roles uses a classifier trained on biomedical abstracts (PubMed-RCT); it is off-domain for news, Wikipedia and legal text."
       ],
-      "params": {
-        "aggregation": "max entailment over source sentences",
-        "scorers": [
-          "lexical_grounding"
-        ],
-        "threshold": 0.5
-      }
+      "params": {}
     },
     "length": {
       "corpus": {

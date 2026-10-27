@@ -1,119 +1,16 @@
-"""Three defects found by review on the M5/M3c path, each verified on real runs.
+"""Defects found by review on the M5/M3c path, verified on real runs.
 
-1. The annotation sample was a flat shuffle over sentences, so a document
-   contributing many not-entailed sentences contributed proportionally many
-   rows. In all three committed swipe_gold runs, 70 of the 100 rows come from
-   swipeg3153 -- the vandalised revision that ``find_degenerate_pairs`` already
-   flags. That CSV is the input to ``corrected_not_entailed_rate``, so
-   annotating it would have corrected the corpus rate from one bad document.
-
-2. The "upper bound until annotated" caveat was gated on ``len(records) <
-   2000``. The caveat is unconditionally true, and the gate dropped it from
-   exactly the corpora with the most sentences: Cochrane and PLOS, the two
-   biomedical sets where an MNLI-trained model is furthest off-domain.
-
-3. ``_ext_oracle_k`` rebuilt a merged counter for every candidate on every
-   greedy iteration. Its tests went with the M3c decomposition in the October
-   2026 metric revision; the ``words_fast`` tests it motivated stay, because
-   M3's WordRank tokenises with ``words_fast`` too.
+The M5 half -- the annotation sample drawn as a flat shuffle over sentences,
+and the "upper bound until annotated" caveat gated on the sentence count --
+went with the annotation sample and the not-entailed rate in the October 2026
+metric revision, and so did the M3c ``_ext_oracle_k`` tests. What stays are the
+``words_fast`` tests the oracle work motivated, because M3's WordRank (and M2
+and M7) tokenise with ``words_fast`` too.
 """
 
 import json
 
 import pytest
-
-from profiler.modules.m5_elaboration import ANNOTATION_SAMPLE_SIZE, _annotation_sample
-
-
-def _records(shape: dict[str, int]) -> list[dict]:
-    out = []
-    for pid, n in shape.items():
-        for i in range(n):
-            out.append(
-                {"pair_id": pid, "sent_idx": i, "sentence": f"{pid} s{i}", "primary_score": 0.1}
-            )
-    return out
-
-
-def test_one_document_cannot_dominate_the_annotation_sample():
-    """The swipe_gold shape: one pair with 700 sentences, 30 with a few."""
-    shape = {"vandal": 700}
-    shape.update({f"p{i}": 3 for i in range(30)})
-    rows = _annotation_sample(_records(shape), {}, seed=13)
-
-    assert len(rows) == ANNOTATION_SAMPLE_SIZE
-    share = sum(1 for r in rows if r["pair_id"] == "vandal") / len(rows)
-    # A flat shuffle gives ~88% here; the committed runs show 70%. Round-robin
-    # gives 10%, which is the floor: the 30 small documents hold only 90
-    # sentences between them, so the last 10 rows have nowhere else to come
-    # from. The point is that the budget goes to the small documents first.
-    assert share <= 0.10, f"one document supplied {share:.0%} of the sample"
-    assert sum(1 for r in rows if r["pair_id"] != "vandal") == 90
-
-
-def test_annotation_sample_spreads_over_as_many_documents_as_it_can():
-    rows = _annotation_sample(_records({f"p{i}": 50 for i in range(40)}), {}, seed=13)
-    assert len({r["pair_id"] for r in rows}) == 40
-
-
-def test_annotation_sample_still_fills_when_documents_are_scarce():
-    """Two documents and a 100-row budget: take everything available."""
-    rows = _annotation_sample(_records({"a": 40, "b": 40}), {}, seed=13)
-    assert len(rows) == 80
-
-
-def test_annotation_sample_is_seed_deterministic():
-    recs = _records({f"p{i}": 20 for i in range(20)})
-    a = _annotation_sample(recs, {}, seed=13)
-    b = _annotation_sample(recs, {}, seed=13)
-    assert [(r["pair_id"], r["sent_idx"]) for r in a] == [
-        (r["pair_id"], r["sent_idx"]) for r in b
-    ]
-    c = _annotation_sample(recs, {}, seed=14)
-    assert [(r["pair_id"], r["sent_idx"]) for r in c] != [
-        (r["pair_id"], r["sent_idx"]) for r in a
-    ]
-
-
-def _m5_result(pairs, ctx):
-    """Run M5 offline (lexical scorer, no model download)."""
-    from profiler.modules import m4_alignment, m5_elaboration
-
-    m4_alignment.compute(pairs, ctx)  # populates ctx.shared["alignment"]
-    return m5_elaboration.compute(pairs, ctx)
-
-
-@pytest.mark.parametrize("n_pairs", [1, 3, 40])
-def test_upper_bound_caveat_is_attached_to_every_run_regardless_of_size(n_pairs, ctx):
-    """Cochrane and PLOS lost this caveat by having too many sentences.
-
-    Asserted on the returned notes, not on the module's source text. The
-    previous version of this test read the source and checked the append was
-    unconditional, which was true and yet missed that ``compute`` returns early
-    on a corpus with no target sentences and never reached it -- the caveat had
-    moved rather than become unconditional. A test that reads code instead of
-    running it cannot see that.
-    """
-    from profiler.modules.m5_elaboration import UPPER_BOUND_NOTE
-    from profiler.types import Pair
-
-    src = "The treatment reduced symptoms. Patients improved over eight weeks."
-    tgt = "The medicine helped. People got better in two months."
-    pairs = [Pair(id=f"p{i}", source=src, target=tgt) for i in range(n_pairs)]
-
-    result = _m5_result(pairs, ctx)
-    assert UPPER_BOUND_NOTE in result.notes
-
-
-def test_upper_bound_caveat_survives_the_no_sentences_early_return(ctx):
-    """The path that returns before the caveat is appended."""
-    from profiler.modules.m5_elaboration import UPPER_BOUND_NOTE, compute
-
-    # What M4 leaves behind for a corpus with nothing in it.
-    ctx.shared["alignment"] = {"src_sents": {}, "tgt_sents": {}, "pairs": {}}
-    result = compute([], ctx)
-    assert result.corpus["n_target_sentences"] == 0
-    assert UPPER_BOUND_NOTE in result.notes
 
 
 def test_words_fast_matches_words_on_real_corpus_text():

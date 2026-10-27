@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from profiler.config import parse_config
 from profiler.run import run
 
@@ -53,8 +55,10 @@ def _smoke_config(tmp_path):
 
 def test_all_outputs_written(tmp_path):
     out = run(_smoke_config(tmp_path), output_dir=tmp_path / "run1")
-    for name in ["metrics.json", "per_pair.parquet", "report.md", "annotation_sample.csv"]:
+    for name in ["metrics.json", "per_pair.parquet", "report.md"]:
         assert (out / name).exists(), f"missing {name}"
+    # The annotation sample went with the not-entailed rate (October 2026).
+    assert not (out / "annotation_sample.csv").exists()
     assert (out / "plots").is_dir()
     assert any((out / "plots").glob("*.png"))
 
@@ -86,3 +90,12 @@ def test_report_has_no_verdict(tmp_path):
     # Sanity: it does contain the descriptive tables and caveats.
     assert "caveats" in text
     assert "literature reference" in text
+
+
+def test_ingest_annotations_command_is_gone():
+    """Removed with the annotation sample and the not-entailed rate (October 2026)."""
+    from profiler.__main__ import main
+
+    with pytest.raises(SystemExit) as exc:
+        main(["ingest-annotations", "--run", "x", "--file", "y"])
+    assert exc.value.code == 2

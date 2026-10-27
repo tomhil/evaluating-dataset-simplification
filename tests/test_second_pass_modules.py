@@ -3,9 +3,9 @@ incomplete fixes from earlier in this loop.
 
 The SMOG guard checked the wrong sentence count, so the sentinel it was written
 to stop still reached metrics.json. (The `_corpus_share` cancellation-guard
-tests went with the M3c decomposition in the October 2026 metric revision.) And the
-document-stratified annotation draw silently invalidated the estimator that
-consumes it.
+tests went with the M3c decomposition in the October 2026 metric revision, and
+the tests of the annotation-corrected rate and of M5's upper-bound caveat went
+with the annotation sample and the not-entailed rate in the same revision.)
 """
 
 from __future__ import annotations
@@ -94,55 +94,3 @@ def test_finite_values_are_untouched():
     h = histogram([i / 10 for i in range(20)], bins=5)
     assert sum(h["counts"]) == 20
     assert summarize([1.0, 2.0, 3.0], seed=13, resamples=50).n == 3
-
-
-# --------------------------------------------------------------------------
-# the annotation sample and the estimator that consumes it must agree
-
-
-def test_corrected_rate_uses_the_same_unit_of_analysis_as_the_sample():
-    """The stratified draw estimates P(genuine | not-entailed) per *document*.
-
-    Multiplying it by a sentence-pooled auto_rate mixes units: round-robin gives
-    a document with one not-entailed sentence the same weight as one with 700,
-    so heavy contributors are under-weighted by orders of magnitude and the
-    product is biased. The pooled rate cannot be paired with a stratified
-    sample, so the correction now reads the document-averaged rate -- the same
-    choice M6 makes with _stratified_effect and M5 already offers as
-    not_entailed_rate_by_document.
-    """
-    from profiler.__main__ import _corrected_rate
-
-    corpus = {
-        "not_entailed_rate": 0.80,  # pooled over sentences, dominated by one doc
-        "not_entailed_rate_by_document": {"mean": 0.20},
-    }
-    got = _corrected_rate(corpus, genuine_share=0.5)
-    assert got == pytest.approx(0.10), "used the pooled rate, not the document mean"
-
-
-def test_corrected_rate_is_none_without_a_document_averaged_rate():
-    from profiler.__main__ import _corrected_rate
-
-    assert _corrected_rate({"not_entailed_rate": 0.8}, genuine_share=0.5) is None
-
-
-# --------------------------------------------------------------------------
-# the caveat must not describe a model that never ran
-
-
-def test_upper_bound_caveat_does_not_claim_entailment_in_heuristic_mode(ctx):
-    from profiler.modules import m4_alignment, m5_elaboration
-    from profiler.types import Pair
-
-    src = "The treatment reduced symptoms. Patients improved over eight weeks."
-    tgt = "The medicine helped. People got better in two months."
-    pairs = [Pair(id=f"p{i}", source=src, target=tgt) for i in range(3)]
-
-    heuristic = m5_elaboration.compute
-    ctx.config.run.heuristic_only = True
-    m4_alignment.compute(pairs, ctx)
-    notes = " ".join(heuristic(pairs, ctx).notes)
-
-    assert "upper bound" in notes.lower(), "the caveat itself must stay"
-    assert "entailment model" not in notes.lower(), notes

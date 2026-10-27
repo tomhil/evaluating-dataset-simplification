@@ -196,8 +196,8 @@ def test_heuristic_only_run_is_fully_labelled(tmp_path):
     raw["run"]["heuristic_only"] = True
     out = run(parse_config(raw), output_dir=tmp_path / "run")
     metrics = json.loads((out / "metrics.json").read_text())
-    # heuristic_grounding is retired: still emitted until Phase C, never labelled.
-    assert "heuristic_grounding" in metrics["modules"]["elaboration"]["corpus"]["per_scorer"]
+    # heuristic_grounding is retired and no longer emitted (item 13).
+    assert "per_scorer" not in metrics["modules"]["elaboration"]["corpus"]
     assert "elaboration.per_scorer.heuristic_grounding" not in metrics["metric_labels"]
     missing = _unlabelled(metrics["modules"])
     assert not missing, missing

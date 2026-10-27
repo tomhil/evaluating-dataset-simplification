@@ -50,8 +50,6 @@ class ModuleResult:
     notes: list[str] = field(default_factory=list)
     # Bulk data used only for plotting; kept out of metrics.json.
     plot_data: dict = field(default_factory=dict)
-    # Tabular exports (e.g. the M5 annotation sample) written as their own files.
-    exports: dict = field(default_factory=dict)
 
 
 def rows_by_id(pairs: Sequence[Pair]) -> dict[str, Pair]:

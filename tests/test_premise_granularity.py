@@ -1,61 +1,9 @@
-"""M5 must judge a target sentence against multi-sentence source context.
+"""Length invariance of ``syllables_per_word``.
 
-A target sentence that merges facts from several source sentences is entailed by
-none of them individually. Scoring only single-sentence premises therefore marks
-faithful merges as unsupported -- and merging is exactly what summarization and
-simplification do.
+This file held the tests of M5's multi-sentence NLI premise window and of the
+offline content-word grounding scorer; both were removed with the NLI scorer in
+the October 2026 metric revision.
 """
-
-import numpy as np
-
-from profiler.scorers import LexicalGrounding, _joined_premise
-
-
-class FakeNLI:
-    """Records the premises it is asked about; entails only the full merge."""
-
-    def __init__(self):
-        self.seen: list[str] = []
-
-    def __call__(self, premises, hypothesis):
-        self.seen.extend(premises)
-        # Only a premise carrying BOTH facts entails the merged hypothesis.
-        return np.array(
-            [1.0 if ("rain" in p and "flood" in p) else 0.0 for p in premises]
-        )
-
-
-SRC = [
-    "Heavy rain fell across the county on Tuesday.",
-    "The river burst its banks the following morning.",
-    "Several roads were closed by the flood.",
-]
-MERGED = "Heavy rain caused a flood that closed roads."
-
-
-def test_joined_premise_selects_overlapping_sentences():
-    joined = _joined_premise(SRC, MERGED, k=2)
-    assert joined, "expected a multi-sentence premise"
-    # It must combine more than one source sentence.
-    assert joined.count(".") >= 2
-    # And it should favour the sentences sharing content with the hypothesis.
-    assert "rain" in joined and "flood" in joined
-
-
-def test_joined_premise_preserves_document_order():
-    joined = _joined_premise(SRC, MERGED, k=3)
-    assert joined.index("Heavy rain") < joined.index("river burst")
-
-
-def test_joined_premise_handles_degenerate_input():
-    assert _joined_premise([], "anything", k=3) == ""
-    assert _joined_premise(["Only one."], "x", k=3) == "Only one."
-
-
-def test_lexical_grounding_unchanged_by_premise_work():
-    """The offline stand-in scorer is document-level already; it must not shift."""
-    got = LexicalGrounding().score([MERGED], SRC)
-    assert 0.0 <= got[0] <= 1.0
 
 
 # --- syllables per word ----------------------------------------------------
