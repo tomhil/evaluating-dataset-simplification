@@ -14,7 +14,7 @@ import pytest
 import yaml
 
 from profiler.config import parse_config
-from profiler.metric_registry import label_for, metric_paths
+from profiler.metric_registry import is_retired, label_for, metric_paths
 from profiler.run import run
 
 REPO = Path(__file__).resolve().parents[1]
@@ -50,6 +50,8 @@ SECTION_4_KEYS = [
 # Section 7 exceptions: optional scorers M5 did not run have no per_scorer entry.
 MAY_BE_ABSENT = {"elaboration.per_scorer.summac_conv", "elaboration.per_scorer.alignscore"}
 DEFERRED = {"abstractiveness.abstractivity_p2"}
+# Removed by the October 2026 metric revision (RETIRED_KEYS): no registry entry.
+RETIRED = {"abstractiveness.exact_copies"}
 
 
 @pytest.fixture(scope="module")
@@ -75,7 +77,7 @@ def test_section_4_has_44_keys():
     assert len(SECTION_4_KEYS) == 44 == len(set(SECTION_4_KEYS))
 
 
-@pytest.mark.parametrize("key", [k for k in SECTION_4_KEYS if k not in DEFERRED])
+@pytest.mark.parametrize("key", [k for k in SECTION_4_KEYS if k not in DEFERRED | RETIRED])
 def test_key_labelled_and_present(metrics, key):
     assert label_for(key) is not None and label_for(key).tasks, key
     if key in MAY_BE_ABSENT:
@@ -91,6 +93,11 @@ def test_key_labelled_and_present(metrics, key):
 def test_all_modules_fully_labelled(metrics):
     missing = [p for p in metric_paths(metrics["modules"]) if label_for(p) is None]
     assert not missing, missing
+
+
+@pytest.mark.parametrize("key", sorted(RETIRED))
+def test_retired_key_is_unregistered(key):
+    assert label_for(key) is None and is_retired(key)
 
 
 def test_deferred_key_is_absent_and_unregistered(metrics):

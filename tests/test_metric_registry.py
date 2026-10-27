@@ -24,8 +24,9 @@ from profiler.run import run
 
 REPO = Path(__file__).resolve().parents[1]
 RESULTS = sorted((REPO / "results").glob("*.json"))
-# The only corpus blocks whose keys are parametrised (by τ, measure or feature).
-WILDCARD_PREFIXES = ("alignment.by_tau.", "readability.m3c_decomposition.", "deletion_profile.features.")
+# The October 2026 revision removed every parametrised (wildcard) entry; the
+# wildcards survive only in RETIRED_KEYS.
+WILDCARD_PREFIXES: tuple[str, ...] = ()
 
 
 @pytest.fixture(scope="module")
@@ -79,8 +80,9 @@ def test_label_integrity(m):
 def test_literature_rows_as_in_prd():
     # The PRD's rows, with the corrections of the 2026-10 citation audit
     # (docs/metrics.md): sentence_ratio gains SUM (Bommasani & Cardie's CMP_s),
-    # FRE cites Martin et al. 2018, document-level recall is introduced, and
-    # source-side ROUGE recall is a DS metric (Martin et al. 2018).
+    # FRE cites Martin et al. 2018, and document-level recall is introduced.
+    # The October 2026 revision relabels syllables per word as DS (Tanprasert
+    # & Kauchak 2021).
     expected = {
         "length.compression_ratio": {"SUM", "DS"},
         "length.sentence_ratio": {"SUM", "DS"},
@@ -102,25 +104,64 @@ def test_literature_rows_as_in_prd():
         assert label_for(key).tasks == tasks, key
     assert label_for("readability.m3a_surface.fkgl").contested_by
     assert label_for("elaboration.per_scorer.summac_conv").evidence == "validated"
-    assert label_for("abstractiveness.rouge1_recall").tasks == frozenset({"DS"})
     assert label_for("elaboration.document_level.summac_recall").evidence == "introduced"
     assert "https://aclanthology.org/2021.cl-4.28" not in {p.url for p in label_for("readability.m3a_surface.fre").papers}
-    assert label_for("abstractiveness.novel_content_1gram").tasks == frozenset()
+    spw = label_for("readability.m3b_length_invariant.syllables_per_word")
+    assert spw.tasks == frozenset({"DS"}) and spw.evidence == "introduced"
+    assert [p.url for p in spw.papers] == ["https://aclanthology.org/2021.gem-1.1"]
+    assert spw.caveats == () and spw.contested_by == ()
 
 
-def test_wildcards_match_decimal_tau_keys():
-    assert label_for("alignment.by_tau.0.40.source_coverage") is not None
-    assert label_for("alignment.by_tau.0.40.alignment_type_counts.n_1_1") is not None
-    assert label_for("readability.m3c_decomposition.fkgl") is not None
+def test_registry_is_the_82_keys_of_metrics_doc_index():
+    import re
+
+    index = re.findall(r"^\| \[`([^`]+)`\]", (REPO / "docs" / "metrics.md").read_text(), re.M)
+    assert len(REGISTRY) == 82
+    assert {m.key for m in REGISTRY} == set(index)
+
+
+def test_project_specific_entries_are_exactly_the_two_kept():
+    # PRD Section 5.5: mean_zipf and rare_word_rate are the only metrics no
+    # paper defines that the profiler keeps. Any other unsupported metric
+    # coming back must fail here.
+    proj = {m.key: m for m in REGISTRY if not m.tasks}
+    assert set(proj) == {
+        "readability.m3b_length_invariant.mean_zipf",
+        "readability.m3b_length_invariant.rare_word_rate",
+    }
+    assert all(m.evidence == "project-specific" for m in proj.values())
+    assert all(m.headline == ("target.median", "delta.median") for m in proj.values())
+    urls = lambda ps: [p.url for p in ps]  # noqa: E731
+    zipf = proj["readability.m3b_length_invariant.mean_zipf"]
+    rare = proj["readability.m3b_length_invariant.rare_word_rate"]
+    assert urls(zipf.papers) == ["https://arxiv.org/html/2005.00481", "https://aclanthology.org/2020.lrec-1.577/"]
+    assert urls(rare.papers) == ["https://aclanthology.org/2024.emnlp-main.519/", "https://arxiv.org/html/2005.00481"]
+    for m in (zipf, rare):
+        assert urls(m.caveats) == ["https://arxiv.org/html/2511.09536v1"]
+
+
+def test_no_registry_entry_for_a_retired_key():
+    keys = {m.key for m in REGISTRY}
+    assert not keys & set(RETIRED_KEYS)
+    assert not [k for k in keys if is_retired(k)]
+
+
+def test_retired_decimal_tau_keys_are_skipped_not_labelled():
+    assert label_for("alignment.by_tau.0.40.source_coverage") is None
+    assert label_for("readability.m3c_decomposition.fkgl") is None
     assert label_for("nonexistent.key") is None
+    modules = {"alignment": {"corpus": {"by_tau": {"0.40": {
+        "source_coverage": {"median": 0.5},
+        "alignment_type_counts": {"n_1_1": {"median": 3}},
+    }}}}}
+    assert metric_paths(modules) == []
 
 
-def test_alignment_counts_are_metrics_not_bookkeeping(smoke_metrics):
-    counts = [p for p in metric_paths(smoke_metrics["modules"]) if ".alignment_type_counts." in p]
-    assert counts
-    for p in counts:
-        assert label_for(p) is not None
-        assert p.rsplit(".", 1)[1] not in BOOKKEEPING
+def test_smoke_run_retired_paths_are_unlabelled(smoke_metrics):
+    # Until Phase C removes them from the code the smoke run still emits the
+    # retired keys; they must be skipped, not labelled.
+    assert not [p for p in metric_paths(smoke_metrics["modules"]) if is_retired(p)]
+    assert not [k for k in smoke_metrics["metric_labels"] if is_retired(k)]
 
 
 def test_bookkeeping_is_exact_names():
@@ -129,11 +170,11 @@ def test_bookkeeping_is_exact_names():
     assert not BOOKKEEPING & labelled_leaves
 
 
-def test_pairwise_agreement_is_labelled():
-    # Empty in every archived and smoke run; filled when two scorers run.
+def test_pairwise_agreement_is_retired_and_skipped():
+    # Retired in October 2026; filled only when two scorers run.
     modules = {"elaboration": {"corpus": {"pairwise_agreement": {
         "nli_vs_summac_conv": {"label_agreement": 0.8, "pearson": 0.5}}}}}
-    assert all(label_for(p) is not None for p in metric_paths(modules))
+    assert metric_paths(modules) == []
 
 
 def test_sample_based_matches_the_run_populations():
@@ -155,7 +196,9 @@ def test_heuristic_only_run_is_fully_labelled(tmp_path):
     raw["run"]["heuristic_only"] = True
     out = run(parse_config(raw), output_dir=tmp_path / "run")
     metrics = json.loads((out / "metrics.json").read_text())
+    # heuristic_grounding is retired: still emitted until Phase C, never labelled.
     assert "heuristic_grounding" in metrics["modules"]["elaboration"]["corpus"]["per_scorer"]
+    assert "elaboration.per_scorer.heuristic_grounding" not in metrics["metric_labels"]
     missing = _unlabelled(metrics["modules"])
     assert not missing, missing
 

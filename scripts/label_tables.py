@@ -58,7 +58,6 @@ NAMES = {
     "abstractiveness.redundancy": "Redundancy",
     "abstractiveness.topic_similarity": "Topic similarity",
     "abstractiveness.levenshtein_similarity": "Levenshtein similarity",
-    "abstractiveness.exact_copies": "Exact copies",
     "abstractiveness.additions_proportion": "Additions proportion",
     "abstractiveness.deletions_proportion": "Deletions proportion",
     "abstractiveness.rouge_abstract_target": "ROUGE-1/2/L(abstract, target)",
@@ -67,6 +66,7 @@ NAMES = {
     "readability.m3a_surface.fre": "FRE",
     "readability.m3a_surface.cli": "CLI",
     "readability.m3a_surface.dcrs": "DCRS",
+    "readability.m3b_length_invariant.syllables_per_word": "Syllables per word",
     "readability.m3b_length_invariant.wordrank": "WordRank",
     "readability.m3b_length_invariant.lexical_complexity": "Lexical complexity",
     "readability.m3d_model_based.sle_doc": "SLE (document)",
@@ -78,10 +78,6 @@ NAMES = {
     # Labelled by the 2026-10 citation audit.
     "length.mean_src_sent_len": "Mean source sentence length",
     "length.mean_tgt_sent_len": "Mean target sentence length",
-    "abstractiveness.rouge1_recall": "ROUGE-1 recall of the source",
-    "abstractiveness.rouge2_recall": "ROUGE-2 recall of the source",
-    "abstractiveness.rougeL_recall": "ROUGE-L recall of the source",
-    "abstractiveness.content_type_overlap": "Content-type overlap",
     "readability.m3a_surface.ari": "ARI",
     "pair_similarity.bertscore_f1": "BERTScore F1(target, source)",
     **{

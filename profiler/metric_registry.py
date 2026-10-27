@@ -14,7 +14,8 @@ so in docs/metrics.md). The citation audit of 2026-10 set these.
 
 Keys are paths under ``modules.<module>.corpus`` in ``metrics.json``, prefixed
 by the module's config name. ``*`` matches one dict key, which may be a decimal
-such as the τ key ``0.40``.
+such as the τ key ``0.40``. Since the October 2026 metric revision no kept
+entry uses ``*``; the removed keys in ``RETIRED_KEYS`` still do.
 
 No heavy imports: the report, the label-table script and the tests all load
 this module.
@@ -88,15 +89,10 @@ SCIALOM_2019 = Paper("Scialom et al. 2019 (SummaQA)", "https://aclanthology.org/
 # its abstract and tables; see docs/metrics.md).
 DEVARAJ_2021 = Paper("Devaraj et al. 2021", "https://arxiv.org/pdf/2104.05767")
 NAN_2021 = Paper("Nan et al. 2021", "https://aclanthology.org/2021.eacl-main.235")
-SRIKANTH_2021 = Paper("Srikanth & Li 2021", "https://aclanthology.org/2021.findings-acl.455/")
-ZHONG_2020 = Paper("Zhong et al. 2020", "https://ojs.aaai.org/index.php/AAAI/article/view/6520")
 BATS_2024 = Paper("Kreutz et al. 2024 (BATS)", "https://aclanthology.org/2024.findings-acl.712/")
 DAHAN_2026 = Paper("Dahan et al. 2026", "https://arxiv.org/html/2604.23844")
-# Sources of a method, not of a task label: cited on project-specific entries.
-LAPATA_2006 = Paper("Lapata 2006", "https://aclanthology.org/J06-4002/")
-PFISTER_2013 = Paper("Pfister et al. 2013", "https://www.frontiersin.org/articles/10.3389/fpsyg.2013.00700/full")
+# Source of the M7 entity features (not of a task label).
 FENG_2010 = Paper("Feng et al. 2010", "https://aclanthology.org/C10-2032/")
-SUN_2019 = Paper("Sun et al. 2019", "https://aclanthology.org/W19-2303/")
 # Meta-evaluation references: go in `caveats`, never in a label.
 SUMMEVAL = Paper("SummEval 2021", "https://arxiv.org/pdf/2007.12626")
 APPLS = Paper("APPLS 2024", "https://aclanthology.org/2024.emnlp-main.519/")
@@ -116,8 +112,7 @@ ALLOWED_PAPER_URLS: frozenset[str] = frozenset(
         ALVA_MANCHEGO_2021, LABAN_2022, ZHA_2023, MARTIN_2020, MARTIN_2018,
         ASSET_2020, SLE_2023, REFEREE_2024, FABBRI_2022, VASILYEV_2020, GAO_2020,
         SCIALOM_2019, SUMMEVAL, APPLS, DEVARAJ_2022, M7_REPO,
-        DEVARAJ_2021, NAN_2021, SRIKANTH_2021, ZHONG_2020, BATS_2024, DAHAN_2026,
-        LAPATA_2006, PFISTER_2013, FENG_2010, SUN_2019, CARDON_2025,
+        DEVARAJ_2021, NAN_2021, BATS_2024, DAHAN_2026, FENG_2010, CARDON_2025,
     )
 )
 
@@ -173,36 +168,12 @@ M7_FEATURES = (
     "unique_entities", "unique_entities_average", "unique_entities_to_total_entities",
     "words_before_main_verb", "words_over_8_chars", "words_per_sentence",
 )
-M3B_MEASURES = (
-    "jargon_rate", "mean_dependency_distance", "mean_parse_depth", "mean_zipf", "mtld",
-    "passive_rate", "rare_word_rate", "subordinate_clause_ratio", "syllables_per_word",
-)
 M7_ENTITY = frozenset({
     "unique_entities", "max_same_entity_distances", "avg_same_entity_distance",
     "consecutive_entity_distance", "unique_entities_average", "entity_to_token_ratio",
     "unique_entities_to_total_entities",
 })
 M7_FLESCH = frozenset({"flesch_reading_ease", "flesch_kincaid_grade"})
-# Papers behind individual M3b measures (none uses the exact quantity as a task
-# metric): frequency (ASSET's lexical complexity), syllables per word
-# (Tanprasert & Kauchak's recommended component), jargon (Devaraj et al. 2021),
-# parse depth (ASSET's dependency-depth ratio).
-M3B_PAPERS: dict[str, tuple[Paper, ...]] = {
-    "mean_zipf": (ASSET_2020,),
-    "rare_word_rate": (ASSET_2020,),
-    "syllables_per_word": (TANPRASERT_2021,),
-    "jargon_rate": (DEVARAJ_2021,),
-    "mean_parse_depth": (ASSET_2020,),
-}
-_M3B_LEXICAL = frozenset({"jargon_rate", "mean_zipf", "mtld", "rare_word_rate", "syllables_per_word"})
-M3B_CAVEATS: dict[str, tuple[Paper, ...]] = {
-    m: ((APPLS, CARDON_2025) if m in _M3B_LEXICAL else (CARDON_2025,))
-    for m in (
-        "jargon_rate", "mean_dependency_distance", "mean_parse_depth", "mean_zipf", "mtld",
-        "passive_rate", "rare_word_rate", "subordinate_clause_ratio", "syllables_per_word",
-    )
-}
-
 # --- Literature metrics: PRD Section 4, corrected and extended by the 2026-10
 # citation audit (docs/metrics.md gives the evidence for every change) ---
 _LITERATURE: tuple[MetricLabel, ...] = (
@@ -234,8 +205,6 @@ _LITERATURE: tuple[MetricLabel, ...] = (
          direction="↑ more abstractive"),
     # Rows 15, 16, 21: edit features at document level. ASSET defines and
     # correlates them; Martin et al. 2018 has them only in its tseval code.
-    _lit("abstractiveness.exact_copies", {"DS"}, (EASSE_2019, ASSET_2020),
-         direction="↑ more source sentences kept verbatim"),
     _lit("abstractiveness.additions_proportion", {"DS"}, (ASSET_2020, EASSE_2019),
          direction="↑ more words added"),
     _lit("abstractiveness.deletions_proportion", {"DS"}, (ASSET_2020, EASSE_2019),
@@ -261,16 +230,6 @@ _LITERATURE: tuple[MetricLabel, ...] = (
              caveats=(SUMMEVAL,), direction="↑ more abstractive")
         for n in (1, 2, 3, 4)
     ),
-    # Audit: source-output ROUGE and word overlap are Martin et al. 2018
-    # quality-estimation features for meaning preservation.
-    _lit("abstractiveness.rouge1_recall", {"DS"}, (MARTIN_2018,), caveats=(SUN_2019,),
-         direction="↑ more source unigrams kept"),
-    _lit("abstractiveness.rouge2_recall", {"DS"}, (MARTIN_2018,), caveats=(SUN_2019,),
-         direction="↑ more source bigrams kept"),
-    _lit("abstractiveness.rougeL_recall", {"DS"}, (MARTIN_2018,), caveats=(SUN_2019,),
-         direction="↑ more source order kept"),
-    _lit("abstractiveness.content_type_overlap", {"DS"}, (MARTIN_2018,),
-         direction="↑ more target vocabulary from source"),
     # Rows 6-8. FRE: Alva-Manchego et al. 2021 does not evaluate it; Martin et
     # al. 2018 uses it and reports its correlation with simplicity.
     _lit("readability.m3a_surface.fkgl", {"PLS", "DS"},
@@ -286,6 +245,10 @@ _LITERATURE: tuple[MetricLabel, ...] = (
     # Audit: Devaraj et al. 2021 report ARI on Cochrane plain-language summaries.
     _lit("readability.m3a_surface.ari", {"PLS"}, (DEVARAJ_2021,),
          caveats=(CARDON_2025,), direction="↓ easier", headline=PAIRED),
+    # Tanprasert & Kauchak (2021, s6) recommend reporting FKGL's components,
+    # average sentence length and average syllables per word, instead of FKGL.
+    _lit("readability.m3b_length_invariant.syllables_per_word", {"DS"}, (TANPRASERT_2021,),
+         direction="↓ shorter words", headline=PAIRED),
     # Rows 12-13: frequency-rank measures in M3b (wordfreq ranks, not FastText).
     # WordRank was a control attribute, never validated as an evaluation metric.
     _lit("readability.m3b_length_invariant.wordrank", {"PLS"}, (MARTIN_2020, GOLDSACK_2022),
@@ -360,47 +323,16 @@ _LITERATURE: tuple[MetricLabel, ...] = (
     ),
 )
 
-# --- Project-specific metrics: every other key the pipeline emits ---
+# --- Project-specific metrics: kept by decision (PRD "Remove Unsupported
+# Metrics", Section 5.5). No paper defines them; the main vocabulary result in
+# RESULTS.md rests on them. The papers are related work docs/metrics.md lists,
+# none of which defines the measure. Nothing else may be project-specific
+# (tests/test_metric_registry.py).
 _PROJECT: tuple[MetricLabel, ...] = (
-    # M1
-    _proj("length.compression_bimodality", papers=(PFISTER_2013,), headline=()),
-    _proj("length.expansion_rate", headline=("rate",)),
-    # M2
-    _proj("abstractiveness.novel_content_1gram"),
-    # M3. SMOG: only meta-evaluated (Cardon & Doğruöz 2025), never used as a
-    # task metric in the reviewed papers.
-    _proj("readability.m3a_surface.smog", caveats=(CARDON_2025,), headline=PAIRED),
-    *(
-        _proj(f"readability.m3b_length_invariant.{m}", papers=M3B_PAPERS.get(m, ()),
-              caveats=M3B_CAVEATS[m], headline=PAIRED)
-        for m in M3B_MEASURES
-    ),
-    # Sun et al. 2019 compare summarizers against a same-length baseline, the
-    # idea behind the length-matched control.
-    _proj("readability.m3c_decomposition.*", papers=(SUN_2019,), headline=("share_attributable.median",)),
-    # M4. The by-τ statistics depend on this project's aligner and threshold,
-    # so they stay project-specific; the papers are the published analogues.
-    _proj("alignment.by_tau.*.kendall_tau", papers=(LAPATA_2006,)),
-    _proj("alignment.by_tau.*.source_coverage", papers=(ZHONG_2020,)),
-    _proj("alignment.by_tau.*.target_groundedness", papers=(SRIKANTH_2021,)),
-    *(_proj(f"alignment.by_tau.*.alignment_type_counts.{t}", papers=(ASSET_2020,), headline=(), fmt="int")
-      for t in _ALIGNMENT_TYPES),
-    *(_proj(f"alignment.by_tau.*.alignment_type_distribution.{t}", papers=(ASSET_2020,), headline=())
-      for t in _ALIGNMENT_TYPES),
-    # M5
-    _proj("elaboration.corrected_not_entailed_rate", headline=()),
-    _proj("elaboration.not_entailed_rate_by_document"),
-    _proj("elaboration.not_entailed_pattern_breakdown", papers=(SRIKANTH_2021,), headline=()),
-    _proj("elaboration.per_scorer.lexical_grounding", papers=(MARTIN_2018,), headline=("score.median",)),
-    # Max entailment over source sentences is SummaC-ZS's sentence step.
-    _proj("elaboration.per_scorer.nli", papers=(LABAN_2022,), caveats=(DEVARAJ_2022,),
-          headline=("score.median",)),
-    # The scorer heuristic_only mode runs instead of NLI.
-    _proj("elaboration.per_scorer.heuristic_grounding", papers=(MARTIN_2018,), headline=("score.median",)),
-    # Filled only when two or more scorers run (never in the archived runs).
-    _proj("elaboration.pairwise_agreement", headline=()),
-    # M6. Zhong et al. 2020 study which sentences simplification deletes.
-    _proj("deletion_profile.features.*", papers=(ZHONG_2020,), headline=("stratified_effect.effect",)),
+    _proj("readability.m3b_length_invariant.mean_zipf", papers=(ASSET_2020, MARTIN_2020),
+          caveats=(CARDON_2025,), headline=PAIRED),
+    _proj("readability.m3b_length_invariant.rare_word_rate", papers=(APPLS, ASSET_2020),
+          caveats=(CARDON_2025,), headline=PAIRED),
 )
 
 REGISTRY: tuple[MetricLabel, ...] = _LITERATURE + _PROJECT
@@ -577,7 +509,7 @@ def metric_labels(modules: dict) -> dict[str, dict]:
     """Literature labels for the metric paths present in this run.
 
     A label says which task's literature uses a metric, never what the corpus
-    is. Keys are concrete paths, e.g. ``alignment.by_tau.0.40.source_coverage``.
+    is. Keys are concrete paths, e.g. ``readability.m3a_surface.fkgl``.
     """
 
     out: dict[str, dict] = {}
