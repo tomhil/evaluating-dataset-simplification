@@ -69,7 +69,7 @@ at a high level and links each metric to its entry in
 
 ```bash
 pip install -r requirements.txt
-# For the model-based metrics (spaCy parsing and NER, SBERT, SLE, BERTScore):
+# For the model-based metrics (spaCy parsing and NER, SLE, BERTScore):
 python -m spacy download en_core_web_sm
 ```
 
@@ -120,7 +120,6 @@ run:
   sample_size: 1000      # M4, M5 and M8 run on this seeded sample; null = full corpus
   seed: 13
   language: en           # only 'en' is supported; anything else is refused at load
-  embedder: sbert        # M4 sentence alignment; hashing = offline
   model_metrics: true    # SLE, semantic coherence, rhetorical roles
   summac: true           # SummaC (M5); off by default
   alignscore: true       # AlignScore (M5); off by default
