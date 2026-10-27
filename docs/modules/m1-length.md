@@ -4,8 +4,8 @@
 
 ## Overview
 
-How much shorter the target is than the source, and whether the corpus is
-consistent about it. Compression is the first axis that separates summarization
+How much shorter the target is than the source, in tokens, characters and
+sentences. Compression is the first axis that separates summarization
 (heavy deletion) from simplification (content-preserving rewriting), so this is
 usually the first table to read — with the caveat about the mean in
 [the compression ratio's reference](../metrics.md#lengthcompression_ratio--compression-ratio-tokens).
@@ -23,8 +23,6 @@ Each name links to its full entry in [the metric reference](../metrics.md).
 - [**Sentence split ratio**](../metrics.md#lengthsentence_ratio--sentence-split-ratio) (SUM, DS) — target sentences per source sentence; above 1 means splitting.
 - [**Length**](../metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) (DS) — source and target lengths in tokens.
 - [**Mean sentence length**](../metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) (DS) — average sentence length on each side.
-- [**Expansion rate**](../metrics.md#lengthexpansion_rate--expansion-rate) (project-specific) — the share of documents that got longer.
-- [**Compression bimodality**](../metrics.md#lengthcompression_bimodality--compression-bimodality) (project-specific) — a warning light for a mixed corpus.
 
 ## Module-level material
 
@@ -39,7 +37,6 @@ Each name links to its full entry in [the metric reference](../metrics.md).
 | `sentence_ratio` | `tgt_sents / src_sents` |
 | `mean_src_sent_len` | `src_tokens / src_sents` |
 | `mean_tgt_sent_len` | `tgt_tokens / tgt_sents` |
-| `expansion` | boolean, `tgt_tokens > src_tokens` |
 
 Every ratio goes through `_safe_ratio`, which returns `None` on a zero
 denominator rather than raising or emitting `inf`. Nulls are dropped before
@@ -56,17 +53,18 @@ Read the median against published figures.
 ### `compression_histogram`
 
 30-bin histogram of the compression column. Always look at this before quoting
-any mean.
+any mean: two clumps mean the corpus mixes two kinds of document, and no single
+central value summarises it. It is also the run's one plot
+(`plots/compression_histogram.png`).
 
 ### Reading it
 
-- Low compression + low `expansion_rate` + unimodal histogram → consistent
-  content selection.
-- Compression near 1 + `sentence_ratio` > 1 → content-preserving rewriting with
-  splitting.
+- Low compression + unimodal histogram → consistent content selection.
+- Compression near 1 + `sentence_ratio` > 1 + falling mean sentence length →
+  content-preserving rewriting with splitting.
 - Compression > 1 → the corpus adds material; check M5.
-- High bimodality or high `expansion_rate` → suspect a mixture, and stop
-  quoting the mean.
+- A histogram with two clumps, or a mean far from the median → suspect a
+  mixture, and stop quoting the mean.
 
 ---
 
@@ -84,7 +82,5 @@ gives the formulas; this is the one-line version to keep beside a results table.
 | [`sentence_ratio`](../metrics.md#lengthsentence_ratio--sentence-split-ratio) | How many target sentences there are per source sentence. Above 1 means sentences were split apart. | More splitting |
 | [`mean_src_sent_len`](../metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) | Average sentence length in the source, in words. | Longer source sentences |
 | [`mean_tgt_sent_len`](../metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) | Average sentence length in the target. Falling versus the source suggests sentences were simplified or split. | Longer target sentences |
-| [`expansion_rate`](../metrics.md#lengthexpansion_rate--expansion-rate) | The share of documents that got *longer* instead of shorter. | More documents grew |
 | `compression_histogram` | The shape of the compression distribution — one clump or several. | (shape, not a value) |
-| [`compression_bimodality`](../metrics.md#lengthcompression_bimodality--compression-bimodality) | A warning light for "this corpus contains two different kinds of document". Above 0.555 triggers a note. | Less like a single population |
 | `n` | How many pairs this statistic is based on. | More data behind the number |
