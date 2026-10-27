@@ -1,7 +1,7 @@
 """Pipeline orchestration.
 
 Ingests pairs, validates loudly, splits cheap (full-corpus) from expensive
-(sampled) modules, runs them in dependency order (M4 before M5/M6), and writes
+(sampled) modules, runs them in dependency order (M4 before M5), and writes
 the five outputs. ``metrics.json`` is deterministic and free of wall-clock/paths
 so two runs of one config produce byte-identical output (acceptance criterion 3).
 """
@@ -31,7 +31,6 @@ from .modules import (
     m3_readability,
     m4_alignment,
     m5_elaboration,
-    m6_deletion,
     m7_linguistic,
     m8_similarity,
 )
@@ -47,11 +46,10 @@ CHEAP = {
     "readability": m3_readability,
     "linguistic_features": m7_linguistic,
 }
-EXPENSIVE_ORDER = ["alignment", "elaboration", "deletion_profile", "pair_similarity"]
+EXPENSIVE_ORDER = ["alignment", "elaboration", "pair_similarity"]
 EXPENSIVE = {
     "alignment": m4_alignment,
     "elaboration": m5_elaboration,
-    "deletion_profile": m6_deletion,
     "pair_similarity": m8_similarity,
 }
 # M7 after M3: both parse the whole corpus, and M7 reuses M3's helpers, so
@@ -211,7 +209,7 @@ def run(config: Config, output_dir: str | Path | None = None) -> Path:
                 _t0 = time.monotonic()
                 results[name] = CHEAP[name].compute(full_pairs, ctx)
                 progress.stage(f"module {name} done", f"{time.monotonic() - _t0:.1f}s")
-        # M1-M3 are done with the corpus; drop the parses before M4-M6 allocate
+        # M1-M3 are done with the corpus; drop the parses before M4, M5 and M8 allocate
         # embeddings and bootstrap arrays.
         ctx.processor.release()
         for name in EXPENSIVE_ORDER:

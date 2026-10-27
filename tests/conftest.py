@@ -35,7 +35,6 @@ def make_config(**run_overrides) -> "Config":  # noqa: F821
                 "readability",
                 "alignment",
                 "elaboration",
-                "deletion_profile",
             ],
         }
     )

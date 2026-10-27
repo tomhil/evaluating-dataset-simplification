@@ -19,7 +19,6 @@ ALL_MODULES = [
     "readability",
     "alignment",
     "elaboration",
-    "deletion_profile",
     "linguistic_features",
     "pair_similarity",
 ]
@@ -299,11 +298,11 @@ def validate(cfg: Config) -> None:
                 f"unknown run.{name} '{value}'; known: {sorted(known)}"
             )
 
-    # M5 and M6 read M4's alignment out of the shared context and raise if it is
-    # absent -- but only after the full-corpus M1-M3 pass, which is hours on a
+    # M5 reads M4's sentence lists out of the shared context and raises if they
+    # are absent -- but only after the full-corpus M1-M3 pass, which is hours on a
     # long-document corpus. Catch it at load instead.
     requested = set(cfg.modules)
-    needs_alignment = requested & {"elaboration", "deletion_profile"}
+    needs_alignment = requested & {"elaboration"}
     if needs_alignment and "alignment" not in requested:
         raise ConfigError(
             f"modules {sorted(needs_alignment)} read M4's alignment and cannot "

@@ -32,4 +32,4 @@ run:
   summac: false
   # Supply a domain jargon term list to activate M3b/M6 jargon_rate:
   jargon_terms: []
-modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile]
+modules: [length, abstractiveness, readability, alignment, elaboration]

@@ -67,6 +67,15 @@ REMOVED_BOOKKEEPING: tuple[tuple[str, ...], ...] = (
     ("modules", "readability", "params", "controls"),
     ("modules", "readability", "params", "headline"),
     ("modules", "readability", "params", "why"),
+    # Item 11: module M6 (deletion_profile) is removed whole. Its metrics are
+    # the retired deletion_profile.features.*; these are its counts (source
+    # sentences, deleted sentences, documents), the primary tau it echoed from
+    # M4, and its parameters. No other module reads them.
+    ("modules", "deletion_profile", "corpus", "n_source_sentences"),
+    ("modules", "deletion_profile", "corpus", "n_deleted"),
+    ("modules", "deletion_profile", "corpus", "n_documents_total"),
+    ("modules", "deletion_profile", "corpus", "primary_tau"),
+    ("modules", "deletion_profile", "params"),
 )
 
 Path_ = tuple[str, ...]

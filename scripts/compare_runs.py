@@ -133,19 +133,30 @@ def _m6_effect(feature: dict) -> tuple[float | None, bool]:
     return feature.get("cohens_d_deleted_vs_retained"), True
 
 
-# Features the pipeline no longer computes must not be ranked out of an older
+# The features M6 computed in its final version, before the module was removed
+# in the October 2026 metric revision. M6 now exists only in the archived
+# results, so the list lives here (it was m6_deletion.ALL_FEATURES: salience,
+# then difficulty, then redundancy) and is what an archive is ranked on.
+ALL_FEATURES = [
+    "textrank", "centroid_sim", "norm_position",
+    "fkgl", "syllables_per_word", "rare_word_rate", "mean_dependency_distance",
+    "jargon_rate", "sent_len",
+    "max_sim_other",
+]
+
+
+# Features M6 had stopped computing must not be ranked out of an older
 # archive. rouge_recall_in_target was removed for restating M6's own dependent
 # variable, and without this filter it came back as the #1 deletion driver in 5
 # of 6 corpora -- the estimator change was flagged, its removal was not.
 def _current_m6_features() -> set[str]:
-    """The features M6 still computes. Raises rather than degrading quietly.
+    """The features M6's final version computed (``ALL_FEATURES``).
 
-    This previously swallowed an ImportError and returned an empty set, which
-    the caller read as "no filter" -- so a removed feature came back as the #1
-    deletion driver with nothing indicating the filter had not run.
+    This previously imported the list from the M6 module and swallowed an
+    ImportError, returning an empty set, which the caller read as "no filter" --
+    so a removed feature came back as the #1 deletion driver with nothing
+    indicating the filter had not run. It must never be empty.
     """
-    from profiler.modules.m6_deletion import ALL_FEATURES
-
     return set(ALL_FEATURES)
 
 

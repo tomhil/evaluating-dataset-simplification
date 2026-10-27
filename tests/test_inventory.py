@@ -1,7 +1,7 @@
 """Section 7 "Inventory complete": every Section 4 key has a registry entry and
 appears in metrics.json.
 
-The smoke config lists M1-M6 and configs may not change, so this runs the smoke
+The smoke config lists M1-M5 and configs may not change, so this runs the smoke
 corpus with all eight modules enabled in-test (offline stand-in backends).
 """
 

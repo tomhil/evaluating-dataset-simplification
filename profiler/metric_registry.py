@@ -57,7 +57,6 @@ MODULE_IDS = {
     "readability": "M3",
     "alignment": "M4",
     "elaboration": "M5",
-    "deletion_profile": "M6",
     "linguistic_features": "M7",
     "pair_similarity": "M8",
 }
@@ -121,7 +120,7 @@ PAIRED = ("target.median", "delta.median")
 # Modules run on the seeded sample (run.py's EXPENSIVE group). M7 is in the
 # cheap, full-corpus group. M3's m3d_model_based entries set sample_based
 # themselves: that block alone runs on the sample.
-SAMPLE_MODULES = frozenset({"M4", "M5", "M6", "M8"})
+SAMPLE_MODULES = frozenset({"M4", "M5", "M8"})
 
 
 def _caveats(tasks: frozenset[str], faithfulness: bool = False) -> tuple[Paper, ...]:

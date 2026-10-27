@@ -68,7 +68,7 @@ def test_scripts_run_without_pythonpath():
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
-    for script in ("compare_runs.py", "archive_results.py", "validate_deletion_split.py"):
+    for script in ("compare_runs.py", "archive_results.py"):
         r = subprocess.run(
             [sys.executable, str(root / "scripts" / script), "--help"],
             capture_output=True, text=True, cwd=str(root), env={"PATH": "/usr/bin:/bin"},

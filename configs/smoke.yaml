@@ -29,4 +29,4 @@ run:
   # config labels 49 of 50 sentences deleted and every M6 feature falls back to
   # a single usable document.
   m6_tau: 0.5
-modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile]
+modules: [length, abstractiveness, readability, alignment, elaboration]

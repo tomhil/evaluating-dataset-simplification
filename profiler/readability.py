@@ -181,21 +181,6 @@ def is_unknown_word(word: str) -> bool:
     return zipf_frequency(word.lower(), "en") == 0.0
 
 
-def jargon_rate(content_words: list[str], terms: list[str]) -> float | None:
-    """Rate of content tokens matching a configurable domain-term list.
-
-    ``None`` when no term list is supplied (the measure is undefined, not zero).
-    """
-
-    if not terms:
-        return None
-    if not content_words:
-        return None
-    termset = {t.lower() for t in terms}
-    hits = sum(1 for w in content_words if w.lower() in termset)
-    return hits / len(content_words)
-
-
 # --------------------------------------------------------------------------
 # Frequency-rank measures (WordRank, lexical complexity)
 # --------------------------------------------------------------------------

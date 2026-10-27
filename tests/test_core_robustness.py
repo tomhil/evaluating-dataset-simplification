@@ -5,7 +5,6 @@ is most needed, silently drop data, or waste hours before failing.
 """
 
 import json
-import pathlib
 import warnings
 
 import numpy as np
@@ -303,27 +302,3 @@ def test_a_truncated_cache_entry_is_a_miss_not_a_crash(tmp_path):
     # And the entry is repairable by the next write.
     c.put_json("k", {"a": 2})
     assert c.get_json("k") == {"a": 2}
-
-
-def test_deletion_overlay_with_only_one_side_still_writes_a_plot(tmp_path):
-    """Drives the function that had the bug.
-
-    The guard in _deletion_overlays skips only when *both* histograms are
-    missing, so one-sided data reaches _hist_from_dict -- which dereferenced
-    None. The previous test called _hist_from_dict(None) directly and asserted
-    nothing, so it could not see whether the caller survived.
-    """
-    import matplotlib
-
-    matplotlib.use("Agg")
-    from profiler import plots as pl
-    from profiler.stats import histogram
-
-    hist = histogram([0.1, 0.2, 0.3, 0.4], bins=4)
-    written = pl._deletion_overlays(
-        {"overlays": {"feat": {"deleted": hist, "retained": None}}}, tmp_path
-    )
-    assert written, "no plot written for one-sided overlay data"
-    assert all(pathlib.Path(w).exists() for w in written)
-
-

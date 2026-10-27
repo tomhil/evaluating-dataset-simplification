@@ -24,9 +24,6 @@ def generate_all(results: dict, out_dir: str | Path) -> list[str]:
         written += _compression_histogram(results["length"].corpus, out)
     if "alignment" in results:
         written += _alignment_types(results["alignment"].corpus, out)
-    if "deletion_profile" in results:
-        written += _deletion_deciles(results["deletion_profile"].plot_data, out)
-        written += _deletion_overlays(results["deletion_profile"].plot_data, out)
     return written
 
 
@@ -38,8 +35,6 @@ def _save(fig, path: Path) -> list[str]:
 
 
 def _hist_from_dict(ax, hist: dict | None, **kw):
-    # The caller's guard skips only when *both* overlays are missing, so one
-    # side can still arrive as None.
     if not hist:
         return
     counts, edges = hist.get("counts", []), hist.get("edges", [])
@@ -83,43 +78,3 @@ def _alignment_types(corpus: dict, out: Path) -> list[str]:
     ax.legend(fontsize=8)
     return _save(fig, out / "alignment_type_distribution.png")
 
-
-def _deletion_deciles(plot_data: dict, out: Path) -> list[str]:
-    deciles = plot_data.get("deciles", {})
-    written: list[str] = []
-    sub = out / "deletion_deciles"
-    sub.mkdir(parents=True, exist_ok=True)
-    for feat, data in deciles.items():
-        centers = data.get("decile_centers", [])
-        rates = data.get("deletion_rate", [])
-        pts = [(c, r) for c, r in zip(centers, rates) if c is not None and r is not None]
-        if len(pts) < 2:
-            continue
-        fig, ax = plt.subplots(figsize=(6, 3.5))
-        ax.plot([p[0] for p in pts], [p[1] for p in pts], marker="o", color="#4C72B0")
-        ax.set_title(f"M6 deletion rate by decile of {feat}")
-        ax.set_xlabel(feat)
-        ax.set_ylabel("deletion rate")
-        ax.set_ylim(0, 1)
-        written += _save(fig, sub / f"decile_{feat}.png")
-    return written
-
-
-def _deletion_overlays(plot_data: dict, out: Path) -> list[str]:
-    overlays = plot_data.get("overlays", {})
-    written: list[str] = []
-    sub = out / "deletion_overlays"
-    sub.mkdir(parents=True, exist_ok=True)
-    for feat, data in overlays.items():
-        d_hist, r_hist = data.get("deleted"), data.get("retained")
-        if not (d_hist and d_hist.get("counts")) and not (r_hist and r_hist.get("counts")):
-            continue
-        fig, ax = plt.subplots(figsize=(6, 3.5))
-        _hist_from_dict(ax, r_hist, color="#4C72B0", alpha=0.55, label="retained")
-        _hist_from_dict(ax, d_hist, color="#C44E52", alpha=0.55, label="deleted")
-        ax.set_title(f"M6 {feat}: deleted vs retained")
-        ax.set_xlabel(feat)
-        ax.set_ylabel("source sentences")
-        ax.legend(fontsize=8)
-        written += _save(fig, sub / f"overlay_{feat}.png")
-    return written

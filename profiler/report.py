@@ -84,8 +84,6 @@ def build_report(config, results: dict[str, ModuleResult], meta: dict) -> str:
         parts.append(_m4(results["alignment"]))
     if "elaboration" in results:
         parts.append(_m5(results["elaboration"]))
-    if "deletion_profile" in results:
-        parts.append(_m6(results["deletion_profile"]))
     if "linguistic_features" in results:
         parts.append(_m7(results["linguistic_features"]))
     if "pair_similarity" in results:
@@ -310,43 +308,6 @@ def _m8(r: ModuleResult) -> str:
     return "\n".join(out) + _notes(r)
 
 
-def _m6(r: ModuleResult) -> str:
-    c = r.corpus
-    out = [_h(2, "M6 — Deletion profile")]
-    out.append(
-        f"Deleted vs retained source sentences at primary τ={c.get('primary_tau')}. "
-        f"{c.get('n_deleted')} deleted of {c.get('n_source_sentences')} source sentences. "
-        "No fitted model — the effect sizes are the answer.\n"
-    )
-    out.append(
-        "**Read the stratified column.** It compares deleted against retained "
-        "sentences inside each document and averages those effects, so document "
-        "length cannot leak in. The pooled column compares sentences across "
-        "documents: textrank is a per-document stationary distribution and "
-        "correlates with its own document's sentence count at rho = -0.92.\n"
-    )
-    out.append(
-        "`n docs` is how many documents could support the comparison for that "
-        "feature -- a feature null on most sentences of a document cannot be "
-        "compared there. The means and their `n` describe every source sentence "
-        "in raw units, so they do not reconstruct the stratified effect.\n"
-    )
-    out.append(
-        "| feature | deleted mean [CI] | retained mean [CI] | stratified effect "
-        "| n docs | Cohen's d (pooled) |"
-        "\n|---|---|---|---|---|---|"
-    )
-    for feat, d in c.get("features", {}).items():
-        st = d.get("stratified_effect") or {}
-        out.append(
-            f"| {feat} | {_summary(d['deleted'])} | {_summary(d['retained'])} "
-            f"| {_fmt(st.get('effect'))} "
-            f"| {st.get('n_documents', '--')} "
-            f"| {_fmt(d['cohens_d_deleted_vs_retained'])} |"
-        )
-    return "\n".join(out) + _notes(r)
-
-
 def _notes(r: ModuleResult) -> str:
     if not r.notes:
         return "\n"
@@ -377,9 +338,7 @@ def _caveats(config, results: dict[str, ModuleResult], meta: dict) -> str:
 
     # Stand-in backends are not real semantics — flag loudly and first.
     stand_in = []
-    if config.run.embedder != "sbert" and any(
-        m in results for m in ("alignment", "deletion_profile")
-    ):
+    if config.run.embedder != "sbert" and "alignment" in results:
         stand_in.append(f"embedder='{config.run.embedder}' (not SBERT)")
     if config.run.nli_backend != "nli" and "elaboration" in results and not config.run.heuristic_only:
         stand_in.append(f"nli_backend='{config.run.nli_backend}' (not an entailment model)")

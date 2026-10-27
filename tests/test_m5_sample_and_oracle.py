@@ -168,11 +168,13 @@ def test_words_fast_matches_words_on_real_corpus_text():
     assert checked >= 0
 
 
-def test_m6_sentence_features_are_unchanged_by_the_tokenizer_path():
-    """M6's published sent_len and syllables_per_word moved to words_fast.
+def test_sentence_features_are_unchanged_by_the_tokenizer_path():
+    """Per-sentence word counts and syllables per word agree across token paths.
 
-    Nothing pinned them. These two feed the deletion-profile effect sizes, so a
-    divergence between the two token paths would shift a published statistic.
+    Written for M6's sent_len and syllables_per_word (M6 was removed in the
+    October 2026 metric revision). M2, M3's WordRank and M7's sentence lengths
+    still tokenise per sentence with words_fast, so a divergence between the two
+    token paths would still shift a published statistic.
     """
     from profiler import readability as rd
     from profiler.nlp import get_processor

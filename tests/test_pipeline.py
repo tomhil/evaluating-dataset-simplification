@@ -46,7 +46,6 @@ def _smoke_config(tmp_path):
                 "readability",
                 "alignment",
                 "elaboration",
-                "deletion_profile",
             ],
         }
     )

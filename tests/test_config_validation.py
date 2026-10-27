@@ -31,20 +31,21 @@ def _cfg_modules(modules, **run):
     return parse_config(d)
 
 
-# --- M5/M6 depend on M4 -----------------------------------------------------
+# --- M5 depends on M4 -------------------------------------------------------
 
 def test_elaboration_without_alignment_is_rejected_at_load():
     with pytest.raises(ConfigError, match="alignment"):
         _cfg_modules(["length", "elaboration"])
 
 
-def test_deletion_profile_without_alignment_is_rejected_at_load():
-    with pytest.raises(ConfigError, match="alignment"):
-        _cfg_modules(["length", "deletion_profile"])
+def test_deletion_profile_is_no_longer_a_module():
+    """M6 was removed in the October 2026 metric revision."""
+    with pytest.raises(ConfigError, match="deletion_profile"):
+        _cfg_modules(["alignment", "deletion_profile"])
 
 
 def test_alignment_present_is_accepted():
-    cfg = _cfg_modules(["alignment", "elaboration", "deletion_profile"])
+    cfg = _cfg_modules(["alignment", "elaboration"])
     assert "elaboration" in cfg.modules
 
 

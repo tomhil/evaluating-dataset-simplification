@@ -96,5 +96,5 @@ run:
     - phenotype
     - in-vitro
     - in-vivo
-modules: [length, abstractiveness, readability, alignment, elaboration, deletion_profile,
+modules: [length, abstractiveness, readability, alignment, elaboration,
           linguistic_features, pair_similarity]

@@ -127,7 +127,6 @@ def test_pipeline_completes_on_an_awkward_corpus(name, tmp_path):
                     "linguistic_features",
                     "alignment",
                     "elaboration",
-                    "deletion_profile",
                 ],
             }
         )
@@ -140,7 +139,7 @@ def test_pipeline_completes_on_an_awkward_corpus(name, tmp_path):
     # Every requested module must have produced a section, not been skipped.
     assert set(metrics["modules"]) == {
         "length", "abstractiveness", "readability", "linguistic_features",
-        "alignment", "elaboration", "deletion_profile",
+        "alignment", "elaboration",
     }
     assert (out / "report.md").exists()
 
