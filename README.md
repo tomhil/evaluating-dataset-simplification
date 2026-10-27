@@ -12,22 +12,25 @@ interpretation is the researcher's.
 
 Every metric in M1–M5 and M8 comes from a published paper that defines it in its
 text and uses it for generic summarization (SUM), plain-language summarization
-(PLS) or document simplification (DS). M7 is a published feature set kept as it
-is, although its source papers name the features without defining them. Metrics
-with no paper behind them were removed in October 2026;
-[`docs/metrics.md`](docs/metrics.md) lists them.
+(PLS) or document simplification (DS), with two stated exceptions: M3's mean
+Zipf frequency and rare-word rate have no defining paper and are kept because
+the main vocabulary result in [`RESULTS.md`](RESULTS.md) rests on them. M7 is a
+published feature set kept as it is, although its source papers name the
+features without defining them. The other metrics with no paper behind them
+were removed in October 2026; [`docs/metrics.md`](docs/metrics.md) lists them.
 
 | Module | Family | Metrics |
 |---|---|---|
 | **M1** | Length & compression | word and sentence compression, character compression, length, mean sentence length |
 | **M2** | Copying & abstractiveness | coverage, density, novel n-grams, abstractivity, redundancy, topic similarity, Levenshtein similarity, word addition and deletion proportions; for corpora with abstracts, ROUGE(abstract, target) and abstract content-word overlap |
-| **M3** | Readability | FKGL, FRE, CLI, DCRS, ARI, syllables per word, WordRank, lexical complexity, SLE and SLE gain, semantic coherence |
+| **M3** | Readability | FKGL, FRE, CLI, DCRS, ARI, syllables per word, WordRank, lexical complexity, SLE and SLE gain, semantic coherence; mean Zipf frequency and rare-word rate (project-specific) |
 | **M4** | Content preservation | entity precision, recall and F1 (M4's sentence alignment is internal and not reported) |
 | **M5** | Faithfulness | SummaC, AlignScore, QAFactEval (deferred), rhetorical-role distribution |
 | **M7** | Linguistic features | 33 lexical, syntactic, named-entity and Flesch features, unchanged |
 | **M8** | Pair similarity | BLEU and BERTScore against the source; BLANC, SUPERT and SummaQA (deferred) |
 
-That is 35 distinct metrics outside M7, and 80 metric keys in all.
+That is 37 distinct metrics outside M7, two of them project-specific, and 82
+metric keys in all.
 
 Every corpus-level statistic is reported as **mean, median, IQR, and a seeded
 bootstrap 95% CI**, always carrying its own `n`.
@@ -51,7 +54,9 @@ The remaining metrics are used by the task papers but were introduced elsewhere:
 novel n-grams ([Narayan et al. 2018](https://aclanthology.org/D18-1206/)), the
 five readability formulas, BLEU, BERTScore, Levenshtein similarity, length
 counts, and entity recall and F1
-([Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278)).
+([Cripwell et al. 2024](https://arxiv.org/pdf/2404.03278)). Mean Zipf frequency
+and rare-word rate come from no paper; WordRank and lexical complexity are their
+closest published relatives.
 [`docs/metrics.md`](docs/metrics.md) gives, for each metric, the paper's section,
 equation or table, its human-judgment evidence, and every place where the
 implementation differs from the paper.
@@ -144,9 +149,12 @@ verdict-free report.
 
 ## Design notes
 
-- **Every metric has a paper.** Each section of `docs/metrics.md` names the
-  paper and the section, equation or table that defines the metric, and says
-  where the profiler computes it differently.
+- **Every metric has a paper, with two stated exceptions.** Each section of
+  `docs/metrics.md` names the paper and the section, equation or table that
+  defines the metric, and says where the profiler computes it differently. Mean
+  Zipf frequency and rare-word rate are labelled project-specific: the
+  paper-defined frequency measures do not reproduce RESULTS.md's vocabulary
+  result in the legal domain, and these two do.
 - **What the literature validates is change, not simplicity.** Overlap and edit
   measures track human ratings of meaning preservation; readability formulas
   and linguistic features track human simplicity ratings poorly.

@@ -5,11 +5,15 @@ computed, how to read it, and which papers establish it. The module pages in
 [`modules/`](modules/README.md) explain each module at a high level and link
 here for the detail.
 
-**Scope.** This reference keeps only metrics a paper supports. Every metric in
-M1–M5 and M8 has a paper that defines it in its text and uses it for
-summarization, plain-language summarization or simplification; the section
-gives the paper and the section, equation or table. M7's 33 features are kept
-as they are, although no paper defines them in writing (see M7). The 39
+**Scope.** This reference keeps only metrics a paper supports, with two stated
+exceptions. Every other metric in M1–M5 and M8 has a paper that defines it in
+its text and uses it for summarization, plain-language summarization or
+simplification; the section gives the paper and the section, equation or table.
+The exceptions are M3's mean Zipf frequency and rare-word rate: no paper defines
+them, and they are kept because the main vocabulary result in
+[`RESULTS.md`](../RESULTS.md) rests on them and the paper-defined frequency
+measures do not reproduce it (see their sections). M7's 33 features are kept as
+they are, although no paper defines them in writing (see M7). The other 37
 project-specific and unsupported metrics were removed after the October 2026
 citation audit; they are listed at the end of the next section.
 
@@ -18,9 +22,10 @@ that differ only by a parameter, a side or a direction of that definition share
 a section: novel n-grams for n = 1–4, source and target length, entity
 precision, recall and F1, SLE and its gain, SummaC at sentence and document
 level. Keys from different definitions get their own section even within one
-family, so coverage and density, and CLI and DCRS, are separate. That gives 35
-metrics outside M7 (47 keys), plus M7's 33 features in four sections; `metrics.json`
-still reports every key separately. Where the keys of one section carry
+family, so coverage and density, and CLI and DCRS, are separate. That gives 37
+metrics outside M7 (49 keys, two of them project-specific), plus M7's 33
+features in four sections, 82 keys in all; `metrics.json` still reports every
+key separately. Where the keys of one section carry
 different labels or evidence, the section lists them in a table instead of a
 single header line.
 
@@ -73,6 +78,7 @@ read.
 |---|---|
 | Validated against human judgments | SLE (sentence level), SummaC (sentence level and document precision), AlignScore, QAFactEval (precision), BLANC, SUPERT, SummaQA |
 | Used descriptively in the literature | compression, sentence ratio, length, mean sentence length, coverage, density, novel n-grams, abstractivity, redundancy, topic similarity, Levenshtein similarity, addition and deletion proportions, ROUGE(abstract, target), abstract content overlap, FKGL, FRE, CLI, DCRS, ARI, syllables per word, WordRank, lexical complexity, semantic coherence, entity matching, SummaC and QAFactEval recall, rhetorical roles, BLEU and BERTScore against the source |
+| Project-specific, kept by exception | mean Zipf frequency, rare-word rate |
 | Kept without a written definition | all 33 M7 features, defined only in the NLU-BGU code |
 
 Two cautions apply across the table:
@@ -89,7 +95,7 @@ Two cautions apply across the table:
 **Removed.** M1 `expansion_rate`, `compression_bimodality`; M2
 `novel_content_1gram`, `rouge1_recall`, `rouge2_recall`, `rougeL_recall`,
 `content_type_overlap`, `exact_copies`; M3 `smog`, the M3b measures
-`mean_zipf`, `rare_word_rate`, `mtld`, `jargon_rate`,
+`mtld`, `jargon_rate`,
 `mean_dependency_distance`, `mean_parse_depth`, `subordinate_clause_ratio`,
 `passive_rate`, and the M3c decomposition; M4's thirteen `alignment.by_tau.*`
 metrics; M5 `per_scorer.nli`, `per_scorer.lexical_grounding`,
@@ -130,6 +136,8 @@ metrics; M5 `per_scorer.nli`, `per_scorer.lexical_grounding`,
 | [`readability.m3b_length_invariant.syllables_per_word`](#readabilitym3b_length_invariantsyllables_per_word--syllables-per-word) | Syllables per word | DS | introduced | M3 |
 | [`readability.m3b_length_invariant.wordrank`](#readabilitym3b_length_invariantwordrank--wordrank) | WordRank | PLS | introduced | M3 |
 | [`readability.m3b_length_invariant.lexical_complexity`](#readabilitym3b_length_invariantlexical_complexity--lexical-complexity) | Lexical complexity | DS | introduced | M3 |
+| [`readability.m3b_length_invariant.mean_zipf`](#readabilitym3b_length_invariantmean_zipf--mean-zipf-frequency) | Mean Zipf frequency | project-specific | project-specific | M3 |
+| [`readability.m3b_length_invariant.rare_word_rate`](#readabilitym3b_length_invariantrare_word_rate--rare-word-rate) | Rare-word rate | project-specific | project-specific | M3 |
 | [`readability.m3d_model_based.sle_doc`](#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain) | SLE, document level, and its gain | DS | validated | M3 |
 | [`readability.m3d_model_based.sle_gain`](#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain) | SLE, document level, and its gain | DS | validated | M3 |
 | [`readability.m3d_model_based.semantic_coherence`](#readabilitym3d_model_basedsemantic_coherence--semantic-coherence) | Semantic coherence | SUM | introduced | M3 |
@@ -814,6 +822,90 @@ features do not correlate with human simplicity ratings (see WordRank).
 most frequent FastText words). The definition is ASSET's; Martin et al. 2018 has
 no feature of this form, so it is no longer cited here, and EASSE's reference
 "lexical complexity score" is a WordRank-style quantile instead.
+
+### `readability.m3b_length_invariant.mean_zipf` — Mean Zipf frequency
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** How common a text's content words are, on average. Reported
+as `source`, `target`, `delta`.
+
+**How it works.** Each of M3b's content words (with spaCy: nouns, proper nouns,
+verbs, adjectives and adverbs that are not stopwords) is lowercased and given
+its Zipf frequency from `wordfreq`: log10 of the word's frequency per billion
+words, so about 7 is very common and about 1 very rare. The value is the mean
+over the text's content words.
+
+**How to read it.** Higher = commoner vocabulary = easier; a positive delta
+means the target uses commoner words.
+
+**Why it is kept.** No reviewed paper defines this measure. It is kept, with
+rare-word rate, because the main vocabulary result in
+[`RESULTS.md`](../RESULTS.md) is stated with these two: in the archived results
+every plain-language and simplification corpus moves to commoner words (mean Δ
++0.057 to +0.547) and every summarization corpus to rarer ones (−0.008 to
+−0.068), in all four domains. The paper-defined frequency measures reproduce
+that split in bio, encyclopedia and news but not in legal: BillSum
+(summarization) moves the same way as Contracts (plain-language) on lexical
+complexity (mean Δ −0.719 and −3.563) and on WordRank (−0.231 and −0.177),
+while on mean Zipf frequency the two move in opposite directions (−0.061 and
++0.126).
+
+**Literature.** No reviewed paper uses mean Zipf frequency. Word frequency is
+the best single cue to word complexity (Paetzold & Specia 2016, as cited by
+ASSET), and both paper-defined vocabulary measures in this profiler, WordRank
+(Martin et al. 2020) and lexical complexity (ASSET), are frequency-rank
+measures. The Zipf scale itself is van Heuven et al.'s (2014).
+
+**Human-judgment evidence.** Weak and indirect. On D-Wikipedia, word-frequency
+features are the next-best correlates of simplification ratings after word
+count (r 0.30), at |r| ≤ 0.27 (Cardon & Doğruöz 2025). In ASSET the
+frequency-rank features do not correlate with sentence-level simplicity ratings
+(see WordRank). No validation of this exact measure was found.
+
+**Related papers (none defines this measure).** [ASSET 2020](https://arxiv.org/html/2005.00481); [Martin et al. 2020](https://aclanthology.org/2020.lrec-1.577/). **Caveats.** [Cardon & Doğruöz 2025](https://arxiv.org/html/2511.09536v1).
+
+**Implementation notes.** A word `wordfreq` has never seen scores 0, so names,
+codes and typos pull the mean down sharply; with spaCy, proper nouns count as
+content words. Values depend on the `wordfreq` version, so they compare across
+corpora in this pipeline but not with other tools.
+
+### `readability.m3b_length_invariant.rare_word_rate` — Rare-word rate
+
+**Label:** project-specific · **Evidence:** project-specific · **Needs:** source+target · **Module:** [M3 — Readability](modules/m3-readability.md)
+
+**What it does.** The share of a text's content words that fall outside the
+3,000 most frequent English words. Reported as `source`, `target`, `delta`.
+
+**How it works.** M3b's content words (as for mean Zipf frequency), lowercased,
+are checked against `wordfreq`'s 3,000 most frequent English words
+(`top_n_list("en", 3000)`). The value is the share outside that list, from 0 to
+1.
+
+**How to read it.** Lower = commoner vocabulary; a negative delta means the
+target uses fewer rare content words. Read it with mean Zipf frequency: this
+counts how many words are rare, while mean Zipf frequency also weighs how rare
+they are, so a few very rare terms move mean Zipf frequency more than this rate.
+
+**Why it is kept.** As for mean Zipf frequency. In the archived results every
+plain-language and simplification corpus lowers it (mean Δ −0.026 to −0.131)
+and every summarization corpus raises it (+0.006 to +0.024), though XWikis-en's
+95% interval touches zero; BillSum (+0.011) and Contracts (−0.061) move in
+opposite directions.
+
+**Literature.** No reviewed paper uses this measure. APPLS (2024) reports a
+related quantity, the share of the 1,000 commonest words, and finds it rises as
+text is simplified.
+
+**Human-judgment evidence.** As for mean Zipf frequency: weak and indirect, and
+none for this exact measure.
+
+**Related papers (none defines this measure).** [APPLS 2024](https://aclanthology.org/2024.emnlp-main.519/); [ASSET 2020](https://arxiv.org/html/2005.00481). **Caveats.** [Cardon & Doğruöz 2025](https://arxiv.org/html/2511.09536v1).
+
+**Implementation notes.** The 3,000-word cut-off is this project's choice, not
+a published one. A word `wordfreq` has never seen counts as rare. M7's
+`infrequent_words_ratio` is a different quantity: it counts only words
+`wordfreq` has never seen, not words outside the top 3,000.
 
 ### `readability.m3d_model_based.sle_doc`, `readability.m3d_model_based.sle_gain` — SLE, document level, and its gain
 
