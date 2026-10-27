@@ -59,7 +59,7 @@ def build_report(config, results: dict[str, ModuleResult], meta: dict) -> str:
     parts.append(_h(2, "Run parameters"))
     parts.append(
         f"- Full-corpus size: {meta.get('n_full', '—')}\n"
-        f"- Sample size (M4–M6): {meta.get('n_sample', '—')} "
+        f"- Sample size (M3d, M4, M5, M8): {meta.get('n_sample', '—')} "
         f"(config sample_size={config.run.sample_size})\n"
         f"- Seed: {config.run.seed}; bootstrap resamples: {config.run.bootstrap_resamples}\n"
     )
@@ -307,7 +307,7 @@ def _caveats(config, results: dict[str, ModuleResult], meta: dict) -> str:
     n_sample = meta.get("n_sample")
     if isinstance(n_sample, int) and n_sample < 1000:
         items.append(
-            f"**Small sample.** M4–M6 ran on n={n_sample} (<1000); CIs may be too "
+            f"**Small sample.** M3d, M4, M5 and M8 ran on n={n_sample} (<1000); CIs may be too "
             "wide to distinguish this corpus from the reference values above."
         )
     if not config.language.lower().startswith("en"):

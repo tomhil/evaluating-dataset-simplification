@@ -49,8 +49,6 @@ def test_m3_section_has_no_decomposition():
     the M3 section reports M3b and M3a only."""
     cfg = make_config()
     text = build_report(cfg, {"readability": _m3_result()}, {"n_full": 10, "n_sample": 10})
-    # The M3 section only: the interpretation guide (profiler/reference.py)
-    # keeps its M3c row until the report and reference cleanup.
     section = text.split("## M3 — Readability", 1)[1].split("\n## ", 1)[0]
 
     assert "M3c" not in section
@@ -123,3 +121,24 @@ def test_m5_section_reports_kept_scorers_and_no_nli():
     caveats = text.split("## Caveats", 1)[1].split("\n## ", 1)[0]
     for gone in ("upper bound", "annotation", "Heuristic-only", "Stand-in backends"):
         assert gone.lower() not in caveats.lower(), gone
+
+
+def test_interpretation_guide_and_caveats_name_no_removed_metric():
+    """The interpretation guide rows for M6 effect sizes, the M3c share, M4
+    source_coverage and the M5 not-entailed rate, and the run parameters'
+    and small-sample caveat's "M4–M6", went with those metrics in the October
+    2026 metric revision."""
+    cfg = make_config()
+    text = build_report(cfg, {}, {"n_full": 10, "n_sample": 10})
+    guide = text.split("## Interpretation guide", 1)[1].split("\n## ", 1)[0]
+    for gone in ("M6", "M3c", "share_attributable", "source_coverage", "not-entailed", "manual sample"):
+        assert gone not in guide, gone
+    assert "| Deletion volume | M1 compression_ratio |" in guide
+    assert "| Rewriting depth | M2 density, novel n-grams |" in guide
+
+    header = text.split("## Run parameters", 1)[1].split("\n## ", 1)[0]
+    assert "- Sample size (M3d, M4, M5, M8): 10 " in header
+    caveats = text.split("## Caveats", 1)[1].split("\n## ", 1)[0]
+    assert "M3d, M4, M5 and M8 ran on n=10" in caveats
+    for gone in ("M6", "M4–M6", "sbert", "Deletion basis"):
+        assert gone not in text, gone

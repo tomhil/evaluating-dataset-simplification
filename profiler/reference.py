@@ -54,36 +54,15 @@ LITERATURE_ANCHORS = (
 )
 
 # Columns: axis, metric_to_read, high_value, low_value
+# The October 2026 metric revision removed the rows that read M6 effect
+# sizes, the M3c share, M4 source_coverage and the M5 not-entailed rate;
+# those metrics no longer exist.
 INTERPRETATION_GUIDE = [
     (
         "Deletion volume",
         "M1 compression_ratio",
         "high ratio → content-preserving rewriting",
         "low ratio → heavy content selection",
-    ),
-    (
-        "Deletion basis",
-        "M6 effect sizes",
-        "salience features dominate → summarization-like selection",
-        "difficulty/redundancy dominate → simplification-style adequacy",
-    ),
-    (
-        "Readability change",
-        "M3c share_attributable_corpus",
-        "genuine rewriting for an audience",
-        "apparent readability gain is a length artifact",
-    ),
-    (
-        "Content preservation",
-        "M4 source_coverage",
-        "most source content survives",
-        "selective retention",
-    ),
-    (
-        "Content addition",
-        "M5 not-entailed rate + manual sample",
-        "elaboration present",
-        "no added background",
     ),
     (
         "Rewriting depth",

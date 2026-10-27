@@ -27,7 +27,8 @@ def _cfg(**run):
 
 
 def test_histogram_survives_values_equal_only_to_float_rounding():
-    """The crash that killed a run at M6, after M1-M5 had completed.
+    """The crash that killed a run at M6 (removed in the October 2026 metric
+    revision), after M1-M5 had completed.
 
     ``hi <= lo`` does not catch min=0.4999999999999999 / max=0.5000000000000001:
     the range is positive but 2.2e-16 wide, and numpy cannot lay 20
