@@ -62,11 +62,6 @@ def build_report(config, results: dict[str, ModuleResult], meta: dict) -> str:
         f"- Sample size (M4–M6): {meta.get('n_sample', '—')} "
         f"(config sample_size={config.run.sample_size})\n"
         f"- Seed: {config.run.seed}; bootstrap resamples: {config.run.bootstrap_resamples}\n"
-        f"- τ sweep: {config.run.tau_sweep}; primary τ (M5/M6): {config.run.m6_tau}\n"
-        # run() always inserts the "embedder" key, setting it to None when M4
-        # did not run, so a `.get` default never fired and the report read
-        # "Embedder: None". Fall back on the value, not on the key.
-        f"- Embedder: {meta.get('embedder') or (config.run.embed_model if config.run.embedder == 'sbert' else config.run.embedder)}\n"
         f"- NLI backend: {config.run.nli_backend}"
         + (f" ({config.run.nli_model})" if config.run.nli_backend == "nli" else "")
         + "\n"
@@ -188,18 +183,11 @@ def _m3(r: ModuleResult) -> str:
 def _m4(r: ModuleResult) -> str:
     c = r.corpus
     out = [_h(2, "M4 — Alignment and content preservation")]
-    out.append(f"Embedder: {r.params.get('embedder')}. Every number reported at each τ.\n")
-    for tau, d in c.get("by_tau", {}).items():
-        out.append(_h(3, f"τ = {tau}"))
-        out.append(f"- source_coverage: {_summary(d['source_coverage'])}")
-        out.append(f"- target_groundedness: {_summary(d['target_groundedness'])}")
-        out.append(f"- Kendall's τ (reordering): {_summary(d['kendall_tau'])}")
-        dist = d.get("alignment_type_distribution", {})
-        out.append(
-            "- alignment types (share): "
-            + ", ".join(f"{k.replace('n_','')}: {_fmt(v)}" for k, v in dist.items())
-            + "\n"
-        )
+    ep = c.get("entity_preservation", {})
+    for k in ("entity_precision", "entity_recall", "entity_f1"):
+        if k in ep:
+            out.append(f"- {k}: {_summary(ep[k])}")
+    out.append("")
     return "\n".join(out) + _notes(r)
 
 
@@ -338,8 +326,6 @@ def _caveats(config, results: dict[str, ModuleResult], meta: dict) -> str:
 
     # Stand-in backends are not real semantics — flag loudly and first.
     stand_in = []
-    if config.run.embedder != "sbert" and "alignment" in results:
-        stand_in.append(f"embedder='{config.run.embedder}' (not SBERT)")
     if config.run.nli_backend != "nli" and "elaboration" in results and not config.run.heuristic_only:
         stand_in.append(f"nli_backend='{config.run.nli_backend}' (not an entailment model)")
     if stand_in:
@@ -358,12 +344,6 @@ def _caveats(config, results: dict[str, ModuleResult], meta: dict) -> str:
         items.append(
             f"**Small sample.** M4–M6 ran on n={n_sample} (<1000); CIs may be too "
             "wide to distinguish this corpus from the reference values above."
-        )
-    if "alignment" in results:
-        items.append(
-            "**τ sensitivity.** Alignment threshold τ is swept "
-            f"{config.run.tau_sweep}; compare the per-τ numbers before trusting any "
-            "coverage/groundedness figure. Alignment noise propagates into M5 and M6."
         )
     if "elaboration" in results:
         c = results["elaboration"].corpus

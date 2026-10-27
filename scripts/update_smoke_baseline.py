@@ -76,6 +76,15 @@ REMOVED_BOOKKEEPING: tuple[tuple[str, ...], ...] = (
     ("modules", "deletion_profile", "corpus", "n_documents_total"),
     ("modules", "deletion_profile", "corpus", "primary_tau"),
     ("modules", "deletion_profile", "params"),
+    # Item 12: M4's SBERT sentence alignment and tau sweep are removed. Their
+    # metrics are the retired alignment.by_tau.*; these are the echoed sweep,
+    # the embedder name, the matching rule and the primary tau handed to M5/M6.
+    # The kept entity matching reads none of them.
+    ("modules", "alignment", "corpus", "tau_sweep"),
+    ("modules", "alignment", "params", "embedder"),
+    ("modules", "alignment", "params", "matching"),
+    ("modules", "alignment", "params", "primary_tau_for_m5_m6"),
+    ("modules", "alignment", "params", "tau_sweep"),
 )
 
 Path_ = tuple[str, ...]

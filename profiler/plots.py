@@ -22,8 +22,6 @@ def generate_all(results: dict, out_dir: str | Path) -> list[str]:
 
     if "length" in results:
         written += _compression_histogram(results["length"].corpus, out)
-    if "alignment" in results:
-        written += _alignment_types(results["alignment"].corpus, out)
     return written
 
 
@@ -55,26 +53,4 @@ def _compression_histogram(corpus: dict, out: Path) -> list[str]:
     ax.set_xlabel("compression ratio")
     ax.set_ylabel("pairs")
     return _save(fig, out / "compression_histogram.png")
-
-
-def _alignment_types(corpus: dict, out: Path) -> list[str]:
-    by_tau = corpus.get("by_tau")
-    if not by_tau:
-        return []
-    types = ["n_1_1", "n_1_n_split", "n_n_1_merge", "n_1_0_deletion", "n_0_1_insertion"]
-    labels = ["1-1", "1-n split", "n-1 merge", "1-0 del", "0-1 ins"]
-    taus = sorted(by_tau)
-    fig, ax = plt.subplots(figsize=(8, 4.5))
-    width = 0.8 / max(1, len(taus))
-    x = range(len(types))
-    for k, tau in enumerate(taus):
-        dist = by_tau[tau]["alignment_type_distribution"]
-        vals = [dist.get(t, 0.0) for t in types]
-        ax.bar([i + k * width for i in x], vals, width=width, label=f"τ={tau}")
-    ax.set_xticks([i + width * (len(taus) - 1) / 2 for i in x])
-    ax.set_xticklabels(labels)
-    ax.set_title("M4 alignment-type distribution")
-    ax.set_ylabel("proportion of links")
-    ax.legend(fontsize=8)
-    return _save(fig, out / "alignment_type_distribution.png")
 

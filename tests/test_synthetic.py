@@ -73,7 +73,7 @@ def test_pure_truncation_pair(ctx):
 
 def test_pure_paraphrase_pair(ctx):
     """Pure paraphrase: compression ~1, high n-gram novelty, content preserved
-    (source fully aligned)."""
+    (most target words come from source fragments)."""
     source = (
         "The scientists discovered a new species of frog in the rainforest. "
         "The frog has bright blue skin and lives near clear streams."
@@ -92,10 +92,21 @@ def test_pure_paraphrase_pair(ctx):
     # Shared vocabulary: unigram novelty stays well below bigram novelty.
     assert m2["novel_1gram"] < 0.3
 
+    # Content preserved: most target words lie in extractive fragments of the
+    # source (Grusky coverage; measured 0.773). M4's sentence-alignment
+    # coverage, which this test used to read, was removed in the October 2026
+    # metric revision.
+    assert m2["coverage"] > 0.7
+
     m4 = _run(m4_alignment, [p], ctx)
-    # Every source sentence aligns to a target sentence (content preserved).
-    cov = m4.corpus["by_tau"]["0.40"]["source_coverage"]["mean"]
-    assert cov == 1.0
+    # M4 reports only entity matching (null here: SimpleProcessor has no NER)
+    # and hands M5 both sentences of each side.
+    assert set(m4.corpus) == {"n", "entity_preservation"}
+    assert m4.per_pair == [
+        {"id": "id", "entity_precision": None, "entity_recall": None, "entity_f1": None}
+    ]
+    assert len(ctx.shared["alignment"]["src_sents"]["id"]) == 2
+    assert len(ctx.shared["alignment"]["tgt_sents"]["id"]) == 2
 
 
 def test_char_compression_ratio(ctx):

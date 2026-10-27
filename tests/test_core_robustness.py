@@ -71,8 +71,9 @@ def test_histogram_still_bins_normal_data():
 
 
 def test_duplicate_pair_ids_are_rejected():
-    """M4 keys its similarity matrices by pair id, so a collision profiles one
-    document twice and drops the other -- and the parquet collapses to one row.
+    """Modules key per-pair state by pair id (M4's sentence lists for M5, for
+    one), so a collision profiles one document twice and drops the other --
+    and the parquet collapses to one row.
     """
     pairs = [
         Pair(id="dup", source="A cat sat on the mat.", target="Cat sat."),

@@ -230,9 +230,6 @@ def run(config: Config, output_dir: str | Path | None = None) -> Path:
         "timestamp": ts,
         "n_full": len(full_pairs),
         "n_sample": len(sample),
-        "embedder": (
-            results["alignment"].params.get("embedder") if "alignment" in results else None
-        ),
         "corpus_warnings": corpus_warnings,
         "degenerate_pairs": degenerate,
     }
