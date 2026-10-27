@@ -55,20 +55,12 @@
       "evidence": "introduced",
       "module": "M2",
       "papers": [
-        "https://aclanthology.org/W18-7005/",
-        "https://aclanthology.org/D19-3009.pdf",
-        "https://arxiv.org/html/2005.00481"
+        "https://arxiv.org/html/2005.00481",
+        "https://aclanthology.org/D19-3009.pdf"
       ],
       "tasks": [
         "DS"
       ]
-    },
-    "abstractiveness.content_type_overlap": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M2",
-      "papers": [],
-      "tasks": []
     },
     "abstractiveness.coverage": {
       "contested_by": [],
@@ -86,9 +78,8 @@
       "evidence": "introduced",
       "module": "M2",
       "papers": [
-        "https://aclanthology.org/W18-7005/",
-        "https://aclanthology.org/D19-3009.pdf",
-        "https://arxiv.org/html/2005.00481"
+        "https://arxiv.org/html/2005.00481",
+        "https://aclanthology.org/D19-3009.pdf"
       ],
       "tasks": [
         "DS"
@@ -105,25 +96,13 @@
         "SUM"
       ]
     },
-    "abstractiveness.exact_copies": {
-      "contested_by": [],
-      "evidence": "introduced",
-      "module": "M2",
-      "papers": [
-        "https://aclanthology.org/W18-7005/",
-        "https://aclanthology.org/D19-3009.pdf"
-      ],
-      "tasks": [
-        "DS"
-      ]
-    },
     "abstractiveness.levenshtein_similarity": {
       "contested_by": [],
       "evidence": "introduced",
       "module": "M2",
       "papers": [
-        "https://aclanthology.org/W18-7005/",
-        "https://arxiv.org/html/2005.00481"
+        "https://arxiv.org/html/2005.00481",
+        "https://aclanthology.org/D19-3009.pdf"
       ],
       "tasks": [
         "DS"
@@ -181,13 +160,6 @@
         "SUM"
       ]
     },
-    "abstractiveness.novel_content_1gram": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M2",
-      "papers": [],
-      "tasks": []
-    },
     "abstractiveness.redundancy": {
       "contested_by": [],
       "evidence": "introduced",
@@ -198,27 +170,6 @@
       "tasks": [
         "SUM"
       ]
-    },
-    "abstractiveness.rouge1_recall": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M2",
-      "papers": [],
-      "tasks": []
-    },
-    "abstractiveness.rouge2_recall": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M2",
-      "papers": [],
-      "tasks": []
-    },
-    "abstractiveness.rougeL_recall": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M2",
-      "papers": [],
-      "tasks": []
     },
     "abstractiveness.rouge_abstract_target": {
       "contested_by": [],
@@ -242,461 +193,6 @@
         "SUM"
       ]
     },
-    "alignment.by_tau.0.40.alignment_type_counts.n_0_1_insertion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.40.alignment_type_counts.n_1_0_deletion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.40.alignment_type_counts.n_1_1": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.40.alignment_type_counts.n_1_n_split": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.40.alignment_type_counts.n_n_1_merge": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.40.alignment_type_distribution.n_0_1_insertion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.40.alignment_type_distribution.n_1_0_deletion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.40.alignment_type_distribution.n_1_1": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.40.alignment_type_distribution.n_1_n_split": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.40.alignment_type_distribution.n_n_1_merge": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.40.kendall_tau": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.40.source_coverage": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.40.target_groundedness": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.50.alignment_type_counts.n_0_1_insertion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.50.alignment_type_counts.n_1_0_deletion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.50.alignment_type_counts.n_1_1": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.50.alignment_type_counts.n_1_n_split": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.50.alignment_type_counts.n_n_1_merge": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.50.alignment_type_distribution.n_0_1_insertion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.50.alignment_type_distribution.n_1_0_deletion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.50.alignment_type_distribution.n_1_1": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.50.alignment_type_distribution.n_1_n_split": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.50.alignment_type_distribution.n_n_1_merge": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.50.kendall_tau": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.50.source_coverage": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.50.target_groundedness": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.60.alignment_type_counts.n_0_1_insertion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.60.alignment_type_counts.n_1_0_deletion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.60.alignment_type_counts.n_1_1": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.60.alignment_type_counts.n_1_n_split": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.60.alignment_type_counts.n_n_1_merge": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.60.alignment_type_distribution.n_0_1_insertion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.60.alignment_type_distribution.n_1_0_deletion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.60.alignment_type_distribution.n_1_1": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.60.alignment_type_distribution.n_1_n_split": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.60.alignment_type_distribution.n_n_1_merge": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.60.kendall_tau": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.60.source_coverage": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.60.target_groundedness": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.70.alignment_type_counts.n_0_1_insertion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.70.alignment_type_counts.n_1_0_deletion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.70.alignment_type_counts.n_1_1": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.70.alignment_type_counts.n_1_n_split": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.70.alignment_type_counts.n_n_1_merge": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.70.alignment_type_distribution.n_0_1_insertion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.70.alignment_type_distribution.n_1_0_deletion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.70.alignment_type_distribution.n_1_1": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.70.alignment_type_distribution.n_1_n_split": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.70.alignment_type_distribution.n_n_1_merge": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.70.kendall_tau": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.70.source_coverage": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.70.target_groundedness": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.80.alignment_type_counts.n_0_1_insertion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.80.alignment_type_counts.n_1_0_deletion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.80.alignment_type_counts.n_1_1": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.80.alignment_type_counts.n_1_n_split": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.80.alignment_type_counts.n_n_1_merge": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.80.alignment_type_distribution.n_0_1_insertion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.80.alignment_type_distribution.n_1_0_deletion": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.80.alignment_type_distribution.n_1_1": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.80.alignment_type_distribution.n_1_n_split": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.80.alignment_type_distribution.n_n_1_merge": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.80.kendall_tau": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.80.source_coverage": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
-    "alignment.by_tau.0.80.target_groundedness": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M4",
-      "papers": [],
-      "tasks": []
-    },
     "alignment.entity_preservation.entity_f1": {
       "contested_by": [],
       "evidence": "introduced",
@@ -713,10 +209,12 @@
       "evidence": "introduced",
       "module": "M4",
       "papers": [
-        "https://arxiv.org/pdf/2404.03278"
+        "https://arxiv.org/pdf/2404.03278",
+        "https://aclanthology.org/2021.eacl-main.235"
       ],
       "tasks": [
-        "DS"
+        "DS",
+        "SUM"
       ]
     },
     "alignment.entity_preservation.entity_recall": {
@@ -729,83 +227,6 @@
       "tasks": [
         "DS"
       ]
-    },
-    "deletion_profile.features.centroid_sim": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M6",
-      "papers": [],
-      "tasks": []
-    },
-    "deletion_profile.features.fkgl": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M6",
-      "papers": [],
-      "tasks": []
-    },
-    "deletion_profile.features.jargon_rate": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M6",
-      "papers": [],
-      "tasks": []
-    },
-    "deletion_profile.features.max_sim_other": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M6",
-      "papers": [],
-      "tasks": []
-    },
-    "deletion_profile.features.mean_dependency_distance": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M6",
-      "papers": [],
-      "tasks": []
-    },
-    "deletion_profile.features.norm_position": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M6",
-      "papers": [],
-      "tasks": []
-    },
-    "deletion_profile.features.rare_word_rate": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M6",
-      "papers": [],
-      "tasks": []
-    },
-    "deletion_profile.features.sent_len": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M6",
-      "papers": [],
-      "tasks": []
-    },
-    "deletion_profile.features.syllables_per_word": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M6",
-      "papers": [],
-      "tasks": []
-    },
-    "deletion_profile.features.textrank": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M6",
-      "papers": [],
-      "tasks": []
-    },
-    "elaboration.corrected_not_entailed_rate": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M5",
-      "papers": [],
-      "tasks": []
     },
     "elaboration.document_level.qafacteval_precision": {
       "contested_by": [],
@@ -822,7 +243,7 @@
     },
     "elaboration.document_level.qafacteval_recall": {
       "contested_by": [],
-      "evidence": "validated",
+      "evidence": "introduced",
       "module": "M5",
       "papers": [
         "https://arxiv.org/pdf/2404.03278"
@@ -847,7 +268,7 @@
     },
     "elaboration.document_level.summac_recall": {
       "contested_by": [],
-      "evidence": "validated",
+      "evidence": "introduced",
       "module": "M5",
       "papers": [
         "https://arxiv.org/pdf/2404.03278"
@@ -856,34 +277,6 @@
       "tasks": [
         "DS"
       ]
-    },
-    "elaboration.not_entailed_pattern_breakdown": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M5",
-      "papers": [],
-      "tasks": []
-    },
-    "elaboration.not_entailed_rate_by_document": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M5",
-      "papers": [],
-      "tasks": []
-    },
-    "elaboration.pairwise_agreement": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M5",
-      "papers": [],
-      "tasks": []
-    },
-    "elaboration.per_scorer.lexical_grounding": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M5",
-      "papers": [],
-      "tasks": []
     },
     "elaboration.rhetorical_roles": {
       "contested_by": [],
@@ -902,18 +295,12 @@
       "evidence": "introduced",
       "module": "M1",
       "papers": [
-        "https://aclanthology.org/D19-3009.pdf"
+        "https://aclanthology.org/D19-3009.pdf",
+        "https://arxiv.org/html/2005.00481"
       ],
       "tasks": [
         "DS"
       ]
-    },
-    "length.compression_bimodality": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M1",
-      "papers": [],
-      "tasks": []
     },
     "length.compression_ratio": {
       "contested_by": [],
@@ -928,36 +315,42 @@
         "SUM"
       ]
     },
-    "length.expansion_rate": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M1",
-      "papers": [],
-      "tasks": []
-    },
     "length.mean_src_sent_len": {
       "contested_by": [],
-      "evidence": "project-specific",
+      "evidence": "introduced",
       "module": "M1",
-      "papers": [],
-      "tasks": []
+      "papers": [
+        "https://aclanthology.org/W18-7005/",
+        "https://aclanthology.org/2021.gem-1.1"
+      ],
+      "tasks": [
+        "DS"
+      ]
     },
     "length.mean_tgt_sent_len": {
       "contested_by": [],
-      "evidence": "project-specific",
+      "evidence": "introduced",
       "module": "M1",
-      "papers": [],
-      "tasks": []
+      "papers": [
+        "https://aclanthology.org/W18-7005/",
+        "https://aclanthology.org/2021.gem-1.1"
+      ],
+      "tasks": [
+        "DS"
+      ]
     },
     "length.sentence_ratio": {
       "contested_by": [],
       "evidence": "introduced",
       "module": "M1",
       "papers": [
-        "https://aclanthology.org/D19-3009.pdf"
+        "https://aclanthology.org/D19-3009.pdf",
+        "https://aclanthology.org/2020.emnlp-main.649/",
+        "https://arxiv.org/html/2005.00481"
       ],
       "tasks": [
-        "DS"
+        "DS",
+        "SUM"
       ]
     },
     "length.src_tokens": {
@@ -984,10 +377,14 @@
     },
     "readability.m3a_surface.ari": {
       "contested_by": [],
-      "evidence": "project-specific",
+      "evidence": "introduced",
       "module": "M3",
-      "papers": [],
-      "tasks": []
+      "papers": [
+        "https://arxiv.org/pdf/2104.05767"
+      ],
+      "tasks": [
+        "PLS"
+      ]
     },
     "readability.m3a_surface.cli": {
       "contested_by": [],
@@ -1022,7 +419,8 @@
       "papers": [
         "https://aclanthology.org/2022.emnlp-main.724/",
         "https://arxiv.org/pdf/2408.08566",
-        "https://arxiv.org/pdf/2305.06274"
+        "https://arxiv.org/pdf/2305.06274",
+        "https://arxiv.org/pdf/2104.05767"
       ],
       "tasks": [
         "DS",
@@ -1036,93 +434,53 @@
       "evidence": "introduced",
       "module": "M3",
       "papers": [
-        "https://aclanthology.org/2021.cl-4.28"
+        "https://aclanthology.org/W18-7005/"
       ],
       "tasks": [
         "DS"
       ]
-    },
-    "readability.m3a_surface.smog": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3b_length_invariant.jargon_rate": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
     },
     "readability.m3b_length_invariant.lexical_complexity": {
       "contested_by": [],
       "evidence": "introduced",
       "module": "M3",
       "papers": [
-        "https://aclanthology.org/W18-7005/",
         "https://arxiv.org/html/2005.00481"
       ],
       "tasks": [
         "DS"
       ]
     },
-    "readability.m3b_length_invariant.mean_dependency_distance": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3b_length_invariant.mean_parse_depth": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
     "readability.m3b_length_invariant.mean_zipf": {
       "contested_by": [],
       "evidence": "project-specific",
       "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3b_length_invariant.mtld": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3b_length_invariant.passive_rate": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
+      "papers": [
+        "https://arxiv.org/html/2005.00481",
+        "https://aclanthology.org/2020.lrec-1.577/"
+      ],
       "tasks": []
     },
     "readability.m3b_length_invariant.rare_word_rate": {
       "contested_by": [],
       "evidence": "project-specific",
       "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3b_length_invariant.subordinate_clause_ratio": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
+      "papers": [
+        "https://aclanthology.org/2024.emnlp-main.519/",
+        "https://arxiv.org/html/2005.00481"
+      ],
       "tasks": []
     },
     "readability.m3b_length_invariant.syllables_per_word": {
       "contested_by": [],
-      "evidence": "project-specific",
+      "evidence": "introduced",
       "module": "M3",
-      "papers": [],
-      "tasks": []
+      "papers": [
+        "https://aclanthology.org/2021.gem-1.1"
+      ],
+      "tasks": [
+        "DS"
+      ]
     },
     "readability.m3b_length_invariant.wordrank": {
       "contested_by": [],
@@ -1135,76 +493,6 @@
       "tasks": [
         "PLS"
       ]
-    },
-    "readability.m3c_decomposition.ari": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3c_decomposition.cli": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3c_decomposition.dcrs": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3c_decomposition.fkgl": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3c_decomposition.fre": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3c_decomposition.mean_zipf": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3c_decomposition.mtld": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3c_decomposition.rare_word_rate": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3c_decomposition.smog": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
-    },
-    "readability.m3c_decomposition.syllables_per_word": {
-      "contested_by": [],
-      "evidence": "project-specific",
-      "module": "M3",
-      "papers": [],
-      "tasks": []
     },
     "readability.m3d_model_based.semantic_coherence": {
       "contested_by": [],
@@ -1219,9 +507,7 @@
       ]
     },
     "readability.m3d_model_based.sle_doc": {
-      "contested_by": [
-        "https://arxiv.org/html/2403.17640v1"
-      ],
+      "contested_by": [],
       "evidence": "validated",
       "module": "M3",
       "papers": [
@@ -1234,9 +520,7 @@
       ]
     },
     "readability.m3d_model_based.sle_gain": {
-      "contested_by": [
-        "https://arxiv.org/html/2403.17640v1"
-      ],
+      "contested_by": [],
       "evidence": "validated",
       "module": "M3",
       "papers": [
@@ -3081,7 +2365,6 @@
           "n": 10,
           "std": 0.04245631903251841
         },
-        "compression_bimodality": 0.37811903350749937,
         "compression_histogram": {
           "counts": [
             2,
@@ -3164,10 +2447,6 @@
           "median": 0.5609756097560976,
           "n": 10,
           "std": 0.0647774243967661
-        },
-        "expansion_rate": {
-          "n": 10,
-          "rate": 0.0
         },
         "mean_src_sent_len": {
           "ci95": [

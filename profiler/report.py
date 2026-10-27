@@ -149,13 +149,6 @@ def _m1(r: ModuleResult) -> str:
     out.append("| metric | mean (median) [95% CI] n |\n|---|---|")
     for name, s in rows:
         out.append(f"| {name} | {_summary(s)} |")
-    exp = c.get("expansion_rate", {})
-    out.append(
-        f"\nExpansion rate (tgt>src tokens): {_fmt(exp.get('rate'))} "
-        f"(n={exp.get('n')}). Compression dip statistic: "
-        f"{_fmt(c.get('compression_bimodality'))} (Sarle's bimodality "
-        f"coefficient; >0.555 suggests more than one mode).\n"
-    )
     return "\n".join(out) + _notes(r)
 
 

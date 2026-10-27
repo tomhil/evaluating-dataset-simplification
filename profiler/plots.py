@@ -63,9 +63,6 @@ def _compression_histogram(corpus: dict, out: Path) -> list[str]:
     ax.set_title("M1 compression ratio (tgt/src tokens)")
     ax.set_xlabel("compression ratio")
     ax.set_ylabel("pairs")
-    bc = corpus.get("compression_bimodality")
-    if bc is not None:
-        ax.annotate(f"BC={bc:.3f}", xy=(0.98, 0.95), xycoords="axes fraction", ha="right", va="top")
     return _save(fig, out / "compression_histogram.png")
 
 

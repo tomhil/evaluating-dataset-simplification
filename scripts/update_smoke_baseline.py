@@ -161,6 +161,9 @@ def run_smoke(workdir: Path) -> Path:
     from profiler.run import run
 
     raw = yaml.safe_load(SMOKE_CONFIG.read_text())
+    # Keep the label the CLI run from the repo root records (the relative
+    # path), so the written baseline holds no machine-specific absolute path.
+    raw["run"].setdefault("dataset_label", raw["dataset"]["path"])
     raw["dataset"]["path"] = str(_ROOT / raw["dataset"]["path"])
     raw["run"]["cache_dir"] = str(workdir / "cache")
     out = run(parse_config(raw), output_dir=workdir / "run")

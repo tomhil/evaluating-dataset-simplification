@@ -38,7 +38,7 @@ def test_identity_pair(ctx):
     m1 = _run(m1_length, [p], ctx).per_pair[0]
     assert m1["compression_ratio"] == 1.0
     assert m1["sentence_ratio"] == 1.0
-    assert m1["expansion"] is False
+    assert "expansion" not in m1
 
     m2 = _run(m2_abstractiveness, [p], ctx).per_pair[0]
     assert m2["novel_1gram"] == 0.0

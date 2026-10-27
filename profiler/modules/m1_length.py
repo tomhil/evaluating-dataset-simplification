@@ -4,17 +4,12 @@ from __future__ import annotations
 
 from typing import Sequence
 
-from ..stats import Summary, bimodality_coefficient, histogram, summarize
+from ..stats import Summary, histogram, summarize
 from .. import progress
 from ..types import Pair
 from .base import Context, ModuleResult
 
 NAME = "length"
-
-# Sarle's coefficient takes this value for a uniform distribution; above it a
-# sample is more consistent with two or more modes than with one.
-BIMODALITY_FLAG = 0.555
-
 
 def _safe_ratio(num: float, den: float) -> float | None:
     if den == 0:
@@ -46,7 +41,6 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             "sentence_ratio": _safe_ratio(n_tgt_sents, n_src_sents),
             "mean_src_sent_len": _safe_ratio(src_tokens, n_src_sents),
             "mean_tgt_sent_len": _safe_ratio(tgt_tokens, n_tgt_sents),
-            "expansion": tgt_tokens > src_tokens,
             # EASSE: target characters / source characters, on the raw strings.
             "char_compression_ratio": _safe_ratio(len(p.target), len(p.source)),
         }
@@ -64,27 +58,11 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         "sentence_ratio": summarize(col("sentence_ratio"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
         "mean_src_sent_len": summarize(col("mean_src_sent_len"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
         "mean_tgt_sent_len": summarize(col("mean_tgt_sent_len"), seed=ctx.seed, resamples=ctx.resamples).to_dict(),
-        "expansion_rate": _rate([r["expansion"] for r in per_pair]),
         "compression_histogram": histogram(compression),
-        "compression_bimodality": bimodality_coefficient(compression),
         "char_compression_ratio": summarize(
             col("char_compression_ratio"), seed=ctx.seed, resamples=ctx.resamples
         ).to_dict(),
     }
 
-    notes = []
-    bc = corpus["compression_bimodality"]
-    if bc is not None and bc > BIMODALITY_FLAG:
-        notes.append(
-            f"Compression distribution is more consistent with two or more "
-            f"modes than one (Sarle's bimodality coefficient={bc:.3f}, above "
-            f"{BIMODALITY_FLAG}); a mixed corpus has no representative mean "
-            f"compression. Inspect the compression histogram."
-        )
+    return ModuleResult(name=NAME, per_pair=per_pair, corpus=corpus, notes=[])
 
-    return ModuleResult(name=NAME, per_pair=per_pair, corpus=corpus, notes=notes)
-
-
-def _rate(flags: list[bool]) -> dict:
-    n = len(flags)
-    return {"n": n, "rate": (sum(1 for f in flags if f) / n) if n else None}

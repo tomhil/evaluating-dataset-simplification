@@ -204,36 +204,3 @@ def point_biserial(values: Sequence[float], indicator: Sequence[int]) -> float |
     if np.std(v) == 0:
         return None
     return float(np.corrcoef(v, ind)[0, 1])
-
-
-def bimodality_coefficient(values: Sequence[float]) -> float | None:
-    """Sarle's bimodality coefficient: ``(skew^2 + 1) / kurtosis``.
-
-    Above roughly 0.555 -- the value a uniform distribution takes -- a sample is
-    more consistent with two or more modes than with one. A bimodal corpus is a
-    mixed corpus whose mean describes no document in it, so this is a prompt to
-    read the histogram, not a hypothesis test.
-
-    Replaces a ``dip_statistic`` that returned ``max|ECDF - uniform CDF|``, and
-    so measured distance from *uniform* rather than bimodality. It was
-    anti-correlated with its own claim: a unimodal lognormal scored 0.724
-    against 0.208 for a genuine two-mode mixture, and a unimodal normal 0.275.
-    Compression ratios are ratios of positive quantities and therefore
-    lognormal-ish, which is why every corpus profiled tripped the old flag.
-
-    ``None`` when the sample is too small or has no variance.
-    """
-
-    arr = _clean(values)
-    n = int(arr.size)
-    if n < 4 or float(np.std(arr)) == 0.0:
-        return None
-    from scipy.stats import kurtosis, skew
-
-    g = float(skew(arr, bias=False))
-    k = float(kurtosis(arr, fisher=True, bias=False))
-    # Sarle's denominator, carrying the small-sample correction.
-    denom = k + 3.0 * ((n - 1) ** 2) / ((n - 2) * (n - 3))
-    if denom <= 0:
-        return None
-    return (g * g + 1.0) / denom
