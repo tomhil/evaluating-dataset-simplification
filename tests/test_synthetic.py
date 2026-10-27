@@ -44,7 +44,7 @@ def test_identity_pair(ctx):
     assert m2["novel_1gram"] == 0.0
     assert m2["novel_2gram"] == 0.0
     assert m2["coverage"] == 1.0
-    assert m2["content_type_overlap"] == 1.0
+    assert m2["levenshtein_similarity"] == 1.0
 
     # M5 needs M4's alignment in shared state.
     _run(m4_alignment, [p], ctx)
@@ -89,8 +89,8 @@ def test_pure_paraphrase_pair(ctx):
     m2 = _run(m2_abstractiveness, [p], ctx).per_pair[0]
     # Reordering/rewording drives high n-gram novelty despite shared vocabulary.
     assert m2["novel_2gram"] > 0.5
-    # Content words are preserved.
-    assert m2["content_type_overlap"] > 0.8
+    # Shared vocabulary: unigram novelty stays well below bigram novelty.
+    assert m2["novel_1gram"] < 0.3
 
     m4 = _run(m4_alignment, [p], ctx)
     # Every source sentence aligns to a target sentence (content preserved).
@@ -121,10 +121,9 @@ def test_abstractivity(ctx):
 
 
 def test_edit_features(ctx):
-    """EASSE edit features: identity is Levenshtein 1, all copied, nothing added or deleted."""
+    """EASSE edit features: identity is Levenshtein 1, nothing added or deleted."""
     same = _run(m2_abstractiveness, [Pair("id", IDENTITY_TEXT, IDENTITY_TEXT)], ctx).per_pair[0]
     assert same["levenshtein_similarity"] == 1.0
-    assert same["exact_copies"] == 1.0
     assert same["additions_proportion"] == 0.0
     assert same["deletions_proportion"] == 0.0
 
@@ -134,7 +133,6 @@ def test_edit_features(ctx):
         "The frog has bright blue skin and lives near streams."
     )
     trunc = _run(m2_abstractiveness, [Pair("id", SOURCE_LONG, target)], ctx).per_pair[0]
-    assert trunc["exact_copies"] == 2 / 5
     assert trunc["additions_proportion"] == 0.0
     assert 0.0 < trunc["deletions_proportion"] < 1.0
 

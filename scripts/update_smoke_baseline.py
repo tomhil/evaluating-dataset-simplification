@@ -55,7 +55,11 @@ EXCLUDED_TOP = frozenset({"config", "metric_labels"})
 # ("modules", "abstractiveness", "params", "rouge_orientation"); it covers every
 # leaf below it. "*" matches any one segment. Items add entries as they remove
 # code (PRD section 7, Phase C); an entry never covers a kept metric.
-REMOVED_BOOKKEEPING: tuple[tuple[str, ...], ...] = ()
+REMOVED_BOOKKEEPING: tuple[tuple[str, ...], ...] = (
+    # Item 9: the orientation of the removed source ROUGE recalls
+    # (rouge1/2/L_recall); no kept metric is a recall against the source.
+    ("modules", "abstractiveness", "params", "rouge_orientation"),
+)
 
 Path_ = tuple[str, ...]
 

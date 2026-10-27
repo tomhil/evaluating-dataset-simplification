@@ -157,15 +157,11 @@ def _m2(r: ModuleResult) -> str:
     out = [_h(2, "M2 — Abstractiveness")]
     names = [
         "novel_1gram", "novel_2gram", "novel_3gram", "novel_4gram",
-        "novel_content_1gram", "coverage", "density",
-        "rouge1_recall", "rouge2_recall", "rougeL_recall", "content_type_overlap",
+        "coverage", "density",
     ]
     out.append("| metric | mean (median) [95% CI] n |\n|---|---|")
     for name in names:
         out.append(f"| {name} | {_summary(c.get(name))} |")
-    out.append(
-        f"\nROUGE orientation: {r.params.get('rouge_orientation', '')}\n"
-    )
     return "\n".join(out) + _notes(r)
 
 

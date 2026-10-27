@@ -707,21 +707,6 @@
           "n": 10,
           "std": 0.07544936571119018
         },
-        "content_type_overlap": {
-          "ci95": [
-            0.5616466137062112,
-            0.6434259588450766
-          ],
-          "extra": {},
-          "iqr": [
-            0.5496794871794872,
-            0.6617647058823529
-          ],
-          "mean": 0.6054259517572211,
-          "median": 0.6153846153846154,
-          "n": 10,
-          "std": 0.07364214723777286
-        },
         "coverage": {
           "ci95": [
             0.5177617882117882,
@@ -834,21 +819,6 @@
             3.739130434782609
           ],
           "n": 10
-        },
-        "exact_copies": {
-          "ci95": [
-            0.0,
-            0.0
-          ],
-          "extra": {},
-          "iqr": [
-            0.0,
-            0.0
-          ],
-          "mean": 0.0,
-          "median": 0.0,
-          "n": 10,
-          "std": 0.0
         },
         "levenshtein_similarity": {
           "ci95": [
@@ -994,21 +964,6 @@
           "n": 10,
           "std": 0.09368323848707696
         },
-        "novel_content_1gram": {
-          "ci95": [
-            0.34900574045407634,
-            0.4238597997397339
-          ],
-          "extra": {},
-          "iqr": [
-            0.3382352941176471,
-            0.4255952380952381
-          ],
-          "mean": 0.3856134255321562,
-          "median": 0.3708791208791209,
-          "n": 10,
-          "std": 0.06881889684335674
-        },
         "redundancy": {
           "ci95": [
             0.010588235294117647,
@@ -1023,51 +978,6 @@
           "median": 0.016666666666666666,
           "n": 10,
           "std": 0.04208597457502222
-        },
-        "rouge1_recall": {
-          "ci95": [
-            0.28787435511982484,
-            0.3298797509269268
-          ],
-          "extra": {},
-          "iqr": [
-            0.29166666666666663,
-            0.33564301552106435
-          ],
-          "mean": 0.30955348974455166,
-          "median": 0.3134502923976608,
-          "n": 10,
-          "std": 0.041434877492725335
-        },
-        "rouge2_recall": {
-          "ci95": [
-            0.06962657132495477,
-            0.12908039691576279
-          ],
-          "extra": {},
-          "iqr": [
-            0.08353808353808354,
-            0.1393733850129199
-          ],
-          "mean": 0.10419935032527203,
-          "median": 0.09639953542392567,
-          "n": 10,
-          "std": 0.05626488978819533
-        },
-        "rougeL_recall": {
-          "ci95": [
-            0.23216054671562628,
-            0.2875871935111345
-          ],
-          "extra": {},
-          "iqr": [
-            0.2232142857142857,
-            0.3064671814671815
-          ],
-          "mean": 0.2637362505695491,
-          "median": 0.27807017543859647,
-          "n": 10,
-          "std": 0.05228458214777808
         },
         "rouge_abstract_target": {
           "rouge1_f1": {
@@ -1140,7 +1050,6 @@
         "abstractivity_p": 1,
         "edit_features": "EASSE/tseval features on whole documents: Levenshtein = rapidfuzz fuzz.ratio(source, target)/100 on raw text; additions/deletions over case-preserving profiler word tokens; exact copies = share of source sentences found verbatim among target sentences",
         "lcs_cell_cap": 4000000,
-        "rouge_orientation": "recall(candidate=target, reference=source) = overlap / |source n-grams|",
         "topic_similarity": {
           "distance": "Jensen-Shannon distance, base 2",
           "fit_on": "sources",

@@ -1,8 +1,9 @@
 """M2 - Abstractiveness.
 
 Measures how much the target reuses source material versus genuinely rewriting
-it: novel n-gram rates, Grusky et al. (2018) extractive coverage/density, ROUGE
-recall, and content-word type overlap.
+it: novel n-gram rates, Grusky et al. (2018) extractive coverage/density,
+abstractivity, redundancy, topic similarity, EASSE edit features, and the
+abstract-based ROUGE and content-word overlap.
 """
 
 from __future__ import annotations
@@ -34,11 +35,16 @@ LDA_SEED = 13
 
 ROUGE_F1_KEYS = ("rouge1_f1", "rouge2_f1", "rougeL_f1")
 
-# Literature metrics added after the original eleven, summarised after them.
-NEW_METRIC_COLS = [
+# Per-pair columns summarised into corpus, in output order.
+METRIC_COLS = [
+    "novel_1gram",
+    "novel_2gram",
+    "novel_3gram",
+    "novel_4gram",
+    "coverage",
+    "density",
     "abstractivity_p1",
     "levenshtein_similarity",
-    "exact_copies",
     "additions_proportion",
     "deletions_proportion",
     "redundancy",
@@ -132,29 +138,6 @@ def _lcs_length(a: list[str], b: list[str]) -> int | None:
     return prev[lb]
 
 
-def _rouge_recall(tgt_tokens: list[str], src_tokens: list[str]) -> dict:
-    """ROUGE recall of the target against the source (candidate=target,
-    reference=source): overlap / |source n-grams|. Documented orientation in
-    params. Naturally covaries with compression - read descriptively."""
-
-    def n_recall(n: int) -> float | None:
-        ref = _ngrams(src_tokens, n)
-        if not ref:
-            return None
-        ref_counts: dict[tuple, int] = {}
-        for g in ref:
-            ref_counts[g] = ref_counts.get(g, 0) + 1
-        cand_counts: dict[tuple, int] = {}
-        for g in _ngrams(tgt_tokens, n):
-            cand_counts[g] = cand_counts.get(g, 0) + 1
-        overlap = sum(min(c, ref_counts.get(g, 0)) for g, c in cand_counts.items())
-        return overlap / len(ref)
-
-    lcs = _lcs_length(tgt_tokens, src_tokens)
-    rouge_l = (lcs / len(src_tokens)) if (lcs is not None and src_tokens) else None
-    return {"rouge1": n_recall(1), "rouge2": n_recall(2), "rougeL": rouge_l}
-
-
 def _redundancy(tgt_sent_tokens: list[list[str]]) -> float | None:
     """Bommasani & Cardie (2020): mean ROUGE-L F1 over all pairs of distinct
     summary sentences. F1 of an LCS is 2*lcs / (|a| + |b|). None below two
@@ -211,7 +194,7 @@ def _topic_similarity(sources: list[str], targets: list[str]) -> tuple[list[floa
 
 def _rouge_f1(cand: list[str], ref: list[str]) -> dict:
     """ROUGE-1/2/L F1 with clipped n-gram counts; F1 = 2*overlap / (|cand|+|ref|).
-    ROUGE-L is None above the LCS size cap, like rougeL_recall."""
+    ROUGE-L is None above the LCS size cap."""
 
     def n_f1(n: int) -> float | None:
         c, r = _ngrams(cand, n), _ngrams(ref, n)
@@ -295,24 +278,18 @@ def _abstract_content_overlap(
     return rows, None
 
 
-def _edit_features(source: str, target: str, src_sents: list[str], tgt_sents: list[str],
-                   src_words: list[str], tgt_words: list[str]) -> dict:
+def _edit_features(source: str, target: str, src_words: list[str], tgt_words: list[str]) -> dict:
     """EASSE / tseval edit features, applied to whole documents.
 
     Levenshtein similarity is the InDel ratio that ``Levenshtein.ratio`` computes
     in the reference code. Additions and deletions follow tseval: the multiset
-    difference of words over the longer of the two word counts. Exact copies is
-    the document-level analogue of tseval's ``is_exact_match``: the share of
-    source sentences reproduced verbatim as a target sentence.
+    difference of words over the longer of the two word counts.
     """
 
     longest = max(len(src_words), len(tgt_words))
     src_counts, tgt_counts = Counter(src_words), Counter(tgt_words)
-    src_set = [s.strip() for s in src_sents if s.strip()]
-    tgt_set = {s.strip() for s in tgt_sents if s.strip()}
     return {
         "levenshtein_similarity": fuzz.ratio(source, target) / 100.0,
-        "exact_copies": (sum(1 for s in src_set if s in tgt_set) / len(src_set)) if src_set else None,
         "additions_proportion": (sum((tgt_counts - src_counts).values()) / longest) if longest else None,
         "deletions_proportion": (sum((src_counts - tgt_counts).values()) / longest) if longest else None,
     }
@@ -329,9 +306,6 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         src_tokens = [t.lower() for t in src_words]
         tgt_tokens = [t.lower() for t in tgt_words]
         target_word_sets.append(set(tgt_tokens))
-        src_content = {t.lower() for t in proc.content_words(p.source)}
-        tgt_content = [t.lower() for t in proc.content_words(p.target)]
-        tgt_content_types = set(tgt_content)
 
         # One greedy fragment match feeds coverage, density and abstractivity.
         fragments = _fragments(src_tokens, tgt_tokens) if tgt_tokens else []
@@ -347,18 +321,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         tgt_sents = proc.sentences(p.target)
         # words_fast per sentence: the same tokens as words(), no parse each.
         redundancy = _redundancy([[t.lower() for t in proc.words_fast(sent)] for sent in tgt_sents])
-        edits = _edit_features(
-            p.source, p.target, proc.sentences(p.source), tgt_sents, src_words, tgt_words,
-        )
-        rouge = _rouge_recall(tgt_tokens, src_tokens)
-
-        content_novel = None
-        if tgt_content:
-            content_novel = sum(1 for w in tgt_content if w not in src_content) / len(tgt_content)
-
-        type_overlap = None
-        if tgt_content_types:
-            type_overlap = len(tgt_content_types & src_content) / len(tgt_content_types)
+        edits = _edit_features(p.source, p.target, src_words, tgt_words)
 
         per_pair.append(
             {
@@ -367,13 +330,8 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
                 "novel_2gram": _novel_rate(tgt_tokens, src_tokens, 2),
                 "novel_3gram": _novel_rate(tgt_tokens, src_tokens, 3),
                 "novel_4gram": _novel_rate(tgt_tokens, src_tokens, 4),
-                "novel_content_1gram": content_novel,
                 "coverage": coverage,
                 "density": density,
-                "rouge1_recall": rouge["rouge1"],
-                "rouge2_recall": rouge["rouge2"],
-                "rougeL_recall": rouge["rougeL"],
-                "content_type_overlap": type_overlap,
                 "abstractivity_p1": _abstractivity_from(fragments, len(tgt_tokens), ABSTRACTIVITY_P),
                 **edits,
                 "redundancy": redundancy,
@@ -392,23 +350,8 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     def col(name: str) -> list[float]:
         return [r[name] for r in per_pair if r[name] is not None]
 
-    metric_cols = [
-        "novel_1gram",
-        "novel_2gram",
-        "novel_3gram",
-        "novel_4gram",
-        "novel_content_1gram",
-        "coverage",
-        "density",
-        "rouge1_recall",
-        "rouge2_recall",
-        "rougeL_recall",
-        "content_type_overlap",
-    ]
     corpus = {"n": len(per_pair)}
-    for name in metric_cols:
-        corpus[name] = summarize(col(name), seed=ctx.seed, resamples=ctx.resamples).to_dict()
-    for name in NEW_METRIC_COLS:
+    for name in METRIC_COLS:
         corpus[name] = summarize(col(name), seed=ctx.seed, resamples=ctx.resamples).to_dict()
     # Goldsack et al. (2022) ABSTRACT baseline: the abstract scored as a summary
     # against the lay summary. Needs meta["abstract"]; null without it.
@@ -429,13 +372,6 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     corpus["novel_1gram_histogram"] = histogram(col("novel_1gram"))
 
     notes = []
-    n_lcs_skipped = sum(1 for r in per_pair if r["rougeL_recall"] is None)
-    if n_lcs_skipped:
-        notes.append(
-            f"ROUGE-L skipped for {n_lcs_skipped} pair(s) exceeding the LCS size "
-            f"cap; those contribute no rougeL_recall value."
-        )
-
     if topic_note:
         notes.append(topic_note)
     if overlap_note:
@@ -448,7 +384,6 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
         )
 
     params = {
-        "rouge_orientation": "recall(candidate=target, reference=source) = overlap / |source n-grams|",
         "lcs_cell_cap": _LCS_CELL_CAP,
         "abstractivity_p": ABSTRACTIVITY_P,
         "topic_similarity": {
@@ -464,6 +399,9 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             "(spaCy POS, standing in for ScispaCy) found among the target's words; "
             "buckets by how many abstracts in this corpus contain the word"
         ),
+        # The "exact copies" clause describes a metric removed in the October
+        # 2026 revision. This string is a kept leaf under the smoke-baseline
+        # guard (scripts/update_smoke_baseline.py), so it is left as is.
         "edit_features": (
             "EASSE/tseval features on whole documents: Levenshtein = rapidfuzz "
             "fuzz.ratio(source, target)/100 on raw text; additions/deletions over "
