@@ -50,7 +50,9 @@ def test_label_entry_shape(metrics):
 
 def test_existing_top_level_blocks_unchanged(metrics):
     for key in BASELINE:
-        if key in ("config", "modules"):  # modules: see test_no_regression
+        # modules: see test_no_regression. metric_labels follows the registry,
+        # which the 2026-10 revision edits; the tests above check it.
+        if key in ("config", "modules", "metric_labels"):
             continue
         assert metrics[key] == BASELINE[key], key
 
