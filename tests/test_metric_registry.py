@@ -14,7 +14,9 @@ from profiler.metric_registry import (
     BOOKKEEPING,
     MODULE_IDS,
     REGISTRY,
+    RETIRED_KEYS,
     TASKS,
+    is_retired,
     label_for,
     metric_paths,
 )
@@ -156,3 +158,85 @@ def test_heuristic_only_run_is_fully_labelled(tmp_path):
     assert "heuristic_grounding" in metrics["modules"]["elaboration"]["corpus"]["per_scorer"]
     missing = _unlabelled(metrics["modules"])
     assert not missing, missing
+
+
+# --- Retired keys (PRD "Remove Unsupported Metrics", Sections 4 and 5.1) ---
+
+_TYPES = ("n_1_1", "n_1_n_split", "n_n_1_merge", "n_1_0_deletion", "n_0_1_insertion")
+SECTION_4_REMOVED = {
+    "length.expansion_rate",
+    "length.compression_bimodality",
+    "abstractiveness.novel_content_1gram",
+    "abstractiveness.rouge1_recall",
+    "abstractiveness.rouge2_recall",
+    "abstractiveness.rougeL_recall",
+    "abstractiveness.content_type_overlap",
+    "abstractiveness.exact_copies",
+    "readability.m3a_surface.smog",
+    "readability.m3b_length_invariant.mtld",
+    "readability.m3b_length_invariant.jargon_rate",
+    "readability.m3b_length_invariant.mean_dependency_distance",
+    "readability.m3b_length_invariant.mean_parse_depth",
+    "readability.m3b_length_invariant.subordinate_clause_ratio",
+    "readability.m3b_length_invariant.passive_rate",
+    "readability.m3c_decomposition.*",
+    "alignment.by_tau.*.kendall_tau",
+    "alignment.by_tau.*.source_coverage",
+    "alignment.by_tau.*.target_groundedness",
+    *(f"alignment.by_tau.*.alignment_type_counts.{t}" for t in _TYPES),
+    *(f"alignment.by_tau.*.alignment_type_distribution.{t}" for t in _TYPES),
+    "elaboration.per_scorer.nli",
+    "elaboration.per_scorer.lexical_grounding",
+    "elaboration.per_scorer.heuristic_grounding",
+    "elaboration.not_entailed_rate_by_document",
+    "elaboration.pairwise_agreement",
+    "elaboration.not_entailed_pattern_breakdown",
+    "elaboration.corrected_not_entailed_rate",
+    "deletion_profile.features.*",
+}
+
+
+def test_retired_keys_are_the_37_removed():
+    assert len(RETIRED_KEYS) == len(set(RETIRED_KEYS)) == 37
+    assert set(RETIRED_KEYS) == SECTION_4_REMOVED
+
+
+def test_retired_keys_disjoint_from_metrics_doc_index():
+    import re
+
+    index = re.findall(r"^\| \[`([^`]+)`\]", (REPO / "docs" / "metrics.md").read_text(), re.M)
+    assert len(index) == 82
+    assert not [k for k in index if is_retired(k)]
+    # Kept by decision (PRD Section 5.5), not retired.
+    assert "readability.m3b_length_invariant.mean_zipf" in index
+    assert "readability.m3b_length_invariant.rare_word_rate" in index
+
+
+def test_is_retired_matches_wildcards_and_nothing_kept():
+    assert is_retired("alignment.by_tau.0.40.source_coverage")
+    assert is_retired("alignment.by_tau.0.40.alignment_type_counts.n_1_1")
+    assert is_retired("readability.m3c_decomposition.fkgl")
+    assert is_retired("deletion_profile.features.position")
+    assert not is_retired("alignment.entity_preservation.entity_f1")
+    assert not is_retired("readability.m3a_surface.fkgl")
+    assert not is_retired("readability.m3b_length_invariant.mean_zipf")
+
+
+@pytest.mark.parametrize("path", RESULTS, ids=lambda p: p.stem)
+def test_archived_results_classified_without_retired_entries(path, monkeypatch):
+    # Simulate the registry once the retired entries are gone: every archived
+    # path must then be bookkeeping, labelled by a kept entry, or retired.
+    import profiler.metric_registry as mr
+
+    retired = set(RETIRED_KEYS)
+    full = mr.label_for
+
+    def kept_label_for(p):
+        m = full(p)
+        return None if m is None or m.key in retired else m
+
+    monkeypatch.setattr(mr, "label_for", kept_label_for)
+    paths = mr.metric_paths(json.loads(path.read_text())["modules"])
+    missing = [p for p in paths if kept_label_for(p) is None]
+    assert not missing, "archived keys neither kept nor retired:\n" + "\n".join(missing)
+    assert not [p for p in paths if is_retired(p)]

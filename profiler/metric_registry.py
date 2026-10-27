@@ -460,8 +460,63 @@ BOOKKEEPING: frozenset[str] = frozenset(
     }
 )
 
+# Keys removed by the October 2026 metric revision (docs/metrics.md, "Removed").
+# The archived results/*.json still carry them; metric_paths skips them once
+# they have no registry entry, so the archives stay fully classified. Same
+# key syntax as the registry: `*` matches one dict key.
+RETIRED_KEYS: tuple[str, ...] = (
+    # M1
+    "length.expansion_rate",
+    "length.compression_bimodality",
+    # M2
+    "abstractiveness.novel_content_1gram",
+    "abstractiveness.rouge1_recall",
+    "abstractiveness.rouge2_recall",
+    "abstractiveness.rougeL_recall",
+    "abstractiveness.content_type_overlap",
+    "abstractiveness.exact_copies",
+    # M3
+    "readability.m3a_surface.smog",
+    "readability.m3b_length_invariant.mtld",
+    "readability.m3b_length_invariant.jargon_rate",
+    "readability.m3b_length_invariant.mean_dependency_distance",
+    "readability.m3b_length_invariant.mean_parse_depth",
+    "readability.m3b_length_invariant.subordinate_clause_ratio",
+    "readability.m3b_length_invariant.passive_rate",
+    "readability.m3c_decomposition.*",
+    # M4
+    "alignment.by_tau.*.kendall_tau",
+    "alignment.by_tau.*.source_coverage",
+    "alignment.by_tau.*.target_groundedness",
+    *(f"alignment.by_tau.*.alignment_type_counts.{t}" for t in _ALIGNMENT_TYPES),
+    *(f"alignment.by_tau.*.alignment_type_distribution.{t}" for t in _ALIGNMENT_TYPES),
+    # M5
+    "elaboration.per_scorer.nli",
+    "elaboration.per_scorer.lexical_grounding",
+    "elaboration.per_scorer.heuristic_grounding",
+    "elaboration.not_entailed_rate_by_document",
+    "elaboration.pairwise_agreement",
+    "elaboration.not_entailed_pattern_breakdown",
+    "elaboration.corrected_not_entailed_rate",
+    # M6
+    "deletion_profile.features.*",
+)
+
 # `*` matches one dict key: an identifier, or a decimal such as the τ key 0.40.
 _SEGMENT = r"[^.]+(?:\.[0-9]+)?"
+
+
+def _key_regex(key: str) -> re.Pattern[str]:
+    return re.compile("^" + _SEGMENT.join(re.escape(part) for part in key.split("*")) + "$")
+
+
+_RETIRED_PATTERNS: tuple[re.Pattern[str], ...] = tuple(_key_regex(k) for k in RETIRED_KEYS)
+
+
+def is_retired(path: str) -> bool:
+    """Whether a metric path falls under a key in RETIRED_KEYS."""
+
+    return any(rx.match(path) for rx in _RETIRED_PATTERNS)
 
 
 @lru_cache(maxsize=None)
@@ -469,8 +524,7 @@ def _patterns() -> tuple[tuple[re.Pattern[str], MetricLabel], ...]:
     out = []
     for m in REGISTRY:
         if "*" in m.key:
-            rx = _SEGMENT.join(re.escape(part) for part in m.key.split("*"))
-            out.append((re.compile(f"^{rx}$"), m))
+            out.append((_key_regex(m.key), m))
     return tuple(out)
 
 
@@ -493,8 +547,9 @@ def metric_paths(modules: dict) -> list[str]:
     """Every metric path in a ``metrics.json`` ``modules`` block, in walk order.
 
     A node whose key is in BOOKKEEPING is skipped. A node with a registry entry
-    is yielded and not descended into. An unlabelled leaf is yielded too, so a
-    coverage check can report it.
+    is yielded and not descended into. A node with no registry entry whose path
+    matches RETIRED_KEYS is skipped (archived runs carry removed metrics). An
+    unlabelled leaf is yielded too, so a coverage check can report it.
     """
 
     out: list[str] = []
@@ -506,6 +561,8 @@ def metric_paths(modules: dict) -> list[str]:
             sub = f"{path}.{key}"
             if label_for(sub) is not None:
                 out.append(sub)
+            elif is_retired(sub):
+                continue
             elif isinstance(value, dict):
                 walk(value, sub)
             else:
