@@ -92,9 +92,8 @@ def _bleu(sources: list[str], targets: list[str]) -> float | None:
 def _bertscore(pairs: Sequence[Pair], ctx: Context) -> tuple[list[float], int]:
     """Per-pair BERTScore F1, cached. Returns (scores, n_cache_misses).
 
-    Cached on ``(model, source, target)`` the way ``CachedEmbedder`` caches
-    embeddings, so a rerun of the same config costs nothing and the run stays
-    deterministic. Scores are stored as one-element arrays because
+    Cached on ``(model, source, target)`` in the content-hash cache, so a
+    rerun of the same config costs nothing and the run stays deterministic. Scores are stored as one-element arrays because
     ``Cache.put_array`` is the array path; ``put_json`` would work equally well
     but this keeps one serialisation format for model output.
     """
@@ -115,7 +114,7 @@ def _bertscore(pairs: Sequence[Pair], ctx: Context) -> tuple[list[float], int]:
     if todo:
         from bert_score import score as bert_score_fn
 
-        from ..embeddings import resolve_device
+        from ..devices import resolve_device
 
         device = resolve_device(ctx.config.run.device)
         cands = [pairs[i].target for i in todo]

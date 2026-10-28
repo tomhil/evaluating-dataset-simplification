@@ -74,7 +74,7 @@ def load_sle(device: str = "auto"):  # pragma: no cover - model download
     import torch
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-    from .embeddings import resolve_device
+    from .devices import resolve_device
 
     dev = resolve_device(device)
     model = AutoModelForSequenceClassification.from_pretrained(SLE_CHECKPOINT, num_labels=1).to(dev).eval()
@@ -107,7 +107,7 @@ def load_nsp(device: str = "auto"):  # pragma: no cover - model download
     import torch
     from transformers import BertForNextSentencePrediction, BertTokenizer
 
-    from .embeddings import resolve_device
+    from .devices import resolve_device
 
     dev = resolve_device(device)
     tok = BertTokenizer.from_pretrained(NSP_MODEL)
@@ -201,7 +201,7 @@ def load_rct(device: str = "auto"):  # pragma: no cover - model download
     import torch
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-    from .embeddings import resolve_device
+    from .devices import resolve_device
 
     dev = resolve_device(device)
     tok = AutoTokenizer.from_pretrained(RCT_TOKENIZER)
