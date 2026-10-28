@@ -9,11 +9,11 @@
 # GRANULARITY WARNING. These pairs are single sentences (1.1 sentences,
 # ~24 words per source), not documents. Every other corpus in this repo is a
 # paragraph or a full document. Its M1 compression is therefore NOT comparable
-# with D-Wikipedia's or Cochrane's full-document figures, and M4/M6 -- which
-# reason over a document's sentences -- have almost nothing to work with: at
-# 1.1 source sentences per pair there is no deleted/retained contrast for M6 to
-# measure. Read this corpus for M1-M3, M7 and M8; treat its M4-M6 output as
-# structurally thin rather than as a finding. Flagged in docs/DATASETS.md.
+# with D-Wikipedia's or Cochrane's full-document figures, and M5 -- which
+# reasons over a document's sentences -- has almost nothing to work with at 1.1
+# source sentences per pair. Read this corpus for M1-M3, M7 and M8; treat its
+# M4 and M5 output as structurally thin rather than as a finding. Flagged in
+# docs/DATASETS.md.
 #
 # Source-independent of Cochrane, which is what lets it serve as the DS cell in
 # a domain whose PLS cell Cochrane already fills.
@@ -28,10 +28,10 @@ dataset:
 run:
   dataset_label: med_easi
   # 250 to match the anchors. Cost is a non-issue here -- at ~1.1 x 1.1
-  # sentences per pair the whole M4-M6 sample is a few hundred model passes --
-  # but the sample size is held at the shared value so the CIs are read the
-  # same way as every other corpus's.
-  sample_size: 250         # M4-M6 sample; M1-M3 run on all 1000
+  # sentences per pair the whole sample is a few hundred model passes -- but
+  # the sample size is held at the shared value so the CIs are read the same
+  # way as every other corpus's.
+  sample_size: 250         # M3d/M4/M5/M8 sample; the rest run on all 1000
   seed: 13
   language: en
   cache_dir: .cache/

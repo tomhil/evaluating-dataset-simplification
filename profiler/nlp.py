@@ -189,7 +189,7 @@ class SpacyProcessor:
         # holds spaCy Doc objects, which are large on long sources, and
         # get_processor is itself module-level lru_cached -- so without
         # release() the working set survives for the process lifetime, through
-        # M4-M6, long after M3 has finished with it. run.py calls release()
+        # M4, M5 and M8, long after M3 has finished with it. run.py calls release()
         # between modules.
         # One cache, shared by the document-level accessors and
         # analyze_sentence. Splitting it into separate document and sentence
@@ -254,7 +254,7 @@ class SpacyProcessor:
         """Named entities as ``(lowercased text, start token index)``.
 
         NER is excluded from the main pipeline (``disable=["ner"]``) because
-        M1-M6 never needed it and it is not free. M7's seven entity features do,
+        M1-M5 never needed it and it is not free. M7's seven entity features do,
         so a second pipeline with *only* the NER components is built on first
         use and cached. M4's entity matching uses it too. Results are cached per
         text and survive release(), so M4 reuses what M7 already extracted, and

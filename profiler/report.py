@@ -98,7 +98,7 @@ def build_report(config, results: dict[str, ModuleResult], meta: dict) -> str:
 
 
 def _metric_labels(results: dict[str, ModuleResult]) -> str:
-    """One row per registry entry present in this run; τ-parametrised keys once."""
+    """One row per registry entry present in this run."""
 
     out = [_h(2, "Metric labels")]
     out.append(

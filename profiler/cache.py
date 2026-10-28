@@ -1,4 +1,4 @@
-"""Content-hash cache for expensive model outputs (embeddings, NLI scores).
+"""Content-hash cache for expensive model outputs (e.g. BERTScore, SummaC).
 
 Keys are derived from the model identity plus the hash of the input text, so
 reruns of the same config reuse prior computation and are cheap. Values are

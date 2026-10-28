@@ -7,17 +7,17 @@ Two of its five metrics apply to a monolingual English corpus:
 
 The other three are cross-lingual or French-only and are structurally undefined
 here rather than merely unmeasured, so they are recorded in ``params`` with the
-reason -- the treatment XSum's impossible 1:n split rate already gets:
+reason:
 
 * ``camembert_score_french`` - French monolingual similarity.
 * ``simplification_mbert_fr`` / ``simplification_mbert_en`` - cross-lingual
   mBERT F1 between a French and an English side.
 
-**Neither computed metric is independent evidence.** M2 already reports ROUGE
-recall and Grusky coverage/density over the same pair, M4 reports SBERT
-target groundedness, and M5 reports entailment. BLEU is an n-gram overlap in the
-same family as ROUGE, and BERTScore is an embedding similarity in the same family
-as M4's cosine alignment. They are here because the feature set was adopted
+**Neither computed metric is independent evidence.** M2 already reports Grusky
+coverage/density and novel n-grams over the same pair, and M5 reports SummaC and
+AlignScore. BLEU is an n-gram overlap in the same family as ROUGE and M2's copy
+measures, and BERTScore, like M5's scorers, compares the pair's meaning with a
+model. They are here because the feature set was adopted
 whole; they should not be read as a second opinion on meaning preservation.
 
 Two deviations from the paper:

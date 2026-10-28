@@ -192,6 +192,10 @@ def row_values(m: dict) -> dict:
     AL = _dig(mod, "alignment", "corpus", default={})
     E = _dig(mod, "elaboration", "corpus", default={})
     D = _dig(mod, "deletion_profile", "corpus", default={})
+    # Keys removed in the October 2026 metric revision (expansion_rate,
+    # rouge1_recall, m3c_decomposition, jargon_rate, mean_parse_depth, by_tau,
+    # the not-entailed rate, deletion_profile) exist only in the archived runs.
+    # They are read with .get/_dig, so a run made since yields None ("--").
 
     tau = _dig(AL, "by_tau", "0.50", default={})
     # M6's features come from whatever primary tau that run used. The threshold
@@ -208,7 +212,11 @@ def row_values(m: dict) -> dict:
     return {
         "n_full": m.get("n_full"), "n_sample": m.get("n_sample"),
         # Provenance, so build() can report the backends instead of asserting
-        # them. Absent in older archives, which read as unknown.
+        # them. A run made after the October 2026 metric revision records
+        # config.stand_ins; the archived runs predate it and record
+        # config.embedder and config.nli_backend instead. A run with neither
+        # reads as unknown.
+        "stand_ins": _dig(m, "config", "stand_ins"),
         "embedder": _dig(m, "config", "embedder"),
         "nli_backend": _dig(m, "config", "nli_backend"),
         "compression": L.get("compression_ratio"),
@@ -241,7 +249,20 @@ def row_values(m: dict) -> dict:
     }
 
 
+# What the archived runs (before the October 2026 metric revision) recorded
+# for real models; a run made since records config.stand_ins instead.
 REAL_BACKENDS = {"embedder": "sbert", "nli_backend": "nli"}
+
+
+def _row_backend(r: dict) -> str:
+    """'real', 'archived-real', 'stand-in' or 'unknown' for one run."""
+    if r.get("stand_ins") is not None:
+        return "stand-in" if r["stand_ins"] else "real"
+    if r.get("embedder") is None and r.get("nli_backend") is None:
+        return "unknown"
+    if all(r.get(k) == v for k, v in REAL_BACKENDS.items()):
+        return "archived-real"
+    return "stand-in"
 
 
 def _backend_note(rows: dict[str, dict]) -> str:
@@ -250,19 +271,26 @@ def _backend_note(rows: dict[str, dict]) -> str:
     Names a stand-in loudly rather than letting it pass as a real model.
     """
 
-    embedders = {r.get("embedder") for r in rows.values()}
-    nlis = {r.get("nli_backend") for r in rows.values()}
-    if embedders == {"sbert"} and nlis == {"nli"}:
+    kinds = {_row_backend(r) for r in rows.values()}
+    if kinds == {"archived-real"}:
         return "real backends (SBERT + deberta-large-mnli)"
+    if kinds == {"real"}:
+        return "real model backends (run.stand_ins off)"
+    if kinds == {"real", "archived-real"}:
+        return (
+            "real model backends (run.stand_ins off; archived runs: "
+            "SBERT + deberta-large-mnli)"
+        )
     parts = [
-        f"embedder={_setstr(embedders)}",
-        f"nli_backend={_setstr(nlis)}",
+        f"stand_ins={_setstr({r.get('stand_ins') for r in rows.values()})}",
+        f"embedder={_setstr({r.get('embedder') for r in rows.values()})}",
+        f"nli_backend={_setstr({r.get('nli_backend') for r in rows.values()})}",
     ]
     return (
-        "MIXED OR STAND-IN BACKENDS (" + ", ".join(parts) + ") -- the hashing "
-        "embedder and lexical scorer are deterministic stand-ins whose cosine "
-        "scale is unrelated to SBERT's, so every tau-derived figure below "
-        "(M4 coverage, M6 deletion split) is not comparable to a real run"
+        "MIXED OR STAND-IN BACKENDS (" + ", ".join(parts) + ") -- the offline "
+        "stand-ins (run.stand_ins, or an archived run's hashing embedder and "
+        "lexical scorer) are deterministic placeholders, not the published "
+        "models, so their figures below are not comparable to a real run"
     )
 
 
@@ -273,16 +301,19 @@ def build(rows: dict[str, dict]) -> str:
     out: list[str] = ["# Cross-corpus task profile\n"]
     n_full = {r["n_full"] for r in rows.values()}
     n_smp = {r["n_sample"] for r in rows.values()}
-    # The backend claim used to be hardcoded. Every metrics.json records
-    # config.embedder and config.nli_backend, and a run of configs/smoke.yaml
-    # (embedder: hashing, nli_backend: lexical) would have published stand-in
-    # numbers labelled as SBERT + DeBERTa -- and smoke.yaml itself warns that
-    # the hashing embedder's cosine scale is unrelated to SBERT's, which makes
-    # every tau-derived row meaningless. Report what was actually used.
+    # The backend claim used to be hardcoded, and a run of configs/smoke.yaml
+    # (offline stand-ins) would have published stand-in numbers labelled as
+    # real models. Every metrics.json records what was used: config.stand_ins
+    # since the October 2026 metric revision, config.embedder and
+    # config.nli_backend in the archived runs. Report what was actually used.
     out.append(
         f"{len(labels)} corpora profiled with {_backend_note(rows)}. "
-        f"M1-M3 over n={_setstr(n_full)} pairs; M4-M6 over a seeded n={_setstr(n_smp)} sample. "
-        "Every number is copied from that corpus's `metrics.json`.\n"
+        f"M1-M3 over n={_setstr(n_full)} pairs; the sampled modules (M4-M6 in "
+        f"the archived runs; M3d, M4, M5 and M8 since the October 2026 metric "
+        f"revision) over a seeded n={_setstr(n_smp)} sample. "
+        "Every number is copied from that corpus's `metrics.json`. Rows and "
+        "tables marked *archived only* read metrics that revision removed, so "
+        "a run made since shows `--` there.\n"
     )
 
     def table(title: str, spec: list[tuple[str, callable]]) -> None:
@@ -294,7 +325,7 @@ def build(rows: dict[str, dict]) -> str:
 
     table("Scale of the run", [
         ("n (M1-M3)", lambda r: r["n_full"]),
-        ("n (M4-M6 sample)", lambda r: r["n_sample"]),
+        ("n (sample)", lambda r: r["n_sample"]),
     ])
     # Compression: the published figures are corpus-level ratios, which the
     # median tracks and the mean of per-pair ratios does not (short sources make
@@ -308,25 +339,25 @@ def build(rows: dict[str, dict]) -> str:
         ("compression (mean, skewed)", lambda r: _f(r["compression"])),
         ("compression mean 95% CI", lambda r: _ci(r["compression"])),
         ("sentence ratio (mean)", lambda r: _f(r["sentence_ratio"])),
-        ("expansion rate", lambda r: _f({"mean": r["expansion_rate"]})),
+        ("expansion rate (archived only)", lambda r: _f({"mean": r["expansion_rate"]})),
     ])
     table("M2 - Abstractiveness", [
         ("novel unigrams (mean)", lambda r: _f(r["novel_1gram"])),
         ("Grusky coverage", lambda r: _f(r["coverage"])),
         ("Grusky density", lambda r: _f(r["density"], nd=2)),
-        ("ROUGE-1 recall", lambda r: _f(r["rouge1_recall"])),
+        ("ROUGE-1 recall (archived only)", lambda r: _f(r["rouge1_recall"])),
     ])
     table("M3 - Readability", [
         ("FKGL source", lambda r: _f(r["fkgl_src"], nd=2)),
         ("FKGL target", lambda r: _f(r["fkgl_tgt"], nd=2)),
         ("FKGL delta (mean)", lambda r: _f(r["fkgl_delta"], nd=2)),
         ("FKGL delta 95% CI", lambda r: _ci(r["fkgl_delta"], nd=2)),
-        ("share attributable (median)", lambda r: _f(r["share_attr"], "median")),
+        ("share attributable (median; archived only)", lambda r: _f(r["share_attr"], "median")),
         ("mean Zipf delta", lambda r: _f(r["zipf_delta"])),
-        ("jargon rate delta", lambda r: _f(r["jargon_delta"], nd=4)),
-        ("parse depth delta", lambda r: _f(r["depth_delta"])),
+        ("jargon rate delta (archived only)", lambda r: _f(r["jargon_delta"], nd=4)),
+        ("parse depth delta (archived only)", lambda r: _f(r["depth_delta"])),
     ])
-    table("M4 - Alignment & preservation (tau=0.5)", [
+    table("M4 - Alignment & preservation (tau=0.5; archived only)", [
         ("source coverage", lambda r: _f(r["src_coverage"])),
         ("target groundedness", lambda r: _f(r["groundedness"])),
         ("1:1 alignments", lambda r: _f({"mean": r["align_dist"].get("n_1_1")})),
@@ -334,7 +365,7 @@ def build(rows: dict[str, dict]) -> str:
         ("1:0 deletions", lambda r: _f({"mean": r["align_dist"].get("n_1_0_deletion")})),
         ("0:1 insertions", lambda r: _f({"mean": r["align_dist"].get("n_0_1_insertion")})),
     ])
-    table("M5 - Content addition", [
+    table("M5 - Content addition (archived only)", [
         ("not-entailed rate", lambda r: _f({"mean": _dig(r["not_entailed"], "rate")})),
     ])
     m6_rows: list[tuple[str, callable]] = [
@@ -349,7 +380,7 @@ def build(rows: dict[str, dict]) -> str:
             if len(r["top_deletion"]) > i else "--"))
         for i in range(3)
     ]
-    table("M6 - Deletion basis (top |Cohen's d|, within-document)", m6_rows)
+    table("M6 - Deletion basis (top |Cohen's d|, within-document; archived only)", m6_rows)
 
     out.append("\n## Published reference (profiler/reference.py)\n")
     out.append("| Corpus | Labelled | Published compression |")

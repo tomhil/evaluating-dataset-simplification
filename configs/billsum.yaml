@@ -18,10 +18,10 @@ dataset:
   target_field: target
 run:
   dataset_label: billsum
-  # 250, matching the anchors. Cheap: 45.4 source x 4.9 target sentences is
-  # ~256 M5 passes per document, ~64,000 at 250 documents, against eLife's
-  # ~665,000 at 60.
-  sample_size: 250         # M4-M6 sample; M1-M3 run on all 1000
+  # 250, matching the anchors. Cheap: 45.4 source x 4.9 target sentences was
+  # ~256 passes per document of M5's NLI scorer (removed in the October 2026
+  # metric revision), ~64,000 at 250 documents, against eLife's ~665,000 at 60.
+  sample_size: 250         # M3d/M4/M5/M8 sample; the rest run on all 1000
   seed: 13
   language: en
   cache_dir: .cache/

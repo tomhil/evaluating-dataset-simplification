@@ -7,7 +7,7 @@ Analyzing the Dimensions of Cross-lingual Text Simplification* (NLU-BGU). Its
 English set.
 
 **This module is self-contained on purpose.** Five of its fields carry a value
-that another module already publishes and four more are near-neighbours of
+that another module already publishes and two more are near-neighbours of
 existing measures with different definitions. They are all computed and
 published here anyway, so the feature set can be read against the paper without
 tracing fields across modules, and so M7 can be enabled or dropped as a unit.
@@ -16,15 +16,10 @@ computation is identical, the existing helper is called.
 
     same value as an existing field     syllables_ratio, sentences_number,
                                         flesch_reading_ease, flesch_kincaid_grade
-    related, genuinely different        lexical_richness (TTR, length-sensitive,
-                                        against M3b mtld), infrequent_words_ratio
-                                        (unknown-word against M3b's top-3000
-                                        frequency), syntactic_tree_depth (max
-                                        against M3b's mean parse depth),
-                                        passive_voice_ratio (verb-token
-                                        denominator against M3b's sentence one),
+    related, genuinely different        infrequent_words_ratio (unknown-word
+                                        against M3b's top-3000 frequency),
                                         words_per_sentence (see below)
-    new to the pipeline                 the other 24, including all 7 entity
+    new to the pipeline                 the other 27, including all 7 entity
                                         features
 
 Six deliberate deviations from the paper's implementation, each avoiding a
@@ -56,7 +51,7 @@ despite the paper's docstring saying so. Dividing a per-sentence mean by the
 document's token count leaves approximately ``1 / n_sentences``. M1's
 ``mean_src_sent_len`` is the uncorrupted quantity if that is what you want.
 
-Sign convention: every ``delta`` here is ``target - source``, matching M1-M6.
+Sign convention: every ``delta`` here is ``target - source``, matching M1-M5.
 The paper computes ``complex - simplified``, so **every delta in this module has
 the opposite sign to the corresponding column in the paper's tables.**
 """
@@ -315,8 +310,8 @@ def _parser_features(
         # different cache key and forces a second full parse of the document.
         "noun_phrases_ratio": _safe(len(proc.noun_chunks(text)), n_clean),
         "words_before_main_verb": _mean([float(v) for v in verb_offsets]),
-        # Max over the document, not a mean over sentences -- the distinction
-        # from M3b's mean_parse_depth.
+        # Max over the document, not a mean over sentences (the mean parse
+        # depth M3b reported before the October 2026 metric revision).
         "syntactic_tree_depth": float(max(depths)) if depths else 0.0,
         "past_tense_verbs": _safe(n_past, n_verbs),
         "past_perfect_verbs": _safe(n_past_perfect, n_past),

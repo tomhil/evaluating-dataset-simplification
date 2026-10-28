@@ -125,7 +125,7 @@ dataset:
   source_field: reference
   target_field: summary
 run:
-  sample_size: 1000      # M4, M5 and M8 run on this seeded sample; null = full corpus
+  sample_size: 1000      # M3d, M4, M5 and M8 run on this seeded sample; null = full corpus
   seed: 13
   language: en           # only 'en' is supported; anything else is refused at load
   model_metrics: true    # SLE, semantic coherence, rhetorical roles
@@ -135,8 +135,9 @@ modules: [length, abstractiveness, readability, alignment, elaboration,
           linguistic_features, pair_similarity]
 ```
 
-Cheap modules (M1–M3, M7) run on the full corpus; expensive modules (M4, M5,
-M8) run on the sample. Every reported number carries its own `n`.
+Cheap modules (M1–M3, M7) run on the full corpus, except M3's model-based M3d
+block (SLE, semantic coherence); M3d and the expensive modules (M4, M5, M8) run
+on the sample. Every reported number carries its own `n`.
 
 ## Tests
 

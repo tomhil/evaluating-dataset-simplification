@@ -3,8 +3,8 @@
 #
 # Corpus materialised by `python scripts/fetch_all.py` (seeded draw, n=1000).
 # All five anchor configs share identical run parameters so their profiles are
-# directly comparable: M1-M3 over all 1000 pairs, M4-M6 over a seeded 250-pair
-# sample, real SBERT + NLI backends.
+# directly comparable: M1-M3 and M7 over all 1000 pairs, M3d, M4, M5 and M8
+# over a seeded 250-pair sample, real model backends (no run.stand_ins).
 dataset:
   adapter: jsonl
   path: data/dwikipedia/test_1000.jsonl
@@ -12,7 +12,7 @@ dataset:
   target_field: target
 run:
   dataset_label: dwikipedia
-  sample_size: 250         # M4-M6 sample; M1-M3 run on all 1000
+  sample_size: 250         # M3d/M4/M5/M8 sample; the rest run on all 1000
   seed: 13
   language: en
   cache_dir: .cache/

@@ -1,18 +1,18 @@
 # SWiPE-gold (Laban et al. 2023) -- the 3,861-pair manually annotated subset.
 #
-# Profiled to validate M4 and M5 against human labels, NOT as a corpus profile.
+# Profiled to validate M4 and M5 against human labels, NOT as a corpus profile
+# (see below: the metrics that validation used were removed in October 2026).
 # Annotators selected pairs carrying interesting edits, so this subset measures
 # 0.504 compression against the full corpus's 0.676; it is a biased sample and
 # its corpus-level figures do not describe SWiPE. Use configs/swipe.yaml for
 # that.
 #
-# Each pair carries human edit annotations whose categories are ground truth for
-# what M4 and M5 estimate:
-#   syntactic_sentence_splitting   -> M4 n_1_n_split
-#   semantic_deletion              -> M4 n_1_0_deletion
-#   semantic_elaboration_*         -> M5 not-entailed rate
-#   discourse_reordering           -> M4 kendall_tau
-# scripts/validate_against_swipe.py performs the join and the correlation.
+# Each pair carries human edit annotations whose categories were ground truth
+# for M4's sentence-alignment counts (splits, deletions, reordering) and M5's
+# not-entailed rate. The October 2026 metric revision removed those metrics, so
+# scripts/validate_against_swipe.py, which performs the join and the
+# correlation, reports their columns as absent on a run made now; its archived
+# result is in results/swipe_gold.json and RESULTS.md.
 #
 # Run parameters match the other anchors so the numbers stay comparable.
 dataset:
@@ -22,7 +22,7 @@ dataset:
   target_field: target
 run:
   dataset_label: swipe_gold
-  sample_size: 250         # M4-M6 sample; M1-M3 run on all 1000
+  sample_size: 250         # M3d/M4/M5/M8 sample; the rest run on all 1000
   seed: 13
   language: en
   cache_dir: .cache/

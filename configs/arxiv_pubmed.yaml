@@ -23,13 +23,14 @@ run:
   # 250, not the 60 eLife uses, even though mean source length (3,121
   # whitespace words) just clears the 3,000-token line that triggered eLife's
   # reduction. That line is a proxy for M5 cost, and here the proxy misreads
-  # the corpus. M5 scores every target sentence against every source sentence,
-  # so its cost is the *product*: PubMed averages 104.6 source x 7.8 target
+  # the corpus. M5's NLI scorer (removed in the October 2026 metric revision)
+  # scored every target sentence against every source sentence, so its cost
+  # was the *product*: PubMed averages 104.6 source x 7.8 target
   # sentences = ~850 passes per document, against eLife's 611.8 x 18.1 =
-  # ~11,084. At 250 documents PubMed is ~212,500 passes, under a third of the
+  # ~11,084. At 250 documents PubMed was ~212,500 passes, under a third of the
   # ~665,000 eLife ran at 60 documents in 6.3 hours. Holding 250 keeps the CIs
   # comparable with the other anchors at a fraction of eLife's cost.
-  sample_size: 250         # M4-M6 sample; M1-M3 run on all 1000
+  sample_size: 250         # M3d/M4/M5/M8 sample; the rest run on all 1000
   seed: 13
   language: en
   cache_dir: .cache/

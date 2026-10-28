@@ -25,8 +25,8 @@ dataset:
 run:
   dataset_label: onestop
   # 250, matching the anchors' sample size. It exceeds the 189 available, so
-  # M4-M6 run on every pair.
-  sample_size: 250         # M4-M6 sample; M1-M3 run on all 189
+  # the sampled modules (M3d, M4, M5, M8) run on every pair.
+  sample_size: 250         # M3d/M4/M5/M8 sample; the rest run on all 189
   seed: 13
   language: en
   cache_dir: .cache/

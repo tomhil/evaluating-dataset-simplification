@@ -19,7 +19,7 @@ dataset:
   target_field: target
 run:
   dataset_label: swipe
-  sample_size: 250         # M4-M6 sample; M1-M3 run on all 1000
+  sample_size: 250         # M3d/M4/M5/M8 sample; the rest run on all 1000
   seed: 13
   language: en
   cache_dir: .cache/

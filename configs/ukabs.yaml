@@ -14,12 +14,13 @@
 #    measuring a corpus that may not belong in the comparison at all.
 # 2. Cost. These are the longest documents in the repository -- 14,211 source
 #    words and 451 source sentences per judgment, against eLife's 10,306 and
-#    612 -- and the targets are long too, at 40.4 sentences. M5 scores every
-#    target sentence against every source sentence, so that is ~19,600 passes
+#    612 -- and the targets are long too, at 40.4 sentences. M5's NLI scorer
+#    (removed in the October 2026 metric revision) scored every target
+#    sentence against every source sentence, so that was ~19,600 passes
 #    per document: at 250 documents ~4.9M, roughly 7x what eLife's 60-document
 #    sample cost at 6.3 hours. Even at 60 documents it would be ~1.2M.
 #
-# If a human approves it as PLS (see docs/DATASETS.md), the M4-M6 modules and a
+# If a human approves it as PLS (see docs/DATASETS.md), the sampled modules and a
 # sample_size chosen on eLife's precedent can be added then.
 #
 # Corpus materialised by `python scripts/fetch_all.py --only ukabs`
@@ -32,7 +33,8 @@ dataset:
 run:
   dataset_label: ukabs
   # Unused while only M1-M3 are enabled; kept at the shared value so enabling
-  # M4-M6 later does not silently change the sample as well as the modules.
+  # the sampled modules later does not silently change the sample as well as
+  # the modules.
   sample_size: 250
   seed: 13
   language: en

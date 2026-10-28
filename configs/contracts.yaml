@@ -26,9 +26,9 @@ dataset:
   target_field: target
 run:
   dataset_label: contracts
-  # 250 of the 446 available, matching the anchors' sample size so the M4-M6
-  # CIs are read the same way. Cost is negligible at ~6 M5 passes per pair.
-  sample_size: 250         # M4-M6 sample; M1-M3 run on all 446
+  # 250 of the 446 available, matching the anchors' sample size so the
+  # sampled modules' CIs are read the same way. Cost is negligible.
+  sample_size: 250         # M3d/M4/M5/M8 sample; the rest run on all 446
   seed: 13
   language: en
   cache_dir: .cache/

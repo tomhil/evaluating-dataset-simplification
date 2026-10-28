@@ -74,3 +74,33 @@ def test_scripts_run_without_pythonpath():
             capture_output=True, text=True, cwd=str(root), env={"PATH": "/usr/bin:/bin"},
         )
         assert r.returncode == 0, f"{script} failed to start: {r.stderr[-300:]}"
+
+
+def _row(**config):
+    return cr.row_values({"config": config, "modules": {}})
+
+
+def test_backend_note_reads_stand_ins_on_a_current_run():
+    """Since the October 2026 metric revision a run records config.stand_ins,
+    not config.embedder/nli_backend; a real current run must not be reported
+    as stand-in or unknown, and a stand-in run must be named loudly."""
+    assert cr._backend_note({"a": _row(stand_ins=False)}).startswith("real model backends")
+    assert cr._backend_note({"a": _row(stand_ins=True)}).startswith("MIXED OR STAND-IN")
+
+
+def test_backend_note_still_reads_the_archives():
+    archived = _row(embedder="sbert", nli_backend="nli")
+    assert cr._backend_note({"a": archived}) == "real backends (SBERT + deberta-large-mnli)"
+    mixed = {"a": archived, "b": _row(stand_ins=False)}
+    assert cr._backend_note(mixed).startswith("real model backends")
+    assert cr._backend_note({"a": _row(embedder="hashing", nli_backend="lexical")}).startswith(
+        "MIXED OR STAND-IN"
+    )
+    assert cr._backend_note({"a": _row()}).startswith("MIXED OR STAND-IN")
+
+
+def test_current_smoke_run_reads_as_stand_in():
+    import json
+    root = Path(__file__).resolve().parents[1]
+    m = json.loads((root / "tests" / "fixtures" / "smoke_baseline.json").read_text())
+    assert cr._backend_note({"smoke": cr.row_values(m)}).startswith("MIXED OR STAND-IN")

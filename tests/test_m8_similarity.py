@@ -52,7 +52,7 @@ def test_bleu_records_its_tokenizer():
 
 def test_inapplicable_metrics_are_recorded_with_reasons(ctx):
     """The three cross-lingual metrics must be visible as inapplicable, not
-    silently absent -- the treatment XSum's impossible split rate gets."""
+    silently absent."""
     result = m8.compute(_pairs(), ctx)
     na = result.params["not_applicable"]
 

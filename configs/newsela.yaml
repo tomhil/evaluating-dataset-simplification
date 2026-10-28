@@ -30,7 +30,7 @@ run:
   # 250, matching the anchors. Revisit once the copy arrives: the PRD drops to
   # 60 if the mean source exceeds 3,000 tokens (the eLife precedent); Xu et
   # al.'s originals average 1,152 words.
-  sample_size: 250         # M4-M6 sample; M1-M3 run on all fetched pairs
+  sample_size: 250         # M3d/M4/M5/M8 sample; the rest run on all fetched pairs
   seed: 13
   language: en
   cache_dir: .cache/

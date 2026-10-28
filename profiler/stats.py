@@ -80,9 +80,10 @@ def bootstrap_ci(
         return [v, v]
     rng = np.random.default_rng(seed)
     # Draw in row blocks rather than one (resamples x n) matrix. n here is
-    # whatever the caller pooled -- M5 passes one score per target sentence and
-    # M6 one row per source sentence -- so at eLife scale the monolithic index
-    # is ~4.8GB, and _summarize_features asks for 22 of them. numpy fills a
+    # whatever the caller pooled -- M5 passes one score per target sentence, and
+    # M6 (removed in October 2026) passed one row per source sentence -- so at
+    # eLife scale the monolithic index was ~4.8GB, and M6's _summarize_features
+    # asked for 22 of them. numpy fills a
     # (R, n) draw in C order, so block-wise drawing continues the identical
     # stream and the resulting CI is unchanged.
     stats = np.empty(resamples, dtype=float)
@@ -151,10 +152,11 @@ def histogram(values: Sequence[float], *, bins: int = 30) -> dict:
         return {"counts": [], "edges": [], "n": 0}
     lo, hi = float(np.min(arr)), float(np.max(arr))
     # A positive range is not enough: numpy raises "Too many bins for data
-    # range" when it cannot lay `bins` finite-width bins across it. M6 hit this
-    # with min=0.4999999999999999 and max=0.5000000000000001 -- values equal up
-    # to float rounding, a 2.2e-16 span -- and the ValueError propagated out of
-    # run(), aborting the run at M6 after M1-M5 had already completed. Compare
+    # range" when it cannot lay `bins` finite-width bins across it. M6 (since
+    # removed) hit this with min=0.4999999999999999 and max=0.5000000000000001
+    # -- values equal up to float rounding, a 2.2e-16 span -- and the
+    # ValueError propagated out of run(), aborting the run at M6 after M1-M5
+    # had already completed. Compare
     # the span against the representable spacing at this magnitude, so
     # "all equal" and "equal to within rounding" take the same path.
     span = hi - lo

@@ -13,7 +13,7 @@ different ways, and asserts two things each time: it completes, and the
 metrics.json it wrote is valid strict JSON -- no bare Infinity or NaN literals,
 which `json.dumps` emits by default and strict parsers reject.
 
-Offline backends throughout (hashing embedder, lexical scorer), so this costs
+Offline stand-ins throughout (``run.stand_ins``), so this costs
 seconds and downloads nothing.
 """
 
@@ -141,10 +141,11 @@ def test_pipeline_completes_on_an_awkward_corpus(name, tmp_path):
     assert (out / "report.md").exists()
 
 
-def test_a_degenerate_feature_distribution_does_not_abort_m6(tmp_path):
+def test_a_degenerate_feature_distribution_does_not_abort_the_histogram(tmp_path):
     """The specific shape that aborted a real run.
 
-    M6's centroid_sim came back with min 0.4999999999999999 and max
+    M6's centroid_sim (M6 was removed in the October 2026 metric revision;
+    the histogram guard stays) came back with min 0.4999999999999999 and max
     0.5000000000000001 -- a positive range 2.2e-16 wide, which numpy cannot
     divide into 20 finite bins. Identical pairs reproduce that class of input.
     """

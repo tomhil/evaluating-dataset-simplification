@@ -334,9 +334,8 @@ systems that change little.
 
 **How it works.** Per pair, `src_tokens / src_sents` and `tgt_tokens / tgt_sents`.
 
-**How to read it.** A large drop indicates syntactic simplification, but *only*
-read it next to M3b's parse-depth and subordinate-clause deltas — truncation
-shortens sentences too. Tanprasert & Kauchak (2021) recommend reporting words
+**How to read it.** A large drop indicates syntactic simplification, but
+truncation shortens sentences too. Tanprasert & Kauchak (2021) recommend reporting words
 per sentence (and syllables per word) instead of FKGL, which combines the two,
 and APPLS finds it falls as text is simplified.
 
@@ -1050,10 +1049,8 @@ design with ALBERT-xlarge fine-tuned on VitaminC and MNLI. Three readings of the
 one model:
 
 - **`per_scorer.summac_conv`** — each target sentence scored against the whole
-  source. The block holds `score` (a `Summary` of the sentence scores),
-  `score_histogram` and `not_entailed_rate`. Only `score` is the paper's
-  quantity; `not_entailed_rate` (the share of sentences below `nli_threshold`)
-  is the profiler's own and is not part of this reference. Laban et al. score a
+  source. The block holds `score` (a `Summary` of the sentence scores) and
+  `score_histogram`. Only `score` is the paper's quantity. Laban et al. score a
   whole summary; scoring each target sentence on its own is this profiler's use
   of the model.
 - **`document_level.summac_precision`** — the whole target scored against the
@@ -1105,8 +1102,8 @@ sentence against its source.
 with the whole source as context. Zha et al. (§3.2, Eq. 3) split the context
 into chunks of about 350 tokens and the claim into sentences, take the
 probability of the ALIGNED class, and average over claim sentences the maximum
-over chunks. The block holds `score`, `score_histogram` and `not_entailed_rate`;
-as for SummaC, only `score` is the paper's quantity.
+over chunks. The block holds `score` and `score_histogram`; as for SummaC, only
+`score` is the paper's quantity.
 
 **How to read it.** Higher = better supported.
 
@@ -1434,8 +1431,8 @@ pipeline that is not a `Summary`.
 reference. There is no human translation here, only the pair, so this is a
 *similarity* measure, not a quality one. A low BLEU means the target is worded
 differently from the source, which for a simplification corpus is expected
-rather than bad. BLEU is in the same n-gram-overlap family as M2's ROUGE recall,
-so it is not independent evidence.
+rather than bad. BLEU is in the same n-gram-overlap family as ROUGE and M2's
+copy measures, so it is not independent evidence.
 
 *BLEU is structurally uninformative on a compressing corpus.* BLEU carries a
 **brevity penalty**, because it was designed for translation where the
@@ -1492,9 +1489,8 @@ language model rather than by shared words.
 **How it works.** `bert-score` with `lang="en"` and
 `rescale_with_baseline=True`, F1, computed per pair and then summarised with the
 usual n/mean/median/IQR/CI contract. Scores are cached on
-`content_hash(model, source, target)` — the same mechanism `CachedEmbedder` uses
-for SBERT embeddings — so a rerun of the same config recomputes nothing and the
-run stays deterministic.
+`content_hash(model, source, target)`, so a rerun of the same config recomputes
+nothing and the run stays deterministic.
 
 **How to read it.** Rescaled so ~0 is the score of unrelated text. It is in the
 meaning-preservation family as BLEU against the source, so read it alongside
