@@ -263,3 +263,53 @@ Starting point: branch `refactor/paper-supported-metrics`, after the commit that
 - **For Tom (not deferred):** `configs/swipe_gold.yaml` exists to feed `scripts/validate_against_swipe.py`, whose checks all read removed M4/M5 columns, so a fresh `swipe_gold` run now prints "column absent" for every check; whether to keep the config, the script (G2) and their RESULTS.md section is his call. The three guarded leaves above still await his approval for a one-off re-bless.
 - **Next item:** 19, full offline `pytest -q`, two byte-identical smoke runs, summary entry listing every DEFERRED item and the gates applied.
 - **DEFERRED:** none.
+
+## 2026-10-28 — Phase D, item 19: final verification and summary
+
+- **Commit:** this commit on refactor/paper-supported-metrics.
+- **Item:** verification only; no code, test, config or doc change besides this entry.
+- **Removed leaves and notes:** none. `update_smoke_baseline.py` without `--write`: `0 change(s): 0 changed, 0 removed (0 not retired), 0 new, 0 emptied, 0 notes removed, 0 note violations. Kept-value guard passed.` Fixture not rewritten. The cumulative Phase C removal is in item 17's entry (929 leaves removed, all under `RETIRED_KEYS` or `REMOVED_BOOKKEEPING`; 609 of 609 kept leaves identical; 5 notes removed; 3 notes reworded with Tom's approval in item 15).
+- **Tests:** none changed.
+- **Result:** `HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 venv/bin/python -m pytest -q`: `846 passed, 2 skipped, 3 warnings in 38.78s`, 0 failed (same as item 18). Skips: `tests/test_inventory.py:88` twice (`test_key_labelled_and_present` for `summac_conv` and `alignscore`, "did not run; recorded in scorers_run"; earlier entries cite line 85, the test moved by three lines). Smoke byte-identical: yes (`python -m profiler run --config configs/smoke.yaml` twice into the scratchpad, not `runs/`; both `metrics.json` sha1 `9ef1d1546d42a800095dc8d484302b0f3f3b213c`, equal to `tests/fixtures/smoke_baseline.json`; outputs `metrics.json`, `per_pair.parquet`, `report.md`, `plots/compression_histogram.png`). Kept-value guard: pass (0 changes).
+- **Acceptance criteria (PRD Section 8):**
+  1. **Met.** A fresh smoke run's `corpus` blocks contain no key matching `RETIRED_KEYS` (walk of every dict key, bookkeeping included; also `test_smoke_run_emits_no_retired_key`); modules emitted are `length`, `abstractiveness`, `readability`, `alignment`, `elaboration` (no `deletion_profile`). Every kept leaf equals the pre-refactor baseline (item 17: 609 of 609, modulo item 15's three approved note rewordings); guard 0 changes now.
+  2. **Met.** `len(REGISTRY) == 82`, 37 `RETIRED_KEYS`; the registry's key set equals the 82 keys of `docs/metrics.md`'s index (no duplicates). The only entries with no task label and evidence `project-specific` are `readability.m3b_length_invariant.mean_zipf` and `readability.m3b_length_invariant.rare_word_rate`. Per module: M1 7, M2 14, M3 13, M4 3, M5 7, M7 33, M8 5.
+  3. **Met.** The suite passes offline. The two skips are in `tests/test_inventory.py` (the per-key presence check for the optional SummaC and AlignScore scorers, which smoke does not request), not doc tests: `tests/test_metrics_doc.py` and `tests/test_label_tables.py` have no skip.
+  4. **Met.** `parse_config` on `configs/smoke.yaml` with each of the nine removed run keys added (`tau_sweep`, `m6_tau`, `embedder`, `embed_model`, `nli_backend`, `nli_model`, `nli_threshold`, `heuristic_only`, `jargon_terms`) raises `ConfigError` whose message contains "October 2026"; adding module `deletion_profile` raises `ConfigError: module(s) removed in the October 2026 metric revision; delete them from 'modules': deletion_profile (module M6 (deletion_profile) was removed)`.
+  5. **Met.** README module table: M1–M5, M7, M8 with no M6; its metric names match the registry's per-module counts (M3's 13 including the two project-specific measures; M7's 33 = `len(m7_linguistic.FEATURES)`). Outputs (`metrics.json`, `per_pair.parquet`, `report.md`, `plots/` with only the compression histogram) match a smoke run. Config example: `ALL_MODULES` equals its module list; every run key it uses exists in `RunConfig` and the example parses with `parse_config`; the smoke paragraph's `run.stand_ins` matches `configs/smoke.yaml` and `model_metrics.use_stand_ins`; `configs/example.yaml` (the Run command) exists.
+- **Commits of the loop:**
+  - `ffab673` A1: starting test and smoke status recorded.
+  - `dadfa9e` A2: `RETIRED_KEYS` and the `metric_paths()` skip.
+  - `3c94b51` A3: kept-value guard (`scripts/update_smoke_baseline.py`), no-regression test adapted, fixture refreshed from `main`.
+  - `64bea7c` B4: 37 registry entries removed, `syllables_per_word` relabelled, the two project-specific keys pinned.
+  - `ec3ea72` B5: doc tests read per-key label tables; M6 out of `MODULE_PAGES`.
+  - `8eb8acc` B6: M1–M5 module pages and index rewritten; M6 page deleted.
+  - `88f2ba6` B7: `RESULTS.md` label-tables block regenerated; G2 dated line in `RESULTS.md` and `docs/DATASETS.md`.
+  - `a3773cc` C8: M1 `expansion_rate`, `compression_bimodality` removed.
+  - `9f7a0f6` C9: M2's six removed keys and `_rouge_recall`, `exact_copies`, `rouge_orientation` removed.
+  - `efe0d1e` C10: M3 `smog` output, six M3b measures, M3c and its plot and report section removed.
+  - `bad743c` C11: M6 removed; `ALL_FEATURES` moved to `compare_runs.py`; `validate_deletion_split.py` deleted.
+  - `c50c341` C12: M4 SBERT alignment and τ sweep removed; segmentation and entity matching kept.
+  - `edfa99a` C13: M5 NLI path, not-entailed rate and threshold removed; annotation sample, `ingest-annotations`, `sweep_nli_threshold.py` deleted.
+  - `2bea941` C14: interpretation-guide rows for removed metrics removed; report sample wording names M3d, M4, M5, M8.
+  - `5340081` Log only: item 15 DEFERRED (stand-in switch vs removed `nli_backend`).
+  - `ac6565f` C15: removed run keys and `deletion_profile` rejected naming the revision; `run.stand_ins` added.
+  - `08b8e5f` C16: SBERT embedder and `sentence-transformers` removed; `resolve_device` in `profiler/devices.py`.
+  - `9d4e220` D17: baseline regenerated (no diff); cumulative removal logged; no-retired-key smoke test.
+  - `39ad52b` D18: audit of removed keys and config; `compare_runs` reads `run.stand_ins`; stale comments, `docs/metrics.md` wording and README sample tier fixed.
+  - this commit, D19: final verification and summary.
+- **Gates applied:** G2 default (B7: narrative of `RESULTS.md` and `docs/DATASETS.md`, `scripts/derived_stats.py`, `scripts/validate_against_swipe.py` and their tests untouched, one dated line added); G4 default (module name `alignment` kept, B6/C12); G5 default (C16); G6 default (C13); G7 default (`validate_deletion_split.py` in C11, `sweep_nli_threshold.py` in C13). G1 held: `results/*.json` and `runs/` untouched, archives read through `RETIRED_KEYS`. G3 not in the loop (Phase E).
+- **DEFERRED items:** one in the loop, item 15 (how to select the offline stand-ins once `nli_backend` and `heuristic_only` are rejected), logged in `5340081` and resolved by Tom's option (a) on 2026-10-28 (`run.stand_ins`, one-off re-bless of the three notes' switch name), implemented in `ac6565f`. None remain open.
+- **Open points for Tom (collected from the log; none blocks the PRD):**
+  1. Guarded leaves left unchanged under hard rules 2–3, each needing his approval for a one-off re-bless: M2 `params.edit_features` still mentions "exact copies" (item 9); M3 `params.surface_measures` still lists `smog` (item 10); M8's note still cites "M2's ROUGE recall" and "M4's target groundedness" (`m8_similarity.py`, asserted by `test_m8_similarity.py`; items 12, 18).
+  2. SMOG is still computed in `readability.surface_scores` (PRD Section 4 keeps it untouched; M7 uses FRE and FKGL from it); whether it should stop is his call (item 10).
+  3. Item 3's fixture refresh: the baseline was re-captured from `main` (`9ac584c`) because the September fixture lacked 343 leaves; every old leaf was checked identical (item 3).
+  4. Item 13's guard "emptied" rule: a `{}` left after all its leaves were removed under rule 2 is reported, not a violation (pinned by three tests); alternative is keeping a dummy M5 param.
+  5. The interpretation guide now has two axes (item 14); restoring readability change, content preservation and content addition needs new readings on kept metrics, which is his text to write.
+  6. `syllables_per_word`'s direction "↓ shorter words" was taken from `docs/metrics.md`'s wording; the PRD does not state one (item 4).
+  7. `configs/swipe_gold.yaml` and `scripts/validate_against_swipe.py` (G2) read removed M4/M5 columns, so a fresh `swipe_gold` run reports every check as "column absent"; keep, retire or rewrite, with their `RESULTS.md` section (item 18).
+  8. `docs/superpowers/plans/2026-08-05-docsimp-eval-walking-skeleton.md` (August walking-skeleton plan) still mentions a parse-depth shift; left as a dated plan (item 18).
+  9. `docs/metrics.md` received five wording-only edits in item 18 (no definition, label, evidence, paper or direction changed); he may want to review them.
+  10. Phase E: re-run the corpora with `run.summac` and `run.alignscore` (G3), archive the results, regenerate `RESULTS.md`'s generated block, decide G1 and G2 (rewrite the narrative quoting removed metrics).
+- **Next item:** none; the loop is complete. Phase E is Tom's.
+- **DEFERRED:** none.
