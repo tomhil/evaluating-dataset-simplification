@@ -158,10 +158,50 @@ def test_retired_decimal_tau_keys_are_skipped_not_labelled():
 
 
 def test_smoke_run_retired_paths_are_unlabelled(smoke_metrics):
-    # Until Phase C removes them from the code the smoke run still emits the
-    # retired keys; they must be skipped, not labelled.
+    # A retired key is skipped, never labelled (the archives still carry them).
     assert not [p for p in metric_paths(smoke_metrics["modules"]) if is_retired(p)]
     assert not [k for k in smoke_metrics["metric_labels"] if is_retired(k)]
+
+
+def _retired_paths_emitted(modules: dict) -> list[str]:
+    """Every path under a module's corpus that matches RETIRED_KEYS.
+
+    Unlike metric_paths, which skips retired nodes, this walks every dict key
+    (bookkeeping included), so it finds a retired key wherever it is emitted.
+    """
+
+    out: list[str] = []
+
+    def walk(node, path: str) -> None:
+        for key, value in node.items():
+            sub = f"{path}.{key}"
+            if is_retired(sub):
+                out.append(sub)
+            elif isinstance(value, dict):
+                walk(value, sub)
+
+    for name, block in modules.items():
+        walk(block.get("corpus", {}), name)
+    return out
+
+
+def test_smoke_run_emits_no_retired_key(smoke_metrics):
+    # PRD acceptance criterion 1: a fresh run emits no key in RETIRED_KEYS,
+    # and the removed module M6 is gone.
+    modules = smoke_metrics["modules"]
+    assert "deletion_profile" not in modules
+    emitted = _retired_paths_emitted(modules)
+    assert not emitted, "retired keys in a fresh smoke run:\n" + "\n".join(emitted)
+
+
+def test_retired_key_walk_finds_archived_keys():
+    # The walk above is not vacuous: an archive from before the revision
+    # carries retired keys, and it finds them under every module that had one.
+    path = next(p for p in RESULTS if "deletion_profile" in json.loads(p.read_text())["modules"])
+    found = _retired_paths_emitted(json.loads(path.read_text())["modules"])
+    assert {p.split(".", 1)[0] for p in found} >= {
+        "length", "abstractiveness", "readability", "alignment", "deletion_profile"
+    }
 
 
 def test_bookkeeping_is_exact_names():
