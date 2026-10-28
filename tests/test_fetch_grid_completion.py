@@ -508,4 +508,9 @@ def test_config_reads_the_fetched_file(label):
     assert cfg["dataset"]["path"].startswith(f"data/{label}/")
     assert cfg["run"]["dataset_label"] == label
     assert cfg["run"]["seed"] == 13
-    assert cfg["run"]["embedder"] == "sbert" and cfg["run"]["nli_backend"] == "nli"
+    # Real models, not the offline stand-ins (run.stand_ins, smoke only); the
+    # config loads under the October 2026 revision's key set.
+    assert cfg["run"].get("stand_ins", False) is False
+    from profiler.config import load_config
+
+    load_config(REPO / "configs" / f"{label}.yaml")

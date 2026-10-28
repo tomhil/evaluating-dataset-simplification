@@ -14,10 +14,7 @@ def make_config(**run_overrides) -> "Config":  # noqa: F821
     run = {
         "seed": 13,
         "bootstrap_resamples": 100,
-        "embedder": "hashing",
-        "nli_backend": "lexical",
-        "m6_tau": 0.4,
-        "tau_sweep": [0.4, 0.5, 0.6],
+        "stand_ins": True,
     }
     run.update(run_overrides)
     return parse_config(

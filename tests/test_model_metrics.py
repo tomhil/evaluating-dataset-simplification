@@ -53,7 +53,7 @@ def test_m3d_stand_ins_on_sample(monkeypatch):
 def test_m3d_skips_gracefully_when_models_cannot_load(monkeypatch):
     # Real-model mode, with both model stacks unimportable.
     monkeypatch.setitem(sys.modules, "transformers", None)
-    ctx = _ctx(nli_backend="nli", sample_size=4)
+    ctx = _ctx(stand_ins=False, sample_size=4)
     with pytest.warns(RuntimeWarning):
         res = m3_readability.compute(_pairs(6), ctx)
     block = res.corpus["m3d_model_based"]
@@ -94,7 +94,7 @@ def test_document_level_summac_skips_when_package_missing(monkeypatch):
     monkeypatch.setitem(sys.modules, "summac.model_summac", None)
     # Real-model mode with SummaC requested; the blocked import means the
     # test downloads nothing.
-    ctx = _ctx(nli_backend="nli", summac=True)
+    ctx = _ctx(stand_ins=False, summac=True)
     with pytest.warns(RuntimeWarning):
         res = _m5([Pair("same", TEXT_A, TEXT_A)], ctx)
     dl = res.corpus["document_level"]
@@ -133,7 +133,7 @@ def test_rhetorical_roles_stand_in_with_abstract():
 
 def test_rhetorical_roles_skip_when_model_cannot_load(monkeypatch):
     monkeypatch.setitem(sys.modules, "transformers", None)
-    ctx = _ctx(nli_backend="nli")
+    ctx = _ctx(stand_ins=False)
     with pytest.warns(RuntimeWarning):
         res = _m5([Pair("a", TEXT_A, TEXT_B)], ctx)
     rr = res.corpus["rhetorical_roles"]
@@ -216,7 +216,7 @@ def test_both_summac_loaders_share_one_model(fake_summac):
 # --------------------------------------------------------------------------
 def test_model_metrics_flag_disables_m3d_and_roles(monkeypatch):
     monkeypatch.setitem(sys.modules, "transformers", None)  # would fail if loaded
-    ctx = _ctx(nli_backend="nli", sample_size=4, model_metrics=False)
+    ctx = _ctx(stand_ins=False, sample_size=4, model_metrics=False)
     res3 = m3_readability.compute(_pairs(6), ctx)
     block = res3.corpus["m3d_model_based"]
     assert block["models_run"] == [] and block["sle_gain"]["median"] is None
@@ -233,7 +233,7 @@ def test_model_metrics_defaults_on():
 
 
 def test_requested_summac_wins_over_the_stand_in(fake_summac):
-    # nli_backend=lexical (stand-in settings) but SummaC requested and loadable:
+    # run.stand_ins (stand-in settings) but SummaC requested and loadable:
     # document level must use the real model, as the sentence scorer does.
     res = _m5([Pair("a", TEXT_A, TEXT_B)], _ctx(summac=True))
     assert res.corpus["document_level"]["scorers_run"] == ["summac"]
@@ -242,10 +242,10 @@ def test_requested_summac_wins_over_the_stand_in(fake_summac):
 
 
 def test_stand_in_notes_name_the_setting_that_selected_them():
-    ctx = _ctx(heuristic_only=True, nli_backend="nli", sample_size=4)
+    ctx = _ctx(sample_size=4)  # make_config sets run.stand_ins
     res = m3_readability.compute(_pairs(6), ctx)
-    assert any("stand-ins (heuristic_only)" in n for n in res.notes)
-    assert not any("nli_backend=lexical" in n for n in res.notes)
+    assert any("stand-ins (run.stand_ins)" in n for n in res.notes)
+    assert not any("nli_backend" in n or "heuristic_only" in n for n in res.notes)
 
 
 def test_m5_per_pair_covers_pairs_without_target_sentences():

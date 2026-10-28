@@ -105,8 +105,11 @@ Outputs are written to `runs/<dataset>_<timestamp>/`:
 
 ### Offline smoke run
 
-`configs/smoke.yaml` uses deterministic offline backends so the whole pipeline
-runs end-to-end with no model downloads:
+`configs/smoke.yaml` sets `run.stand_ins: true`, which replaces the model-based
+metrics (M3d's SLE and coherence, M5's document-level SummaC and rhetorical
+roles) with deterministic offline stand-ins, so the whole pipeline runs
+end-to-end with no model downloads. Stand-in values are flagged in the notes
+and are not the published metrics.
 
 ```bash
 python -m profiler run --config configs/smoke.yaml

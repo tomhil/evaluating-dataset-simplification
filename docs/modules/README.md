@@ -75,6 +75,7 @@ measures, which take no length as input
 | `bootstrap_resamples` | all CIs | precision of interval endpoints |
 | `model_metrics` | M3d, M5 roles | `false` skips SLE, BERT coherence and the PubMed-RCT classifier (no download); keys null |
 | `summac`, `alignscore` | M5 | optional scorers; `summac` also gates document-level SummaC |
+| `stand_ins` | M3d, M5 | `true` replaces SLE, coherence, document-level SummaC and the role classifier with deterministic offline stand-ins (tests, smoke); flagged in notes |
 | `language` | all | only `en` is supported; anything else is refused at load |
 
 Whatever a module's numbers depend on is recorded verbatim in its `params` block

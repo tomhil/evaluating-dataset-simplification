@@ -30,12 +30,35 @@ ENGLISH_ONLY_MODULES = {"readability", "elaboration", "linguistic_features"}
 
 KNOWN_ADAPTERS = {"jsonl", "hf", "filedir"}
 
-# Backend names are validated at load. get_embedder raised on an unknown name
-# only when M4 started -- after the full-corpus M1-M3 pass -- and
-# get_primary_scorer only at M5, after M4's embeddings. A typo cost hours.
-KNOWN_EMBEDDERS = {"sbert", "hashing"}
-KNOWN_NLI_BACKENDS = {"nli", "lexical"}
+# The device name is validated at load: an unknown backend name used to raise
+# only when its model loaded, hours into a run on a long-document corpus.
 KNOWN_DEVICES = {"auto", "cpu", "mps", "cuda"}
+
+# Run keys and modules removed in the October 2026 metric revision (the
+# "Removed" list in docs/metrics.md). A config that still sets one is rejected
+# at load rather than silently ignored, so nobody believes a removed metric,
+# threshold or backend still shapes the run. The value is what to do instead.
+REVISION = "the October 2026 metric revision"
+REMOVED_RUN_KEYS = {
+    "tau_sweep": "M4's sentence alignment and its tau sweep were removed",
+    "m6_tau": "M4's alignment and module M6 (deletion_profile) were removed",
+    "embedder": "M4's SBERT sentence alignment was removed",
+    "embed_model": "M4's SBERT sentence alignment was removed",
+    "nli_backend": (
+        "M5's NLI scorer was removed; set run.stand_ins: true for the offline "
+        "stand-ins it used to select"
+    ),
+    "nli_model": "M5's NLI scorer was removed",
+    "nli_threshold": "M5's not-entailed rate and its threshold were removed",
+    "heuristic_only": (
+        "M5's content-word fallback was removed; set run.stand_ins: true for "
+        "the offline stand-ins it used to select"
+    ),
+    "jargon_terms": "M3b's jargon_rate and M6 were removed",
+}
+REMOVED_MODULES = {
+    "deletion_profile": "module M6 (deletion_profile) was removed",
+}
 
 # The only language with a processor. get_processor ignored its argument and
 # always loaded en_core_web_sm, so the documented "non-English corpora get
@@ -71,33 +94,20 @@ class RunConfig:
     cache_dir: str = ".cache/"
     output_dir: str = "runs/"
     bootstrap_resamples: int = 1000
-    tau_sweep: list[float] = field(default_factory=lambda: [0.4, 0.5, 0.6, 0.7, 0.8])
-    nli_threshold: float = 0.5
-    jargon_terms: list[str] = field(default_factory=list)
-    # Model backends. 'sbert'/'nli' use real models (network download on first
-    # use); 'hashing'/'lexical' are deterministic offline stand-ins for tests
-    # and smoke runs.
-    embedder: str = "sbert"
-    embed_model: str = "sentence-transformers/all-MiniLM-L6-v2"
-    nli_backend: str = "nli"
-    nli_model: str = "microsoft/deberta-large-mnli"
-    # Torch device for the SBERT/NLI backends. 'auto' picks mps/cuda when
+    # Torch device for the model-based metrics. 'auto' picks mps/cuda when
     # available, else cpu. Purely a speed knob: same model, same math.
     device: str = "auto"
-    # Primary tau used for the alignment that feeds M5/M6 (M4 itself sweeps).
-    # Stays 0.5. 0.7 measures better against SWiPE's human deletion labels
-    # (kappa 0.754 vs 0.410; see scripts/validate_deletion_split.py) but that
-    # calibration is Wikipedia prose with MiniLM and does not transfer: on XSum
-    # it raises the deletion rate to 0.983 and leaves only 13 of 60 documents
-    # with the deleted/retained contrast M6 needs. The threshold is
-    # genre-dependent, so each config sets its own and the default stays where
-    # every committed result was produced.
-    m6_tau: float = 0.5
-    # M5 optional scorers. NLI always runs (unless heuristic_only); these gate
-    # the fragile extras.
+    # M5 optional sentence-level scorers; summac also gates document-level
+    # SummaC.
     alignscore: bool = False
     summac: bool = False
-    heuristic_only: bool = False
+    # Deterministic offline stand-ins for the model-based metrics (M3d's SLE
+    # and coherence, M5's document-level SummaC and rhetorical roles), for
+    # tests and smoke runs: no model download. Stand-in values exercise the
+    # plumbing only; they are flagged in notes and in the *_run records and are
+    # not the published metrics. A scorer requested with run.summac still uses
+    # the real model.
+    stand_ins: bool = False
     # Model-based literature metrics that load their own checkpoints: M3's
     # m3d_model_based block (SLE, BERT coherence) and M5's rhetorical roles.
     # On by default; false skips them with a note and null keys (no download).
@@ -155,17 +165,6 @@ def _num(value: Any, name: str, cast, expected: str):
         raise ConfigError(f"run.{name} must be {expected}; got {value!r}") from None
 
 
-def _num_list(value: Any, name: str) -> list[float]:
-    """Coerce a list-of-floats run field (``tau_sweep``).
-
-    A scalar raised ``TypeError: 'int' object is not iterable`` from ``list()``.
-    """
-
-    if isinstance(value, (str, bytes)) or not isinstance(value, (list, tuple)):
-        raise ConfigError(f"run.{name} must be a list of numbers; got {value!r}")
-    return [_num(v, name, float, "a list of numbers") for v in value]
-
-
 def _require(d: dict, key: str, where: str) -> Any:
     if key not in d or d[key] is None:
         raise ConfigError(f"missing required field '{key}' in {where}")
@@ -219,6 +218,14 @@ def parse_config(raw: dict) -> Config:
     run_raw = raw.get("run", {}) or {}
     if not isinstance(run_raw, dict):
         raise ConfigError("'run' must be a mapping")
+    removed = [k for k in REMOVED_RUN_KEYS if k in run_raw]
+    if removed:
+        raise ConfigError(
+            "run key(s) removed in "
+            + REVISION
+            + "; delete them from the config: "
+            + "; ".join(f"run.{k} ({REMOVED_RUN_KEYS[k]})" for k in removed)
+        )
     run = RunConfig(
         sample_size=_opt_int(run_raw.get("sample_size", 1000), "sample_size"),
         seed=_num(run_raw.get("seed", 13), "seed", int, "an integer"),
@@ -228,20 +235,10 @@ def parse_config(raw: dict) -> Config:
         bootstrap_resamples=_num(
             run_raw.get("bootstrap_resamples", 1000), "bootstrap_resamples", int, "an integer"
         ),
-        tau_sweep=_num_list(run_raw.get("tau_sweep", [0.4, 0.5, 0.6, 0.7, 0.8]), "tau_sweep"),
-        nli_threshold=_num(run_raw.get("nli_threshold", 0.5), "nli_threshold", float, "a number"),
-        jargon_terms=list(run_raw.get("jargon_terms", []) or []),
-        embedder=str(run_raw.get("embedder", "sbert")),
-        embed_model=str(
-            run_raw.get("embed_model", "sentence-transformers/all-MiniLM-L6-v2")
-        ),
-        nli_backend=str(run_raw.get("nli_backend", "nli")),
-        nli_model=str(run_raw.get("nli_model", "microsoft/deberta-large-mnli")),
         device=str(run_raw.get("device", "auto")),
-        m6_tau=_num(run_raw.get("m6_tau", 0.5), "m6_tau", float, "a number"),
         alignscore=bool(run_raw.get("alignscore", False)),
         summac=bool(run_raw.get("summac", False)),
-        heuristic_only=bool(run_raw.get("heuristic_only", False)),
+        stand_ins=bool(run_raw.get("stand_ins", False)),
         model_metrics=bool(run_raw.get("model_metrics", True)),
         dataset_label=str(
             run_raw.get("dataset_label")
@@ -256,6 +253,14 @@ def parse_config(raw: dict) -> Config:
         modules = list(ALL_MODULES)
     if not isinstance(modules, list) or not modules:
         raise ConfigError("'modules' must be a non-empty list")
+    gone = [m for m in modules if isinstance(m, str) and m in REMOVED_MODULES]
+    if gone:
+        raise ConfigError(
+            "module(s) removed in "
+            + REVISION
+            + "; delete them from 'modules': "
+            + "; ".join(f"{m} ({REMOVED_MODULES[m]})" for m in gone)
+        )
     unknown = [m for m in modules if m not in ALL_MODULES]
     if unknown:
         raise ConfigError(
@@ -272,31 +277,10 @@ def validate(cfg: Config) -> None:
         raise ConfigError("run.sample_size must be positive or null")
     if cfg.run.bootstrap_resamples <= 0:
         raise ConfigError("run.bootstrap_resamples must be positive")
-    if not cfg.run.tau_sweep:
-        raise ConfigError("run.tau_sweep must not be empty")
-    for t in cfg.run.tau_sweep:
-        if not 0.0 <= float(t) <= 1.0:
-            raise ConfigError(f"tau values must be in [0,1]; got {t}")
-    # These two were unvalidated while tau_sweep was. Out of range they produce
-    # no error and no obvious wrong number: m6_tau above 1 labels every source
-    # sentence deleted, so M6's contrast vanishes and every effect size goes
-    # null; nli_threshold above 1 makes M5's not-entailed rate exactly 1.0.
-    for name, value in (
-        ("m6_tau", cfg.run.m6_tau),
-        ("nli_threshold", cfg.run.nli_threshold),
-    ):
-        if not 0.0 <= float(value) <= 1.0:
-            raise ConfigError(f"{name} must be in [0,1]; got {value}")
-
-    for name, value, known in (
-        ("embedder", cfg.run.embedder, KNOWN_EMBEDDERS),
-        ("nli_backend", cfg.run.nli_backend, KNOWN_NLI_BACKENDS),
-        ("device", cfg.run.device, KNOWN_DEVICES),
-    ):
-        if value not in known:
-            raise ConfigError(
-                f"unknown run.{name} '{value}'; known: {sorted(known)}"
-            )
+    if cfg.run.device not in KNOWN_DEVICES:
+        raise ConfigError(
+            f"unknown run.device '{cfg.run.device}'; known: {sorted(KNOWN_DEVICES)}"
+        )
 
     # M5 reads M4's sentence lists out of the shared context and raises if they
     # are absent -- but only after the full-corpus M1-M3 pass, which is hours on a

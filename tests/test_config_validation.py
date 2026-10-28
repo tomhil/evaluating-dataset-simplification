@@ -1,15 +1,20 @@
 """Config errors must surface at load, not hours into a run.
 
-M5 and M6 read M4's alignment out of the shared context and raise if it is
+M5 reads M4's sentence lists out of the shared context and raises if they are
 absent -- but only after the full-corpus M1-M3 pass, which is hours on PLOS.
-And m6_tau / nli_threshold were unvalidated while tau_sweep was, so a value
-outside [0,1] was accepted and silently labelled every sentence deleted or every
-target sentence not-entailed.
+And the run keys and module removed in the October 2026 metric revision
+(PRD "Remove Unsupported Metrics", Section 5.4) are rejected at load, so a
+stale config cannot suggest that a removed metric, threshold or backend still
+shapes the run.
 """
+
+from pathlib import Path
 
 import pytest
 
 from profiler.config import ConfigError, parse_config
+
+REPO = Path(__file__).resolve().parents[1]
 
 BASE = {
     "dataset": {
@@ -40,8 +45,9 @@ def test_elaboration_without_alignment_is_rejected_at_load():
 
 def test_deletion_profile_is_no_longer_a_module():
     """M6 was removed in the October 2026 metric revision."""
-    with pytest.raises(ConfigError, match="deletion_profile"):
+    with pytest.raises(ConfigError, match="deletion_profile") as exc:
         _cfg_modules(["alignment", "deletion_profile"])
+    assert "October 2026 metric revision" in str(exc.value)
 
 
 def test_alignment_present_is_accepted():
@@ -57,24 +63,70 @@ def test_cheap_only_needs_no_alignment():
     assert _cfg_modules(["length", "abstractiveness", "readability"]).modules
 
 
-# --- threshold ranges -------------------------------------------------------
+# --- removed run keys (Section 5.4) ----------------------------------------
 
-@pytest.mark.parametrize("bad", [-0.1, 1.5, 7.0])
-def test_m6_tau_outside_unit_interval_is_rejected(bad):
-    with pytest.raises(ConfigError, match="m6_tau"):
-        _cfg(m6_tau=bad)
-
-
-@pytest.mark.parametrize("bad", [-1.0, 42])
-def test_nli_threshold_outside_unit_interval_is_rejected(bad):
-    with pytest.raises(ConfigError, match="nli_threshold"):
-        _cfg(nli_threshold=bad)
-
-
-def test_valid_thresholds_are_accepted():
-    cfg = _cfg(m6_tau=0.7, nli_threshold=0.5)
-    assert cfg.run.m6_tau == 0.7 and cfg.run.nli_threshold == 0.5
+REMOVED_RUN_KEYS = {
+    "tau_sweep": [0.4, 0.5],
+    "m6_tau": 0.5,
+    "embedder": "sbert",
+    "embed_model": "sentence-transformers/all-MiniLM-L6-v2",
+    "nli_backend": "lexical",
+    "nli_model": "microsoft/deberta-large-mnli",
+    "nli_threshold": 0.5,
+    "heuristic_only": False,
+    "jargon_terms": [],
+}
 
 
-def test_boundaries_are_allowed():
-    assert _cfg(m6_tau=0.0, nli_threshold=1.0).run.m6_tau == 0.0
+def test_removed_run_keys_are_the_prd_list():
+    from profiler.config import REMOVED_RUN_KEYS as CODE
+
+    assert set(CODE) == set(REMOVED_RUN_KEYS)
+
+
+@pytest.mark.parametrize("key", sorted(REMOVED_RUN_KEYS))
+def test_removed_run_key_is_rejected_naming_the_revision(key):
+    # Any value, including the old default, is rejected: the key is gone.
+    with pytest.raises(ConfigError, match=f"run.{key}") as exc:
+        _cfg(**{key: REMOVED_RUN_KEYS[key]})
+    assert "October 2026 metric revision" in str(exc.value)
+
+
+@pytest.mark.parametrize("key", ["nli_backend", "heuristic_only"])
+def test_removed_stand_in_switches_point_to_stand_ins(key):
+    with pytest.raises(ConfigError, match="run.stand_ins"):
+        _cfg(**{key: REMOVED_RUN_KEYS[key]})
+
+
+def test_every_removed_key_present_is_named():
+    with pytest.raises(ConfigError) as exc:
+        _cfg(m6_tau=0.5, jargon_terms=["a"], seed=13)
+    assert "run.m6_tau" in str(exc.value) and "run.jargon_terms" in str(exc.value)
+
+
+def test_removed_module_rejected_before_unknown_module_check():
+    with pytest.raises(ConfigError, match="October 2026 metric revision"):
+        _cfg_modules(["length", "deletion_profile"])
+
+
+# --- the stand-in switch ----------------------------------------------------
+
+def test_stand_ins_default_off():
+    assert _cfg().run.stand_ins is False
+
+
+def test_stand_ins_selects_the_offline_stand_ins():
+    from profiler import model_metrics as mm
+
+    on = _cfg(stand_ins=True)
+    assert on.run.stand_ins is True
+    assert mm.use_stand_ins(on) and mm.stand_in_reason(on) == "run.stand_ins"
+    assert not mm.use_stand_ins(_cfg())
+
+
+@pytest.mark.parametrize("path", sorted(REPO.glob("configs/*.yaml")), ids=lambda p: p.name)
+def test_every_committed_config_loads(path):
+    from profiler.config import load_config
+
+    cfg = load_config(path)
+    assert cfg.run.stand_ins is (path.name == "smoke.yaml")

@@ -38,8 +38,7 @@ def _smoke_config(tmp_path):
                 "seed": 13,
                 "sample_size": None,
                 "bootstrap_resamples": 100,
-                "embedder": "hashing",
-                "nli_backend": "lexical",
+                "stand_ins": True,
                 "cache_dir": str(tmp_path / "cache"),
             },
             "modules": [

@@ -16,7 +16,7 @@ removed (it is reported), but no note may be added or reworded, and the kept
 notes stay in order.
 
 The comparison covers everything except the top-level ``config`` block (it
-echoes the run config, whose removed keys go in a later item) and
+echoes the run config, whose removed keys item 15 dropped) and
 ``metric_labels`` (derived from the registry, which the revision edits). A leaf
 is a scalar, a list, or an empty dict; values are compared as canonical JSON,
 so ``1`` and ``1.0`` differ.

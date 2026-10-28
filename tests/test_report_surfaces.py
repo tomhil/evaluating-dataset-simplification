@@ -85,7 +85,7 @@ def test_m4_section_reports_entity_matching_not_alignment():
 def test_provenance_header_has_no_embedder_or_tau_line():
     """M4's SBERT alignment and tau sweep were removed in the October 2026
     metric revision, so the header no longer reports an embedder or a sweep."""
-    cfg = make_config(embedder="hashing")
+    cfg = make_config()
     text = build_report(cfg, {}, {"n_full": 10, "n_sample": 10})
     header = text.split("## Run parameters", 1)[1].split("\n## ", 1)[0]
     assert "Embedder" not in header

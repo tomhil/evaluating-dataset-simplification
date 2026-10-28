@@ -112,13 +112,10 @@ def test_pipeline_completes_on_an_awkward_corpus(name, tmp_path):
                 "run": {
                     "language": "en",
                     "sample_size": 10,
-                    "embedder": "hashing",
-                    "nli_backend": "lexical",
+                    "stand_ins": True,
                     "bootstrap_resamples": 30,
                     "cache_dir": str(tmp_path / "cache"),
                     "dataset_label": name,
-                    "tau_sweep": [0.4, 0.5],
-                    "m6_tau": 0.4,
                 },
                 "modules": [
                     "length",

@@ -2,9 +2,7 @@
   "config": {
     "bootstrap_resamples": 200,
     "dataset_label": "data/smoke.jsonl",
-    "embedder": "hashing",
     "language": "en",
-    "m6_tau": 0.5,
     "modules": [
       "length",
       "abstractiveness",
@@ -12,17 +10,9 @@
       "alignment",
       "elaboration"
     ],
-    "nli_backend": "lexical",
-    "nli_threshold": 0.5,
     "sample_size": null,
     "seed": 13,
-    "tau_sweep": [
-      0.4,
-      0.5,
-      0.6,
-      0.7,
-      0.8
-    ]
+    "stand_ins": true
   },
   "corpus_warnings": [],
   "degenerate_pairs": [],
@@ -1344,9 +1334,9 @@
         }
       },
       "notes": [
-        "document_level SummaC uses an offline content-word stand-in (nli_backend=lexical); it is not the published metric.",
+        "document_level SummaC uses an offline content-word stand-in (run.stand_ins); it is not the published metric.",
         "qafacteval_precision/recall not computed: QAFactEval is DEFERRED (its package fails to build against the core dependencies); keys are null.",
-        "rhetorical_roles uses an offline keyword stand-in (nli_backend=lexical); it is not the published classifier.",
+        "rhetorical_roles uses an offline keyword stand-in (run.stand_ins); it is not the published classifier.",
         "rhetorical_roles uses a classifier trained on biomedical abstracts (PubMed-RCT); it is off-domain for news, Wikipedia and legal text."
       ],
       "params": {}
@@ -2079,7 +2069,7 @@
         "n": 10
       },
       "notes": [
-        "m3d_model_based uses offline stand-ins (nli_backend=lexical): SLE is a sentence-length proxy and coherence a content-word-overlap proxy. These are not the published metrics."
+        "m3d_model_based uses offline stand-ins (run.stand_ins): SLE is a sentence-length proxy and coherence a content-word-overlap proxy. These are not the published metrics."
       ],
       "params": {
         "surface_measures": [

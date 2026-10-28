@@ -99,29 +99,16 @@ def test_unique_ids_still_pass():
 # config validation: fail at load, not hours in
 
 
-@pytest.mark.parametrize(
-    "run",
-    [
-        {"embedder": "sbrt"},
-        {"nli_backend": "nly"},
-        {"device": "gpuu"},
-    ],
-)
-def test_unknown_backend_names_are_rejected_at_load(run):
-    """get_embedder raised only when M4 started -- after the full-corpus
-    M1-M3 pass, which is hours on a long-document corpus."""
+def test_unknown_device_is_rejected_at_load():
+    """A backend name used to be checked only when its model loaded -- after
+    the full-corpus M1-M3 pass, which is hours on a long-document corpus."""
     with pytest.raises(ConfigError):
-        _cfg(**run)
+        _cfg(device="gpuu")
 
 
-def test_known_backend_names_are_accepted():
-    for run in (
-        {"embedder": "sbert", "nli_backend": "nli", "device": "auto"},
-        {"embedder": "hashing", "nli_backend": "lexical", "device": "cpu"},
-        {"device": "mps"},
-        {"device": "cuda"},
-    ):
-        _cfg(**run)
+def test_known_devices_are_accepted():
+    for device in ("auto", "cpu", "mps", "cuda"):
+        _cfg(device=device)
 
 
 def test_sample_size_yaml_float_literal_is_a_config_error_not_a_typeerror():
