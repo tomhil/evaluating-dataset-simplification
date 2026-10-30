@@ -5,7 +5,6 @@ is most needed, silently drop data, or waste hours before failing.
 """
 
 import json
-import pathlib
 import warnings
 
 import numpy as np
@@ -28,7 +27,8 @@ def _cfg(**run):
 
 
 def test_histogram_survives_values_equal_only_to_float_rounding():
-    """The crash that killed a run at M6, after M1-M5 had completed.
+    """The crash that killed a run at M6 (removed in the October 2026 metric
+    revision), after M1-M5 had completed.
 
     ``hi <= lo`` does not catch min=0.4999999999999999 / max=0.5000000000000001:
     the range is positive but 2.2e-16 wide, and numpy cannot lay 20
@@ -72,8 +72,9 @@ def test_histogram_still_bins_normal_data():
 
 
 def test_duplicate_pair_ids_are_rejected():
-    """M4 keys its similarity matrices by pair id, so a collision profiles one
-    document twice and drops the other -- and the parquet collapses to one row.
+    """Modules key per-pair state by pair id (M4's sentence lists for M5, for
+    one), so a collision profiles one document twice and drops the other --
+    and the parquet collapses to one row.
     """
     pairs = [
         Pair(id="dup", source="A cat sat on the mat.", target="Cat sat."),
@@ -98,29 +99,16 @@ def test_unique_ids_still_pass():
 # config validation: fail at load, not hours in
 
 
-@pytest.mark.parametrize(
-    "run",
-    [
-        {"embedder": "sbrt"},
-        {"nli_backend": "nly"},
-        {"device": "gpuu"},
-    ],
-)
-def test_unknown_backend_names_are_rejected_at_load(run):
-    """get_embedder raised only when M4 started -- after the full-corpus
-    M1-M3 pass, which is hours on a long-document corpus."""
+def test_unknown_device_is_rejected_at_load():
+    """A backend name used to be checked only when its model loaded -- after
+    the full-corpus M1-M3 pass, which is hours on a long-document corpus."""
     with pytest.raises(ConfigError):
-        _cfg(**run)
+        _cfg(device="gpuu")
 
 
-def test_known_backend_names_are_accepted():
-    for run in (
-        {"embedder": "sbert", "nli_backend": "nli", "device": "auto"},
-        {"embedder": "hashing", "nli_backend": "lexical", "device": "cpu"},
-        {"device": "mps"},
-        {"device": "cuda"},
-    ):
-        _cfg(**run)
+def test_known_devices_are_accepted():
+    for device in ("auto", "cpu", "mps", "cuda"):
+        _cfg(device=device)
 
 
 def test_sample_size_yaml_float_literal_is_a_config_error_not_a_typeerror():
@@ -160,54 +148,6 @@ def test_get_processor_refuses_a_language_it_cannot_handle():
 
 
 # --------------------------------------------------------------------------
-# report caveats
-
-
-def test_total_scorer_disagreement_produces_a_caveat():
-    """`(v.get("label_agreement") or 1.0) < 0.8` turned 0.0 into 1.0, so the
-    worst possible disagreement -- the case the caveat exists for -- was the
-    one case that produced no caveat, while 0.5 produced one."""
-    from profiler.report import _caveats
-
-    def caveats_for(agreement):
-        res = {
-            "elaboration": type(
-                "R",
-                (),
-                {
-                    "corpus": {"pairwise_agreement": {"a|b": {"label_agreement": agreement}}},
-                    "params": {},
-                    "notes": [],
-                    "per_pair": [],
-                },
-            )()
-        }
-        return _caveats(_cfg(language="en"), res, {})
-
-    assert "agreement" in caveats_for(0.0).lower(), "total disagreement was silent"
-    assert "agreement" in caveats_for(0.5).lower()
-    assert "agreement" not in caveats_for(0.95).lower()
-
-
-def test_missing_agreement_value_does_not_trigger_the_caveat():
-    from profiler.report import _caveats
-
-    res = {
-        "elaboration": type(
-            "R",
-            (),
-            {
-                "corpus": {"pairwise_agreement": {"a|b": {}}},
-                "params": {},
-                "notes": [],
-                "per_pair": [],
-            },
-        )()
-    }
-    assert "agreement" not in _caveats(_cfg(language="en"), res, {}).lower()
-
-
-# --------------------------------------------------------------------------
 # determinism: no exception text in metrics.json
 
 
@@ -233,30 +173,6 @@ def test_optional_scorer_failure_note_carries_no_machine_specific_text():
 
 # --------------------------------------------------------------------------
 # plots must not draw an undefined value as zero
-
-
-def test_undefined_m3c_component_is_not_plotted_as_a_zero_bar():
-    """`mean or 0.0` mapped None (measure had no data -- SMOG under three
-    sentences, MTLD on short text) onto the same bar as a genuine 0.0, so the
-    figure asserted 'this did not change' for something not computed."""
-    import matplotlib
-
-    matplotlib.use("Agg")
-    from profiler import plots as pl
-
-    decomp = {
-        "fkgl": {
-            "attributable_to_rewriting": {"mean": -1.5},
-            "length_artifact": {"mean": 0.3},
-        },
-        "smog": {
-            "attributable_to_rewriting": {"mean": None},
-            "length_artifact": {"mean": None},
-        },
-    }
-    measures = pl._decomp_measures(decomp)
-    assert "fkgl" in measures
-    assert "smog" not in measures, "an undefined measure was kept for plotting"
 
 
 def test_hist_from_dict_ignores_a_missing_histogram():
@@ -327,27 +243,3 @@ def test_a_truncated_cache_entry_is_a_miss_not_a_crash(tmp_path):
     # And the entry is repairable by the next write.
     c.put_json("k", {"a": 2})
     assert c.get_json("k") == {"a": 2}
-
-
-def test_deletion_overlay_with_only_one_side_still_writes_a_plot(tmp_path):
-    """Drives the function that had the bug.
-
-    The guard in _deletion_overlays skips only when *both* histograms are
-    missing, so one-sided data reaches _hist_from_dict -- which dereferenced
-    None. The previous test called _hist_from_dict(None) directly and asserted
-    nothing, so it could not see whether the caller survived.
-    """
-    import matplotlib
-
-    matplotlib.use("Agg")
-    from profiler import plots as pl
-    from profiler.stats import histogram
-
-    hist = histogram([0.1, 0.2, 0.3, 0.4], bins=4)
-    written = pl._deletion_overlays(
-        {"overlays": {"feat": {"deleted": hist, "retained": None}}}, tmp_path
-    )
-    assert written, "no plot written for one-sided overlay data"
-    assert all(pathlib.Path(w).exists() for w in written)
-
-

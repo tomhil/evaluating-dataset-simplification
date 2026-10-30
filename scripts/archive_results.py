@@ -4,7 +4,7 @@
     python scripts/archive_results.py [--runs runs/] [--out results/]
 
 ``runs/`` is gitignored and each run directory is ~1.3MB (per-pair parquet,
-plots, annotation CSV). This distils the part worth keeping -- every
+plots). This distils the part worth keeping -- every
 corpus-level statistic, the parameters that produced it, and provenance -- into
 one small JSON per corpus that is committed alongside the code.
 

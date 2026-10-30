@@ -26,8 +26,7 @@ tqdm>=4.60
 spacy>=3.7
 # python -m spacy download en_core_web_sm
 
-# Alignment / elaboration (M4, M5; model download required)
-sentence-transformers>=2.2
+# Model-based metrics (M3d, M5, M8; model download required)
 transformers>=4.35
 torch>=2.0
 

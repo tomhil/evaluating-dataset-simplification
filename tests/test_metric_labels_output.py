@@ -9,7 +9,7 @@ import pytest
 import yaml
 
 from profiler.config import parse_config
-from profiler.metric_registry import ALLOWED_PAPER_URLS, label_for, metric_paths
+from profiler.metric_registry import ALLOWED_PAPER_URLS, is_retired, label_for, metric_paths
 from profiler.run import run
 
 REPO = Path(__file__).resolve().parents[1]
@@ -42,15 +42,19 @@ def test_label_entry_shape(metrics):
         "evidence": "introduced",
         "module": "M3",
     }
-    tau = metrics["metric_labels"]["alignment.by_tau.0.40.source_coverage"]
-    assert tau["tasks"] == [] and tau["evidence"] == "project-specific"
+    zipf = metrics["metric_labels"]["readability.m3b_length_invariant.mean_zipf"]
+    assert zipf["tasks"] == [] and zipf["evidence"] == "project-specific"
+    # Retired keys the run still emits (until Phase C) carry no label.
+    assert not [k for k in metrics["metric_labels"] if is_retired(k)]
     for entry in metrics["metric_labels"].values():
         assert set(entry["papers"] + entry["contested_by"]) <= ALLOWED_PAPER_URLS
 
 
 def test_existing_top_level_blocks_unchanged(metrics):
     for key in BASELINE:
-        if key in ("config", "modules"):  # modules: see test_no_regression
+        # modules: see test_no_regression. metric_labels follows the registry,
+        # which the 2026-10 revision edits; the tests above check it.
+        if key in ("config", "modules", "metric_labels"):
             continue
         assert metrics[key] == BASELINE[key], key
 
@@ -66,9 +70,13 @@ def test_report_ends_with_metric_labels_section(tmp_path):
     assert "not this corpus" in section
     assert "| `readability.m3a_surface.fkgl` | DS, PLS |" in section
     assert "contested: [Tanprasert & Kauchak 2021]" in section
-    # A τ-parametrised metric is listed once, by its registry key.
-    assert section.count("alignment.by_tau.*.source_coverage") == 1
-    assert "| `abstractiveness.rouge1_recall` | project-specific | — |" in section
+    # Retired by the October 2026 revision: no row, even while still emitted.
+    assert "by_tau" not in section
+    assert "novel_content_1gram" not in section
+    assert "rouge1_recall" not in section
+    # Kept project-specific (PRD Section 5.5), and the relabelled DS entry.
+    assert "| `readability.m3b_length_invariant.mean_zipf` | project-specific | [ASSET 2020]" in section
+    assert "| `readability.m3b_length_invariant.syllables_per_word` | DS | [Tanprasert & Kauchak 2021]" in section
 
 
 def test_stand_in_values_are_marked_in_metric_labels(metrics):

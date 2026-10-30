@@ -3,7 +3,7 @@
 Two implementations share one interface:
 
 * ``SpacyProcessor`` wraps ``en_core_web_sm`` and exposes the full feature set
-  (dependency distance, parse-tree depth, POS, passive/subordinate detection).
+  (parse-tree depth, POS, passive detection).
 * ``SimpleProcessor`` is a dependency-free regex fallback used when spaCy is
   unavailable and injected directly in tests. It provides tokenization,
   sentence splitting and stopword-based content-word detection, but reports
@@ -73,10 +73,11 @@ class Processor(Protocol):
         against :meth:`words` on 10,217 sentences from PLOS, Cochrane,
         CNN/DailyMail and XSum: zero mismatches.
 
-        This exists because ``_ext_oracle_k`` and ``_lead_k`` call it once per
-        *source sentence*, which is a cache miss per sentence: profiling ten
-        PLOS articles showed 2,844 full pipeline runs taking 8.3 of the
-        oracle's 8.6 seconds.
+        This exists because callers that tokenise once per *sentence* (M3's
+        WordRank; formerly the M3c controls ``_ext_oracle_k`` and ``_lead_k``,
+        removed in the October 2026 metric revision) miss the cache every
+        time: profiling ten PLOS articles showed 2,844 full pipeline runs
+        taking 8.3 of the oracle's 8.6 seconds.
         """
         ...
 
@@ -188,15 +189,16 @@ class SpacyProcessor:
         # holds spaCy Doc objects, which are large on long sources, and
         # get_processor is itself module-level lru_cached -- so without
         # release() the working set survives for the process lifetime, through
-        # M4-M6, long after M3 has finished with it. run.py calls release()
+        # M4, M5 and M8, long after M3 has finished with it. run.py calls release()
         # between modules.
         # One cache, shared by the document-level accessors and
         # analyze_sentence. Splitting it into separate document and sentence
         # caches was tried on the hypothesis that long sources evict their own
         # Doc: measured on 15 PLOS articles (6,800 words each) it made no
         # difference (36.4s split vs 36.0s shared) and lowered the document hit
-        # rate, because _lead_k and _ext_oracle_k call words() per *sentence*,
-        # so sentence-level lookups land in the document cache either way. On
+        # rate, because the M3c controls (since removed) called words() per
+        # *sentence*, so sentence-level lookups land in the document cache
+        # either way. On
         # D-Wikipedia the split was slower (108s vs 92s). Keeping it simple.
         self._doc = functools.lru_cache(maxsize=_DOC_CACHE)(self._parse)
         # Entities per text, kept across release(): M7 (full corpus) and M4's
@@ -252,7 +254,7 @@ class SpacyProcessor:
         """Named entities as ``(lowercased text, start token index)``.
 
         NER is excluded from the main pipeline (``disable=["ner"]``) because
-        M1-M6 never needed it and it is not free. M7's seven entity features do,
+        M1-M5 never needed it and it is not free. M7's seven entity features do,
         so a second pipeline with *only* the NER components is built on first
         use and cached. M4's entity matching uses it too. Results are cached per
         text and survive release(), so M4 reuses what M7 already extracted, and
@@ -332,7 +334,7 @@ class SpacyProcessor:
 def get_processor(language: str = "en", prefer_spacy: bool = True) -> Processor:
     """Return a processor for ``language``.
 
-    Attempts spaCy first (required for the syntactic M3b features); falls back to
+    Attempts spaCy first (required for M7's syntactic features); falls back to
     :class:`SimpleProcessor` with a warning if the model cannot be loaded. Cached
     so a single model is shared across modules within a run.
 
@@ -360,10 +362,8 @@ def get_processor(language: str = "en", prefer_spacy: bool = True) -> Processor:
                 "SimpleProcessor splits sentences on every period, so decimals and "
                 "abbreviations ('OR 0.61, 95% CI 0.46 to 0.79') each become several "
                 "sentences -- the exact behaviour _normalise_for_textstat exists to "
-                "undo. All six M3a formulas and M1's sentence counts will read "
-                "easier than the text is. "
-                "Syntactic M3b features (dependency distance, parse depth, "
-                "passive/subordinate rates) will be reported as null.",
+                "undo. The M3a formulas and M1's sentence counts will read "
+                "easier than the text is.",
                 RuntimeWarning,
                 stacklevel=2,
             )

@@ -2,10 +2,10 @@
 incomplete fixes from earlier in this loop.
 
 The SMOG guard checked the wrong sentence count, so the sentinel it was written
-to stop still reached metrics.json. The `_corpus_share` cancellation guard was
-three orders of magnitude too tight to do what its docstring claimed. And the
-document-stratified annotation draw silently invalidated the estimator that
-consumes it.
+to stop still reached metrics.json. (The `_corpus_share` cancellation-guard
+tests went with the M3c decomposition in the October 2026 metric revision, and
+the tests of the annotation-corrected rate and of M5's upper-bound caveat went
+with the annotation sample and the not-entailed rate in the same revision.)
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ import numpy as np
 import pytest
 
 from profiler import readability as rd
-from profiler.modules.m3_readability import _corpus_share
 from profiler.stats import histogram, summarize
 
 
@@ -58,48 +57,6 @@ def test_smog_guard_holds_without_an_explicit_segmentation():
 
 
 # --------------------------------------------------------------------------
-# _corpus_share: the guard must fire on a directionless corpus
-
-
-def _rows(totals, attributable=1.0):
-    return [{"attributable_fkgl": attributable, "total_fkgl": t} for t in totals]
-
-
-def test_corpus_share_is_none_when_the_corpus_has_no_net_direction():
-    """1000 pairs of magnitude ~1 that nearly cancel.
-
-    `max(1e-6 * scale, 1e-6)` gives a threshold of 1e-3 here, so a net of 0.05
-    passed and published num/0.05 as the bold headline in report.md -- the
-    per-pair instability relocated to the corpus level, which is what this
-    function exists to remove. Measured sign-coherence on the real Cochrane run
-    ranges from 0.031 (mtld) to 0.861 (mean_zipf), so a 1%-of-magnitude floor
-    nulls nothing legitimate.
-    """
-    totals = [1.0] * 500 + [-1.0] * 500 + [0.05]
-    den, scale = sum(totals), sum(abs(t) for t in totals)
-    assert abs(den) == pytest.approx(0.05)
-    assert abs(den) / scale < 1e-4, "fixture is not actually directionless"
-    assert _corpus_share(_rows(totals), "fkgl") is None
-
-
-def test_corpus_share_survives_a_real_sign_coherence_ratio():
-    """mtld's 0.031 on Cochrane is the tightest real case; it must not null."""
-    n = 1000
-    totals = [1.0] * int(n * 0.5155) + [-1.0] * (n - int(n * 0.5155))
-    ratio = abs(sum(totals)) / sum(abs(t) for t in totals)
-    assert 0.02 < ratio < 0.05, ratio
-    assert _corpus_share(_rows(totals), "fkgl") is not None
-
-
-def test_corpus_share_still_returns_the_ratio_of_sums():
-    rows = [
-        {"attributable_fkgl": 1.0, "total_fkgl": 2.0},
-        {"attributable_fkgl": 3.0, "total_fkgl": 6.0},
-    ]
-    assert _corpus_share(rows, "fkgl") == pytest.approx(0.5)
-
-
-# --------------------------------------------------------------------------
 # non-finite values must never reach metrics.json
 
 
@@ -137,55 +94,3 @@ def test_finite_values_are_untouched():
     h = histogram([i / 10 for i in range(20)], bins=5)
     assert sum(h["counts"]) == 20
     assert summarize([1.0, 2.0, 3.0], seed=13, resamples=50).n == 3
-
-
-# --------------------------------------------------------------------------
-# the annotation sample and the estimator that consumes it must agree
-
-
-def test_corrected_rate_uses_the_same_unit_of_analysis_as_the_sample():
-    """The stratified draw estimates P(genuine | not-entailed) per *document*.
-
-    Multiplying it by a sentence-pooled auto_rate mixes units: round-robin gives
-    a document with one not-entailed sentence the same weight as one with 700,
-    so heavy contributors are under-weighted by orders of magnitude and the
-    product is biased. The pooled rate cannot be paired with a stratified
-    sample, so the correction now reads the document-averaged rate -- the same
-    choice M6 makes with _stratified_effect and M5 already offers as
-    not_entailed_rate_by_document.
-    """
-    from profiler.__main__ import _corrected_rate
-
-    corpus = {
-        "not_entailed_rate": 0.80,  # pooled over sentences, dominated by one doc
-        "not_entailed_rate_by_document": {"mean": 0.20},
-    }
-    got = _corrected_rate(corpus, genuine_share=0.5)
-    assert got == pytest.approx(0.10), "used the pooled rate, not the document mean"
-
-
-def test_corrected_rate_is_none_without_a_document_averaged_rate():
-    from profiler.__main__ import _corrected_rate
-
-    assert _corrected_rate({"not_entailed_rate": 0.8}, genuine_share=0.5) is None
-
-
-# --------------------------------------------------------------------------
-# the caveat must not describe a model that never ran
-
-
-def test_upper_bound_caveat_does_not_claim_entailment_in_heuristic_mode(ctx):
-    from profiler.modules import m4_alignment, m5_elaboration
-    from profiler.types import Pair
-
-    src = "The treatment reduced symptoms. Patients improved over eight weeks."
-    tgt = "The medicine helped. People got better in two months."
-    pairs = [Pair(id=f"p{i}", source=src, target=tgt) for i in range(3)]
-
-    heuristic = m5_elaboration.compute
-    ctx.config.run.heuristic_only = True
-    m4_alignment.compute(pairs, ctx)
-    notes = " ".join(heuristic(pairs, ctx).notes)
-
-    assert "upper bound" in notes.lower(), "the caveat itself must stay"
-    assert "entailment model" not in notes.lower(), notes

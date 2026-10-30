@@ -5,11 +5,10 @@ Every model here follows the ``optional_scorers()`` pattern: imported lazily,
 skipped with a note when it cannot load, recorded under a ``*_run`` key, and
 emitting ``None`` -- never zero -- for its keys when skipped.
 
-Under the offline smoke settings (``nli_backend: lexical``, or
-``heuristic_only``) each metric uses a deterministic stand-in instead of its
-model. Stand-in values exist to exercise the plumbing offline; they are flagged
-in ``notes`` and in the ``*_run`` record (``"<name>:stand-in"``) and are not the
-published metric.
+Under ``run.stand_ins: true`` (the offline smoke setting) each metric uses a
+deterministic stand-in instead of its model. Stand-in values exist to exercise
+the plumbing offline; they are flagged in ``notes`` and in the ``*_run`` record
+(``"<name>:stand-in"``) and are not the published metric.
 """
 
 from __future__ import annotations
@@ -27,15 +26,15 @@ NSP_MODEL = "bert-base-uncased"
 
 
 def use_stand_ins(config) -> bool:
-    """The existing offline smoke settings select the stand-ins."""
+    """``run.stand_ins`` selects the offline stand-ins."""
 
-    return config.run.nli_backend == "lexical" or bool(config.run.heuristic_only)
+    return bool(config.run.stand_ins)
 
 
 def stand_in_reason(config) -> str:
-    """Which smoke setting selected the stand-ins, for the notes."""
+    """The setting that selected the stand-ins, for the notes."""
 
-    return "heuristic_only" if config.run.heuristic_only else "nli_backend=lexical"
+    return "run.stand_ins"
 
 
 def disabled_note(what: str) -> str:
@@ -75,7 +74,7 @@ def load_sle(device: str = "auto"):  # pragma: no cover - model download
     import torch
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-    from .embeddings import resolve_device
+    from .devices import resolve_device
 
     dev = resolve_device(device)
     model = AutoModelForSequenceClassification.from_pretrained(SLE_CHECKPOINT, num_labels=1).to(dev).eval()
@@ -108,7 +107,7 @@ def load_nsp(device: str = "auto"):  # pragma: no cover - model download
     import torch
     from transformers import BertForNextSentencePrediction, BertTokenizer
 
-    from .embeddings import resolve_device
+    from .devices import resolve_device
 
     dev = resolve_device(device)
     tok = BertTokenizer.from_pretrained(NSP_MODEL)
@@ -173,7 +172,7 @@ def load_summac_doc(device: str = "auto"):  # noqa: ARG001 - see below
 
 def summac_doc_stand_in(original: str, generated: str) -> float | None:
     """Offline stand-in: mean share of each generated sentence's content words
-    found in the original (the lexical_grounding idea at document level)."""
+    found in the original (content-word grounding at document level)."""
 
     from .nlp import SimpleProcessor
 
@@ -202,7 +201,7 @@ def load_rct(device: str = "auto"):  # pragma: no cover - model download
     import torch
     from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-    from .embeddings import resolve_device
+    from .devices import resolve_device
 
     dev = resolve_device(device)
     tok = AutoTokenizer.from_pretrained(RCT_TOKENIZER)

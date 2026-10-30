@@ -33,28 +33,35 @@ def _run(mod, pairs, ctx):
 
 
 def test_identity_pair(ctx):
-    """Identity: compression 1.0, novelty 0, coverage 1.0, not-entailed 0."""
+    """Identity: compression 1.0, novelty 0, coverage 1.0, document-level support 1.0."""
     p = Pair("id", IDENTITY_TEXT, IDENTITY_TEXT)
     m1 = _run(m1_length, [p], ctx).per_pair[0]
     assert m1["compression_ratio"] == 1.0
     assert m1["sentence_ratio"] == 1.0
-    assert m1["expansion"] is False
+    assert "expansion" not in m1
 
     m2 = _run(m2_abstractiveness, [p], ctx).per_pair[0]
     assert m2["novel_1gram"] == 0.0
     assert m2["novel_2gram"] == 0.0
     assert m2["coverage"] == 1.0
-    assert m2["content_type_overlap"] == 1.0
+    assert m2["levenshtein_similarity"] == 1.0
 
-    # M5 needs M4's alignment in shared state.
+    # M5 needs M4's sentence lists in shared state. No sentence-level scorer is
+    # requested offline, so M5 reports its document level (here the offline
+    # SummaC stand-in, which is exact on an identity pair) and nothing per scorer.
     _run(m4_alignment, [p], ctx)
     m5 = _run(m5_elaboration, [p], ctx).corpus
-    assert m5["per_scorer"]["lexical_grounding"]["not_entailed_rate"]["rate"] == 0.0
+    assert m5["n_target_sentences"] == 3
+    assert "per_scorer" not in m5 and "scorers_run" not in m5
+    dl = m5["document_level"]
+    assert dl["scorers_run"] == ["summac:stand-in"]
+    assert dl["summac_precision"]["median"] == 1.0
+    assert dl["summac_recall"]["median"] == 1.0
 
 
 def test_pure_truncation_pair(ctx):
-    """Pure truncation: target is leading source sentences verbatim, so the
-    readability change is a length artifact and share_attributable ~ 0."""
+    """Pure truncation: target is leading source sentences verbatim, so
+    nothing in it is novel and the source covers all of it."""
     target = (
         "The scientists discovered a new species of frog in the rainforest. "
         "The frog has bright blue skin and lives near streams."
@@ -64,16 +71,16 @@ def test_pure_truncation_pair(ctx):
     assert m2["coverage"] == 1.0  # target fully copied from source
     assert m2["novel_1gram"] == 0.0
 
+    # M3 no longer computes the M3c decomposition (October 2026 metric
+    # revision), which this pair used to exercise: no control or share column.
     row = _run(m3_readability, [p], ctx).per_pair[0]
-    share = row["share_attributable_fkgl"]
-    # EXT-ORACLE reconstructs the copied sentences, so nothing is attributable
-    # to rewriting: share is ~0 (or None if total change was ~0).
-    assert share is None or abs(share) < 0.15
+    removed = ("lead_", "oracle_", "total_", "attributable_", "artifact_", "share_attributable_")
+    assert not [k for k in row if k.startswith(removed)]
 
 
 def test_pure_paraphrase_pair(ctx):
     """Pure paraphrase: compression ~1, high n-gram novelty, content preserved
-    (source fully aligned)."""
+    (most target words come from source fragments)."""
     source = (
         "The scientists discovered a new species of frog in the rainforest. "
         "The frog has bright blue skin and lives near clear streams."
@@ -89,13 +96,24 @@ def test_pure_paraphrase_pair(ctx):
     m2 = _run(m2_abstractiveness, [p], ctx).per_pair[0]
     # Reordering/rewording drives high n-gram novelty despite shared vocabulary.
     assert m2["novel_2gram"] > 0.5
-    # Content words are preserved.
-    assert m2["content_type_overlap"] > 0.8
+    # Shared vocabulary: unigram novelty stays well below bigram novelty.
+    assert m2["novel_1gram"] < 0.3
+
+    # Content preserved: most target words lie in extractive fragments of the
+    # source (Grusky coverage; measured 0.773). M4's sentence-alignment
+    # coverage, which this test used to read, was removed in the October 2026
+    # metric revision.
+    assert m2["coverage"] > 0.7
 
     m4 = _run(m4_alignment, [p], ctx)
-    # Every source sentence aligns to a target sentence (content preserved).
-    cov = m4.corpus["by_tau"]["0.40"]["source_coverage"]["mean"]
-    assert cov == 1.0
+    # M4 reports only entity matching (null here: SimpleProcessor has no NER)
+    # and hands M5 both sentences of each side.
+    assert set(m4.corpus) == {"n", "entity_preservation"}
+    assert m4.per_pair == [
+        {"id": "id", "entity_precision": None, "entity_recall": None, "entity_f1": None}
+    ]
+    assert len(ctx.shared["alignment"]["src_sents"]["id"]) == 2
+    assert len(ctx.shared["alignment"]["tgt_sents"]["id"]) == 2
 
 
 def test_char_compression_ratio(ctx):
@@ -121,10 +139,9 @@ def test_abstractivity(ctx):
 
 
 def test_edit_features(ctx):
-    """EASSE edit features: identity is Levenshtein 1, all copied, nothing added or deleted."""
+    """EASSE edit features: identity is Levenshtein 1, nothing added or deleted."""
     same = _run(m2_abstractiveness, [Pair("id", IDENTITY_TEXT, IDENTITY_TEXT)], ctx).per_pair[0]
     assert same["levenshtein_similarity"] == 1.0
-    assert same["exact_copies"] == 1.0
     assert same["additions_proportion"] == 0.0
     assert same["deletions_proportion"] == 0.0
 
@@ -134,7 +151,6 @@ def test_edit_features(ctx):
         "The frog has bright blue skin and lives near streams."
     )
     trunc = _run(m2_abstractiveness, [Pair("id", SOURCE_LONG, target)], ctx).per_pair[0]
-    assert trunc["exact_copies"] == 2 / 5
     assert trunc["additions_proportion"] == 0.0
     assert 0.0 < trunc["deletions_proportion"] < 1.0
 

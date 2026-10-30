@@ -49,20 +49,3 @@ def test_degenerate_histogram():
     h = stats.histogram([3.0, 3.0, 3.0], bins=20)
     assert h["n"] == 3
     assert sum(h["counts"]) == 3
-
-
-def test_bimodality_coefficient_separates_bimodal_from_unimodal():
-    """The old dip_statistic passed a bimodal-vs-uniform test and still failed.
-
-    Comparing against uniform was the one case it got right; it ranked a
-    unimodal lognormal above a genuine two-mode mixture. So this compares
-    against a unimodal shape, not a flat one.
-    """
-    import numpy as np
-
-    rng = np.random.default_rng(7)
-    bimodal = np.concatenate([rng.normal(0.2, 0.05, 800), rng.normal(0.8, 0.05, 800)])
-    unimodal = rng.normal(0.5, 0.12, 1600)
-    assert stats.bimodality_coefficient(bimodal) > stats.bimodality_coefficient(unimodal)
-    assert stats.bimodality_coefficient(bimodal) > 0.555
-    assert stats.bimodality_coefficient(unimodal) < 0.555

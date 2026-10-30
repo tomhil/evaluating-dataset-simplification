@@ -46,7 +46,6 @@ def _third_party_imports() -> set[str]:
     # Import name differs from the distribution name.
     alias = {
         "yaml": "pyyaml",
-        "sentence_transformers": "sentence-transformers",
         "sklearn": "scikit-learn",
         "bert_score": "bert-score",
     }
@@ -91,3 +90,21 @@ def test_requirements_and_pyproject_do_not_diverge_on_core_deps():
     for core in ("numpy", "scipy", "pandas", "pyarrow", "textstat", "wordfreq", "tqdm"):
         assert core in req, f"{core} missing from requirements.txt"
         assert core in pyproj, f"{core} missing from pyproject.toml"
+
+
+def test_sbert_embedder_and_its_dependency_are_gone():
+    """Gate G5 (October 2026 metric revision): the SBERT embedder went with
+    M4's alignment and M6, so nothing imports sentence-transformers and
+    neither dependency file declares it."""
+    assert "sentence-transformers" not in _third_party_imports()
+    assert "sentence-transformers" not in _declared()
+    assert "sentence-transformers" not in (ROOT / "pyproject.toml").read_text()
+    assert not (ROOT / "profiler" / "embeddings.py").exists()
+
+
+def test_resolve_device_survives_in_its_own_module():
+    from profiler.devices import resolve_device
+
+    assert resolve_device("cpu") == "cpu"
+    assert resolve_device("mps") == "mps"
+    assert resolve_device("auto") in {"cpu", "cuda", "mps"}

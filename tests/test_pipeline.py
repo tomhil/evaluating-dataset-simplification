@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from profiler.config import parse_config
 from profiler.run import run
 
@@ -36,8 +38,7 @@ def _smoke_config(tmp_path):
                 "seed": 13,
                 "sample_size": None,
                 "bootstrap_resamples": 100,
-                "embedder": "hashing",
-                "nli_backend": "lexical",
+                "stand_ins": True,
                 "cache_dir": str(tmp_path / "cache"),
             },
             "modules": [
@@ -46,7 +47,6 @@ def _smoke_config(tmp_path):
                 "readability",
                 "alignment",
                 "elaboration",
-                "deletion_profile",
             ],
         }
     )
@@ -54,8 +54,10 @@ def _smoke_config(tmp_path):
 
 def test_all_outputs_written(tmp_path):
     out = run(_smoke_config(tmp_path), output_dir=tmp_path / "run1")
-    for name in ["metrics.json", "per_pair.parquet", "report.md", "annotation_sample.csv"]:
+    for name in ["metrics.json", "per_pair.parquet", "report.md"]:
         assert (out / name).exists(), f"missing {name}"
+    # The annotation sample went with the not-entailed rate (October 2026).
+    assert not (out / "annotation_sample.csv").exists()
     assert (out / "plots").is_dir()
     assert any((out / "plots").glob("*.png"))
 
@@ -74,11 +76,8 @@ def test_every_number_carries_n_and_ci(tmp_path):
     m1 = metrics["modules"]["length"]["corpus"]["compression_ratio"]
     assert "n" in m1 and "ci95" in m1 and "median" in m1
     # Module parameters are recorded.
-    # Against the config, not a literal: the point is that params records what
-    # produced the numbers, and the default sweep is free to change.
-    assert (
-        metrics["modules"]["alignment"]["params"]["tau_sweep"]
-        == _smoke_config(tmp_path).run.tau_sweep
+    assert metrics["modules"]["alignment"]["params"]["entity_preservation"].startswith(
+        "Cripwell et al. 2024 entity matching"
     )
 
 
@@ -90,3 +89,12 @@ def test_report_has_no_verdict(tmp_path):
     # Sanity: it does contain the descriptive tables and caveats.
     assert "caveats" in text
     assert "literature reference" in text
+
+
+def test_ingest_annotations_command_is_gone():
+    """Removed with the annotation sample and the not-entailed rate (October 2026)."""
+    from profiler.__main__ import main
+
+    with pytest.raises(SystemExit) as exc:
+        main(["ingest-annotations", "--run", "x", "--file", "y"])
+    assert exc.value.code == 2

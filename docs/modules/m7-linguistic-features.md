@@ -14,9 +14,11 @@ description says 37 — 33 is what the code returns.)
 Tier: **cheap** — runs on the full corpus, not the M4–M8 sample, and depends on
 no other module.
 
-**Why it was added.** Our own length-invariant family (M3b) has nine features,
-and `RESULTS.md` shows they are thin where it matters: only the M4 split rate
-and the Zipf delta track the task labels. This set is wider, and one part of it
+**Why it was added.** When M7 was added, our own length-invariant family (M3b)
+had nine features, and `RESULTS.md` showed they were thin where it matters: only
+the M4 split rate and the Zipf delta tracked the task labels. (The split rate
+and most of those M3b features were removed in the October 2026 metric
+revision.) This set is wider, and one part of it
 — **entity coherence** — measures something the pipeline had no equivalent for:
 how referents are repeated and how far apart. That is a discourse-level
 property, and discourse is where document-level simplification should differ
@@ -25,7 +27,10 @@ from summarization.
 ## Metrics in this module
 
 Each name links to its full entry in [the metric reference](../metrics.md). All
-33 are project-specific labels carrying the source repository as their reference.
+33 carry the DS label: Dahan et al. (2026) list every one of them and adopt most
+of the BATS feature set (Kreutz et al. 2024), which compares simplification
+datasets on these features. The source repository stays cited as the code's
+origin.
 
 - [**Lexical features**](../metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) — nine word-level features: variety, rarity, length, word class.
 - [**Syntactic and sentence features**](../metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) — fifteen features: structure, embedding, voice, tense, reference.
@@ -36,7 +41,7 @@ Each name links to its full entry in [the metric reference](../metrics.md). All
 
 ### Sign convention — read this first
 
-Every `delta` here is **`target − source`**, matching M1–M6.
+Every `delta` here is **`target − source`**, matching M1–M5.
 
 The source project computes **`complex − simplified`**, which is the other way
 round. **Every delta in this module therefore has the opposite sign to the
@@ -45,22 +50,19 @@ here and positive there.
 
 ### This module is self-contained on purpose
 
-Five of its fields carry a value another module already publishes, and five more
+Five of its fields carry a value another module already publishes, and two more
 are near-neighbours of existing measures with *different* definitions. They are
 all computed and published here anyway, so the feature set can be read against
 the source paper without tracing fields across modules, and so M7 can be enabled
 or dropped as one unit.
 
-| M7 field | relationship to M1–M6 |
+| M7 field | relationship to M1–M5 |
 |---|---|
 | `syllables_ratio` | **same value** as M3b `syllables_per_word` |
 | `sentences_number` | **same value** as M1 `src_sents` / `tgt_sents` |
 | `flesch_reading_ease` | **same value** as M3a `fre` |
 | `flesch_kincaid_grade` | **same value** as M3a `fkgl` |
-| `lexical_richness` | type-token ratio, which is length-sensitive; M3b `mtld` is not |
 | `infrequent_words_ratio` | "unattested in any corpus"; M3b `rare_word_rate` is "outside the top 3000" |
-| `syntactic_tree_depth` | **max** over the document; M3b `mean_parse_depth` is a mean over sentences |
-| `passive_voice_ratio` | denominator is verb tokens; M3b `passive_rate` uses sentences |
 | `words_per_sentence` | not mean sentence length — see its reference entry. M1 `mean_src_sent_len` is that |
 
 **Do not read all 33 as independent signals.** Four pairs above are the same
@@ -89,7 +91,7 @@ this machine, per 1000 pairs:
 
 **NER is 47% of that** on eLife. The seven entity features are the expensive
 half of the module and the most novel part of it; the other 26 cost ~34 min per
-1000 eLife pairs. NER is not loaded at all unless M7 is active, so M1–M6 runs
+1000 eLife pairs. NER is not loaded at all unless M7 is active, so M1–M5 runs
 are unaffected — verified byte-identical. M4's entity matching also uses NER, on
 the sample; entity results are cached per text, so with M7 enabled M4 reuses
 them instead of running NER again.

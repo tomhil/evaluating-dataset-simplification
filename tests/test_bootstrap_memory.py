@@ -1,9 +1,10 @@
 """The bootstrap must not materialise a resamples x n index matrix.
 
-M5 summarises one score per target sentence and M6 one row per source sentence
-pooled across the sample, so n is sentences, not pairs. At eLife scale
-(n ~ 600,000) a single `rng.integers(0, n, size=(1000, n))` is ~4.8GB, and
-_summarize_features makes 22 such calls.
+M5 summarises one score per target sentence (and M6, removed in October 2026,
+one row per source sentence) pooled across the sample, so n is sentences, not
+pairs. At eLife scale (n ~ 600,000) a single
+`rng.integers(0, n, size=(1000, n))` is ~4.8GB, and M6's _summarize_features
+made 22 such calls.
 
 Chunking must not change any result: numpy fills a (R, n) draw in C order, so
 drawing it in row blocks continues the same stream.

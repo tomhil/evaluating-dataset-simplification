@@ -17,7 +17,7 @@ depends on no other module.
 Each name links to its full entry in [the metric reference](../metrics.md).
 
 - [**BLEU(target, source)**](../metrics.md#pair_similaritybleu--bleutarget-source) (DS) — corpus-level n-gram overlap of the target with its source; collapses under heavy compression.
-- [**BERTScore F1**](../metrics.md#pair_similaritybertscore_f1--bertscore-f1) (project-specific) — embedding similarity of the pair.
+- [**BERTScore F1**](../metrics.md#pair_similaritybertscore_f1--bertscore-f1) (DS) — embedding similarity of the pair.
 - [**BLANC**](../metrics.md#pair_similarityblanc--blanc) (SUM) — how much the target helps a language model understand the source. Deferred; always null.
 - [**SUPERT**](../metrics.md#pair_similaritysupert--supert) (SUM) — similarity to a pseudo-reference of salient source sentences. Deferred; always null.
 - [**SummaQA**](../metrics.md#pair_similaritysummaqa--summaqa) (SUM) — cloze questions from the source, answered from the target. Deferred; always null.
@@ -31,12 +31,13 @@ measures both things BLEU and BERTScore measure:
 
 | M8 metric | already covered by |
 |---|---|
-| `bleu` — n-gram overlap | M2 `rouge1_recall` / `rouge2_recall`, `coverage`, `density` |
-| `bertscore_f1` — embedding similarity | M4 `target_groundedness` (SBERT cosine), M5 entailment |
+| `bleu` — n-gram overlap | M2 `coverage`, `density`, novel n-grams |
+| `bertscore_f1` — embedding similarity | M5 SummaC and AlignScore |
 
-BLEU is in the same family as ROUGE; BERTScore is in the same family as M4's
-cosine alignment. They were added because the feature set was adopted whole.
-**Read them alongside M2/M4/M5, not as a second opinion on meaning
+BLEU is in the same family as ROUGE and M2's copy measures; BERTScore, like
+M5's scorers, compares the pair's meaning with a model. They were added because
+the feature set was adopted whole.
+**Read them alongside M2 and M5, not as a second opinion on meaning
 preservation.** The module says so in its own `notes`.
 
 ### Reference-free summary quality: deferred
@@ -50,8 +51,7 @@ reason. They are ready to wire in on a machine where the packages install.
 
 Three of the source project's five metrics are cross-lingual or French-only.
 They are **recorded in `params.not_applicable` with the reason** rather than
-quietly omitted, the same treatment XSum's structurally impossible 1:n split
-rate gets.
+quietly omitted.
 
 | metric | why not |
 |---|---|

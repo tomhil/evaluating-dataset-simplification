@@ -2,7 +2,7 @@
 
 `sentences`, `words` and `content_words` each ran the full spaCy pipeline. M3
 calls them repeatedly on the same document -- source and target surface scores,
-the M3b length-invariant block, and four `_readability_vector` calls -- and M3
+the M3b length-invariant block, WordRank and lexical complexity -- and M3
 runs on the full corpus, not the sample. A 400-word document costs ~30ms per
 parse; a 5,000-word PLOS article roughly twelve times that.
 """

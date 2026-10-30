@@ -1,4 +1,4 @@
-"""M3a must segment sentences the same way M1/M3b/M3c do.
+"""M3a must segment sentences the same way M1/M3b do.
 
 The surface formulas are sentence-length driven, so if ``textstat`` splits on
 punctuation that is not a sentence boundary the scores are wrong. Its splitter

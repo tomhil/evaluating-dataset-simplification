@@ -74,6 +74,7 @@ def test_english_variants_are_accepted():
         assert cfg.active_modules() == ["length"]
 
 
-def test_bad_tau_raises():
-    with pytest.raises(ConfigError):
+def test_removed_tau_sweep_raises():
+    # tau_sweep was removed in the October 2026 metric revision; any value fails.
+    with pytest.raises(ConfigError, match="October 2026"):
         parse_config(_base(run={"seed": 1, "tau_sweep": [1.5]}))

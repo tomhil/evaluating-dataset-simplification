@@ -29,8 +29,8 @@ Pair = tuple[str, str, str]  # id, source, target
 # stores them beside id/source/target, and the jsonl adapter passes them into
 # Pair.meta.
 
-# Matches the profiler's default run.seed, so the corpus draw and the M4-M6
-# sample draw are reproducible from the same number.
+# Matches the profiler's default run.seed, so the corpus draw and the sample
+# draw (M3d, M4, M5, M8) are reproducible from the same number.
 SEED = 13
 # Row groups to spread a parquet draw across (see _parquet_rows).
 STRATA = 5
@@ -581,8 +581,8 @@ def fetch_ukabs(limit: int) -> Path:
     its readability is checked. See docs/DATASETS.md.
 
     Documents are very long (~151k characters for the first judgment), so this
-    is not a candidate for the full M4-M6 treatment at any sample size the
-    other corpora use.
+    is not a candidate for the sampled modules (M3d, M4, M5, M8) at any sample
+    size the other corpora use.
     """
     urls = [f"{UKABS}/train/0000.parquet"]
     return _write("ukabs", "train", limit,

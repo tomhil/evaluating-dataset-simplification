@@ -1,5 +1,7 @@
 # Results — cross-corpus task profile
 
+> **2026-10-27:** this page quotes metrics removed from the profiler on 2026-10-27 (listed under "Removed" in [the metric reference](docs/metrics.md#literature-status-at-a-glance)). The vocabulary result's two measures, `mean_zipf` and `rare_word_rate`, are kept. The narrative has not been rewritten yet.
+
 Thirteen published corpora profiled end to end with the pipeline in this repo,
 under **identical run parameters**, so their numbers are directly comparable. A
 fourteenth, UK-Abs, is profiled M1-M3 only and carries no task label. A
@@ -424,8 +426,9 @@ SUM is generic summarization, PLS plain-language (lay) summarization and DS docu
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | *dataset task* | PLS | PLS | PLS | PLS | DS | DS | DS | DS | SUM | SUM | SUM | SUM | SUM |
 | [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.584 | 0.0311 | 0.0408 | 0.242 | 0.642 | 0.687 | 0.957 | 0.649 | 0.0770 | 0.0694 | 0.0769 | 0.123 | 0.0828 |
-| [Coverage](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ more copied | 0.704 | 0.913 | 0.826 | 0.500 | 0.750 | 0.875 | 0.700 | 0.922 | 0.881 | 0.650 | 0.903 | 0.906 | 0.722 |
-| [Density](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ longer copied spans | 1.95 | 2.48 | 1.46 | 0.718 | 2.70 | 6.82 | 2.91 | 8.18 | 2.65 | 0.957 | 3.24 | 5.42 | 1.33 |
+| [Sentence split ratio](docs/metrics.md#lengthsentence_ratio--sentence-split-ratio) ↑ more target sentences per source sentence | 0.667 | 0.0274 | 0.0343 | 0.500 | 1.00 | 1.00 | 1.00 | 0.852 | 0.109 | 0.0667 | 0.0822 | 0.125 | 0.0870 |
+| [Coverage](docs/metrics.md#abstractivenesscoverage--coverage) ↑ more copied | 0.704 | 0.913 | 0.826 | 0.500 | 0.750 | 0.875 | 0.700 | 0.922 | 0.881 | 0.650 | 0.903 | 0.906 | 0.722 |
+| [Density](docs/metrics.md#abstractivenessdensity--density) ↑ longer copied spans | 1.95 | 2.48 | 1.46 | 0.718 | 2.70 | 6.82 | 2.91 | 8.18 | 2.65 | 0.957 | 3.24 | 5.42 | 1.33 |
 | [Abstractivity](docs/metrics.md#abstractivenessabstractivity_p1--abstractivity) ↑ more abstractive | 0.296 | 0.0870 | 0.174 | 0.500 | 0.250 | 0.125 | 0.300 | 0.0785 | 0.119 | 0.350 | 0.0966 | 0.0938 | 0.278 |
 | [Redundancy](docs/metrics.md#abstractivenessredundancy--redundancy) ↑ more repetitive target | 0.116 | 0.120 | 0.112 | 0.139 | 0.124 | 0.125 | 0.119 | 0.0930 | 0.0787 | 0.00 | 0.125 | 0.150 | 0.131 |
 | [Topic similarity](docs/metrics.md#abstractivenesstopic_similarity--topic-similarity) ↑ closer topic mix to source | 0.553 | 0.686 | 0.558 | 0.335 | 0.632 | 0.791 | 0.692 | 0.763 | 0.715 | 0.462 | 0.747 | 0.666 | 0.585 |
@@ -434,6 +437,7 @@ SUM is generic summarization, PLS plain-language (lay) summarization and DS docu
 | [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.854 | 0.770 | 0.927 | 1.00 | 0.742 | 0.494 | 0.650 | 0.503 | 0.752 | 1.00 | 0.697 | 0.543 | 0.923 |
 | [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.913 | 0.889 | 0.983 | 1.00 | 0.826 | 0.584 | 0.750 | 0.595 | 0.865 | 1.00 | 0.816 | 0.657 | 0.981 |
 | [Semantic coherence](docs/metrics.md#readabilitym3d_model_basedsemantic_coherence--semantic-coherence)† ↑ more coherent | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 0.947 | 1.00 | 0.00 | 1.00 | 1.00 | 1.00 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ fewer entities absent from source | 0.621 | 1.00 | 0.600 | 0.00 | 0.500 | 0.800 | 0.667 | 0.900 | 0.800 | 0.333 | 0.750 | 0.625 | 0.444 |
 
 Not yet computed for any dataset: SummaC precision (document), QAFactEval precision, SummaC-Conv (sentence), AlignScore (sentence), BLANC, SUPERT, SummaQA.
 
@@ -449,8 +453,9 @@ Not yet computed for any dataset: SummaC precision (document), QAFactEval precis
 | [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.854 | 0.770 | 0.927 | 1.00 | 0.742 | 0.494 | 0.650 | 0.503 | 0.752 | 1.00 | 0.697 | 0.543 | 0.923 |
 | [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.913 | 0.889 | 0.983 | 1.00 | 0.826 | 0.584 | 0.750 | 0.595 | 0.865 | 1.00 | 0.816 | 0.657 | 0.981 |
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 12.6 (Δ −1.60) | 14.6 (Δ +1.80) | 11.2 (Δ −1.40) | 7.60 (Δ −6.15) | 7.60 (Δ −3.40) | 7.60 (Δ −2.60) | 10.2 (Δ −1.35) | 7.50 (Δ −2.80) | 6.90 (Δ −2.10) | 10.3 (Δ +0.60) | 15.1 (Δ +0.30) | 20.7 (Δ 0.00) | 11.0 (Δ +0.20) |
-| [CLI](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 13.9 (Δ +0.05) | 15.8 (Δ +2.27) | 12.5 (Δ −0.99) | 9.35 (Δ −1.34) | 9.16 (Δ −2.04) | 9.39 (Δ −1.50) | 11.4 (Δ −1.23) | 8.82 (Δ −1.56) | 10.5 (Δ +0.33) | 11.1 (Δ +0.95) | 15.5 (Δ +1.62) | 15.3 (Δ +1.80) | 11.4 (Δ +0.14) |
-| [DCRS](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 9.49 (Δ −0.49) | 10.9 (Δ +3.26) | 8.94 (Δ +1.56) | 9.35 (Δ −0.06) | 10.2 (Δ −0.73) | 10.3 (Δ −0.50) | 10.8 (Δ −0.63) | 7.85 (Δ −0.97) | 10.8 (Δ +2.12) | 11.0 (Δ +1.78) | 11.1 (Δ +2.63) | 11.3 (Δ +2.40) | 11.1 (Δ +1.74) |
+| [CLI](docs/metrics.md#readabilitym3a_surfacecli--colemanliau-index) ↓ easier | 13.9 (Δ +0.05) | 15.8 (Δ +2.27) | 12.5 (Δ −0.99) | 9.35 (Δ −1.34) | 9.16 (Δ −2.04) | 9.39 (Δ −1.50) | 11.4 (Δ −1.23) | 8.82 (Δ −1.56) | 10.5 (Δ +0.33) | 11.1 (Δ +0.95) | 15.5 (Δ +1.62) | 15.3 (Δ +1.80) | 11.4 (Δ +0.14) |
+| [DCRS](docs/metrics.md#readabilitym3a_surfacedcrs--dalechall-readability-score) ↓ easier | 9.49 (Δ −0.49) | 10.9 (Δ +3.26) | 8.94 (Δ +1.56) | 9.35 (Δ −0.06) | 10.2 (Δ −0.73) | 10.3 (Δ −0.50) | 10.8 (Δ −0.63) | 7.85 (Δ −0.97) | 10.8 (Δ +2.12) | 11.0 (Δ +1.78) | 11.1 (Δ +2.63) | 11.3 (Δ +2.40) | 11.1 (Δ +1.74) |
+| [ARI](docs/metrics.md#readabilitym3a_surfaceari--automated-readability-index) ↓ easier | 15.2 (Δ −2.00) | 17.1 (Δ +1.85) | 13.6 (Δ −2.10) | 8.50 (Δ −6.80) | 9.20 (Δ −4.60) | 9.00 (Δ −3.30) | 12.3 (Δ −1.50) | 9.20 (Δ −3.40) | 9.40 (Δ −2.10) | 13.1 (Δ +1.00) | 18.0 (Δ +0.20) | 24.2 (Δ −0.70) | 13.4 (Δ −0.10) |
 | [WordRank](docs/metrics.md#readabilitym3b_length_invariantwordrank--wordrank) ↓ more frequent words | 7.71 (Δ −0.76) | 8.64 (Δ −0.49) | 8.09 (Δ −1.49) | 6.97 (Δ −0.21) | 8.28 (Δ −0.29) | 8.34 (Δ −0.09) | 8.15 (Δ −0.21) | 7.12 (Δ −0.35) | 8.07 (Δ +0.47) | 7.84 (Δ +0.23) | 8.84 (Δ +0.10) | 7.98 (Δ −0.21) | 8.47 (Δ +0.20) |
 | [Background sentence share](docs/metrics.md#elaborationrhetorical_roles--rhetorical-role-distribution)† ↑ more background sentences | 0.143 | 0.481 | 0.353 | 0.00 | 0.333 | 0.333 | 0.00 | 0.239 | 0.200 | 0.00 | 0.200 | 0.354 | 0.200 |
 
@@ -466,19 +471,55 @@ Not yet computed for any dataset: SummaC-Conv (sentence), AlignScore (sentence).
 | [Compression ratio (characters)](docs/metrics.md#lengthchar_compression_ratio--compression-ratio-characters) ↓ more compressed | 0.583 | 0.0326 | 0.0392 | 0.232 | 0.608 | 0.655 | 0.939 | 0.628 | 0.0804 | 0.0686 | 0.0804 | 0.106 | 0.0835 |
 | [Source length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 326 | 5865 | 8666 | 58 | 85 | 86 | 20 | 844 | 634 | 306 | 2340 | 1218 | 600 |
 | [Target length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 199 | 188 | 352 | 13 | 52 | 47 | 18 | 557 | 46 | 21 | 186 | 161 | 53 |
-| [Exact copies](docs/metrics.md#abstractivenessexact_copies--exact-copies) ↑ more source sentences kept verbatim | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.0600 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| [Mean source sentence length](docs/metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) | 24.7 | 19.7 | 17.6 | 26.2 | 23.0 | 20.3 | 19.8 | 22.5 | 18.8 | 20.7 | 25.7 | 37.6 | 21.5 |
+| [Mean target sentence length](docs/metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) ↓ shorter target sentences | 21.4 | 22.4 | 20.7 | 12.0 | 15.0 | 14.4 | 17.0 | 17.2 | 12.7 | 21.0 | 24.0 | 38.0 | 20.8 |
 | [Additions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words added | 0.220 | 0.00314 | 0.00841 | 0.105 | 0.162 | 0.0779 | 0.236 | 0.0930 | 0.0106 | 0.0243 | 0.00766 | 0.0149 | 0.0250 |
 | [Deletions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words deleted | 0.649 | 0.973 | 0.968 | 0.896 | 0.584 | 0.482 | 0.353 | 0.447 | 0.934 | 0.957 | 0.932 | 0.894 | 0.945 |
 | [Levenshtein similarity](docs/metrics.md#abstractivenesslevenshtein_similarity--levenshtein-similarity) ↑ closer to source text | 0.441 | 0.0627 | 0.0749 | 0.303 | 0.470 | 0.577 | 0.688 | 0.652 | 0.139 | 0.121 | 0.142 | 0.178 | 0.139 |
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 12.6 (Δ −1.60) | 14.6 (Δ +1.80) | 11.2 (Δ −1.40) | 7.60 (Δ −6.15) | 7.60 (Δ −3.40) | 7.60 (Δ −2.60) | 10.2 (Δ −1.35) | 7.50 (Δ −2.80) | 6.90 (Δ −2.10) | 10.3 (Δ +0.60) | 15.1 (Δ +0.30) | 20.7 (Δ 0.00) | 11.0 (Δ +0.20) |
 | [FRE](docs/metrics.md#readabilitym3a_surfacefre--flesch-reading-ease) ↑ easier | 42.8 (Δ +5.62) | 30.0 (Δ −11.25) | 51.4 (Δ +8.59) | 64.0 (Δ +18.71) | 67.5 (Δ +14.38) | 67.1 (Δ +10.14) | 55.9 (Δ +8.46) | 71.8 (Δ +12.02) | 68.3 (Δ +3.90) | 59.6 (Δ −2.85) | 29.1 (Δ −6.13) | 14.8 (Δ −5.45) | 54.2 (Δ −2.35) |
+| [Syllables per word](docs/metrics.md#readabilitym3b_length_invariantsyllables_per_word--syllables-per-word) ↓ shorter words | 1.78 (Δ −0.01) | 1.93 (Δ +0.14) | 1.70 (Δ −0.05) | 1.63 (Δ −0.03) | 1.58 (Δ −0.07) | 1.60 (Δ −0.05) | 1.67 (Δ −0.07) | 1.48 (Δ −0.07) | 1.59 (Δ +0.04) | 1.58 (Δ +0.04) | 1.94 (Δ +0.09) | 1.90 (Δ +0.12) | 1.68 (Δ +0.04) |
 | [Lexical complexity](docs/metrics.md#readabilitym3b_length_invariantlexical_complexity--lexical-complexity) ↓ more frequent words | 62.9 (Δ −4.63) | 74.0 (Δ −4.18) | 67.7 (Δ −12.78) | 53.3 (Δ −4.00) | 65.6 (Δ −2.05) | 67.7 (Δ −0.61) | 67.5 (Δ −2.08) | 55.8 (Δ −4.68) | 62.8 (Δ +1.65) | 60.6 (Δ +0.33) | 75.7 (Δ +0.76) | 61.7 (Δ −0.62) | 68.4 (Δ +0.62) |
 | [SLE (document)](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler | 0.134 | 0.283 | 1.18 | 1.14 | 2.72 | 2.02 | 1.41 | 2.13 | 2.63 | 0.475 | 0.424 | −0.530 | 1.05 |
 | [SLE gain](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler than source | 0.394 | −0.663 | −0.307 | 1.24 | 1.01 | 0.955 | 0.738 | 1.27 | 1.39 | −0.414 | −0.0162 | −2.38 | 0.102 |
-| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ fewer entities absent from source | 0.621 | 1.00 | 0.600 | 0.00 | 0.500 | 0.800 | 0.667 | 0.900 | 0.800 | 0.333 | 0.750 | 0.625 | 0.444 |
-| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more source entities kept | 0.167 | 0.0160 | 0.00820 | 0.00 | 0.315 | 0.500 | 0.500 | 0.652 | 0.120 | 0.0339 | 0.0541 | 0.102 | 0.0523 |
-| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more entity overlap | 0.259 | 0.0315 | 0.0162 | 0.00 | 0.364 | 0.538 | 0.500 | 0.753 | 0.203 | 0.0616 | 0.101 | 0.174 | 0.0920 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ fewer entities absent from source | 0.621 | 1.00 | 0.600 | 0.00 | 0.500 | 0.800 | 0.667 | 0.900 | 0.800 | 0.333 | 0.750 | 0.625 | 0.444 |
+| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ more source entities kept | 0.167 | 0.0160 | 0.00820 | 0.00 | 0.315 | 0.500 | 0.500 | 0.652 | 0.120 | 0.0339 | 0.0541 | 0.102 | 0.0523 |
+| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ more entity overlap | 0.259 | 0.0315 | 0.0162 | 0.00 | 0.364 | 0.538 | 0.500 | 0.753 | 0.203 | 0.0616 | 0.101 | 0.174 | 0.0920 |
+| [M7 appositions ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00734 (Δ −0.04) | 0.00649 (Δ −0.01) | 0.00490 (Δ −0.04) | 0.00 (Δ 0.00) | 0.0102 (Δ 0.00) | 0.0234 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00816 (Δ 0.00) | 0.00 (Δ −0.01) | 0.00 (Δ −0.01) | 0.0134 (Δ −0.01) | 0.00810 (Δ −0.02) | 0.0233 (Δ +0.01) |
+| [M7 avg same entity distance](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 23.8 (Δ −38.55) | 25.2 (Δ −1074.21) | 68.2 (Δ −1475.07) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 158 (Δ −75.51) | 0.00 (Δ −160.90) | 0.00 (Δ −107.82) | 0.00 (Δ −443.66) | 37.6 (Δ −298.95) | 0.00 (Δ −128.59) |
+| [M7 avg word length](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 5.29 (Δ +0.05) | 5.58 (Δ +0.42) | 5.07 (Δ −0.01) | 4.81 (Δ −0.02) | 4.58 (Δ −0.22) | 4.67 (Δ −0.15) | 5.00 (Δ −0.16) | 4.47 (Δ −0.18) | 4.82 (Δ +0.17) | 4.75 (Δ +0.10) | 5.61 (Δ +0.28) | 5.45 (Δ +0.39) | 4.88 (Δ +0.04) |
+| [M7 conditional clauses ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00221 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00177 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 conjunctions ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.0551 (Δ +0.01) | 0.0500 (Δ 0.00) | 0.0554 (Δ +0.01) | 0.00 (Δ −0.05) | 0.0282 (Δ 0.00) | 0.0303 (Δ 0.00) | 0.0526 (Δ 0.00) | 0.0577 (Δ 0.00) | 0.0286 (Δ −0.02) | 0.00 (Δ −0.03) | 0.0492 (Δ 0.00) | 0.0600 (Δ +0.01) | 0.0385 (Δ −0.01) |
+| [M7 consecutive entity distance](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 16.9 (Δ +5.66) | 19.0 (Δ +6.93) | 29.9 (Δ +18.97) | 0.00 (Δ 0.00) | 7.37 (Δ −0.72) | 6.00 (Δ −0.30) | 0.00 (Δ 0.00) | 13.8 (Δ −1.63) | 7.50 (Δ −3.19) | 5.33 (Δ −5.25) | 15.1 (Δ −4.54) | 13.7 (Δ −2.88) | 6.38 (Δ −1.83) |
+| [M7 content words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.558 (Δ +0.01) | 0.576 (Δ +0.06) | 0.546 (Δ +0.05) | 0.500 (Δ +0.01) | 0.396 (Δ −0.03) | 0.303 (Δ −0.02) | 0.540 (Δ 0.00) | 0.462 (Δ −0.01) | 0.464 (Δ +0.03) | 0.433 (Δ +0.01) | 0.582 (Δ +0.03) | 0.459 (Δ +0.05) | 0.333 (Δ −0.05) |
+| [M7 entity to token ratio](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.0420 (Δ −0.05) | 0.0304 (Δ −0.06) | 0.0270 (Δ −0.09) | 0.00 (Δ 0.00) | 0.125 (Δ +0.01) | 0.186 (Δ +0.01) | 0.0171 (Δ 0.00) | 0.0820 (Δ +0.01) | 0.135 (Δ +0.03) | 0.130 (Δ +0.02) | 0.0361 (Δ −0.01) | 0.0738 (Δ 0.00) | 0.168 (Δ +0.03) |
+| [M7 flesch kincaid grade](docs/metrics.md#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | 12.6 (Δ −1.60) | 14.6 (Δ +1.80) | 11.2 (Δ −1.40) | 7.60 (Δ −6.15) | 7.60 (Δ −3.40) | 7.60 (Δ −2.60) | 10.2 (Δ −1.35) | 7.50 (Δ −2.80) | 6.90 (Δ −2.10) | 10.3 (Δ +0.60) | 15.1 (Δ +0.30) | 20.7 (Δ 0.00) | 11.0 (Δ +0.20) |
+| [M7 flesch reading ease](docs/metrics.md#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | 42.8 (Δ +5.62) | 30.0 (Δ −11.25) | 51.4 (Δ +8.59) | 64.0 (Δ +18.71) | 67.5 (Δ +14.38) | 67.1 (Δ +10.14) | 55.9 (Δ +8.46) | 71.8 (Δ +12.02) | 68.3 (Δ +3.90) | 59.6 (Δ −2.85) | 29.1 (Δ −6.13) | 14.8 (Δ −5.45) | 54.2 (Δ −2.35) |
+| [M7 infrequent words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.00 (Δ 0.00) | 0.00941 (Δ −0.02) | 0.00637 (Δ −0.04) | 0.00 (Δ 0.00) | 0.0338 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00573 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.0230 (Δ 0.00) | 0.00 (Δ −0.04) | 0.00881 (Δ 0.00) |
+| [M7 lexical richness](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.573 (Δ +0.08) | 0.616 (Δ +0.39) | 0.495 (Δ +0.29) | 1.00 (Δ +0.21) | 0.742 (Δ +0.04) | 0.750 (Δ +0.02) | 0.929 (Δ 0.00) | 0.461 (Δ −0.01) | 0.861 (Δ +0.39) | 0.947 (Δ +0.36) | 0.605 (Δ +0.31) | 0.564 (Δ +0.28) | 0.774 (Δ +0.30) |
+| [M7 long words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.0888 (Δ −0.01) | 0.129 (Δ +0.02) | 0.0721 (Δ −0.03) | 0.0293 (Δ −0.03) | 0.0457 (Δ −0.01) | 0.0467 (Δ −0.01) | 0.0583 (Δ 0.00) | 0.0334 (Δ −0.01) | 0.0400 (Δ 0.00) | 0.0417 (Δ −0.01) | 0.131 (Δ +0.02) | 0.117 (Δ +0.01) | 0.0588 (Δ 0.00) |
+| [M7 max same entity distances](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 33.0 (Δ −150.50) | 46.0 (Δ −6730.50) | 160 (Δ −10257.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 488 (Δ −306.00) | 0.00 (Δ −588.50) | 0.00 (Δ −256.50) | 0.00 (Δ −2185.50) | 61.0 (Δ −1379.50) | 0.00 (Δ −550.00) |
+| [M7 modifiers ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.139 (Δ 0.00) | 0.156 (Δ +0.03) | 0.130 (Δ +0.01) | 0.0698 (Δ −0.02) | 0.0860 (Δ −0.01) | 0.0714 (Δ 0.00) | 0.129 (Δ 0.00) | 0.117 (Δ 0.00) | 0.0889 (Δ −0.01) | 0.0800 (Δ −0.02) | 0.153 (Δ +0.01) | 0.0878 (Δ +0.01) | 0.0870 (Δ 0.00) |
+| [M7 negations ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.0134 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00326 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00702 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 noun phrases ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.291 (Δ −0.01) | 0.284 (Δ +0.01) | 0.282 (Δ 0.00) | 0.308 (Δ +0.03) | 0.292 (Δ +0.02) | 0.302 (Δ +0.01) | 0.296 (Δ 0.00) | 0.292 (Δ +0.01) | 0.292 (Δ +0.01) | 0.259 (Δ −0.02) | 0.277 (Δ +0.01) | 0.266 (Δ 0.00) | 0.282 (Δ +0.01) |
+| [M7 passive voice ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.101 (Δ 0.00) | 0.100 (Δ −0.07) | 0.0949 (Δ −0.08) | 0.00 (Δ 0.00) | 0.125 (Δ 0.00) | 0.156 (Δ 0.00) | 0.00 (Δ 0.00) | 0.0357 (Δ −0.03) | 0.0667 (Δ −0.02) | 0.00 (Δ −0.05) | 0.172 (Δ 0.00) | 0.0286 (Δ −0.05) | 0.100 (Δ −0.04) |
+| [M7 past perfect verbs](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 past tense verbs](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.755 (Δ −0.06) | 0.400 (Δ −0.28) | 0.383 (Δ −0.30) | 0.00 (Δ −0.08) | 0.833 (Δ 0.00) | 1.00 (Δ 0.00) | 0.333 (Δ 0.00) | 0.385 (Δ −0.06) | 0.600 (Δ −0.03) | 0.667 (Δ −0.03) | 0.750 (Δ −0.02) | 0.229 (Δ −0.18) | 1.00 (Δ +0.09) |
+| [M7 punctuation ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.103 (Δ −0.04) | 0.103 (Δ −0.04) | 0.100 (Δ −0.08) | 0.0769 (Δ +0.04) | 0.148 (Δ 0.00) | 0.141 (Δ 0.00) | 0.118 (Δ 0.00) | 0.128 (Δ 0.00) | 0.118 (Δ −0.01) | 0.0800 (Δ −0.04) | 0.121 (Δ −0.01) | 0.116 (Δ −0.08) | 0.147 (Δ +0.02) |
+| [M7 relative clauses ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.0170 (Δ +0.01) | 0.0219 (Δ +0.01) | 0.0304 (Δ +0.02) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.0229 (Δ 0.00) | 0.00 (Δ −0.01) | 0.00 (Δ −0.01) | 0.00930 (Δ 0.00) | 0.0109 (Δ 0.00) | 0.00 (Δ −0.01) |
+| [M7 sentences number](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 9.00 (Δ −4.00) | 8.00 (Δ −292.00) | 17.0 (Δ −456.00) | 1.00 (Δ −1.00) | 3.00 (Δ 0.00) | 3.00 (Δ 0.00) | 1.00 (Δ 0.00) | 32.0 (Δ −5.00) | 4.00 (Δ −30.00) | 1.00 (Δ −14.00) | 7.00 (Δ −79.00) | 4.00 (Δ −28.00) | 3.00 (Δ −25.00) |
+| [M7 short sentences ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.125 (Δ 0.00) | 0.00 (Δ −0.18) | 0.118 (Δ −0.24) | 0.00 (Δ 0.00) | 0.286 (Δ +0.12) | 0.333 (Δ +0.08) | 0.00 (Δ 0.00) | 0.206 (Δ +0.07) | 0.200 (Δ −0.06) | 0.00 (Δ −0.09) | 0.00 (Δ −0.01) | 0.00 (Δ −0.23) | 0.00 (Δ −0.07) |
+| [M7 syllables ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 1.78 (Δ −0.01) | 1.93 (Δ +0.14) | 1.70 (Δ −0.05) | 1.63 (Δ −0.03) | 1.58 (Δ −0.07) | 1.60 (Δ −0.05) | 1.67 (Δ −0.07) | 1.48 (Δ −0.07) | 1.59 (Δ +0.04) | 1.58 (Δ +0.04) | 1.94 (Δ +0.09) | 1.90 (Δ +0.12) | 1.68 (Δ +0.04) |
+| [M7 syntactic tree depth](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 11.0 (Δ −1.00) | 10.0 (Δ −5.00) | 11.0 (Δ −5.00) | 4.00 (Δ −5.00) | 6.00 (Δ −1.00) | 6.00 (Δ −1.00) | 5.00 (Δ 0.00) | 10.0 (Δ −2.00) | 6.00 (Δ −5.00) | 6.00 (Δ −4.00) | 10.0 (Δ −4.00) | 13.0 (Δ −5.00) | 8.00 (Δ −4.00) |
+| [M7 third person pronouns ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00507 (Δ 0.00) | 0.00597 (Δ 0.00) | 0.0154 (Δ +0.01) | 0.00 (Δ 0.00) | 0.0323 (Δ +0.01) | 0.0326 (Δ 0.00) | 0.00 (Δ 0.00) | 0.0381 (Δ +0.01) | 0.0256 (Δ −0.01) | 0.00 (Δ −0.02) | 0.00405 (Δ 0.00) | 0.00 (Δ 0.00) | 0.0222 (Δ −0.01) |
+| [M7 unique entities](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 7.00 (Δ −16.00) | 4.00 (Δ −233.00) | 6.00 (Δ −359.00) | 0.00 (Δ 0.00) | 5.00 (Δ −2.00) | 7.00 (Δ −2.00) | 1.00 (Δ 0.00) | 32.0 (Δ −11.00) | 6.00 (Δ −33.00) | 3.00 (Δ −21.00) | 5.00 (Δ −65.00) | 9.00 (Δ −42.00) | 8.00 (Δ −50.00) |
+| [M7 unique entities average](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.714 (Δ −0.95) | 0.500 (Δ −0.30) | 0.348 (Δ −0.39) | 0.00 (Δ 0.00) | 1.67 (Δ −0.33) | 2.33 (Δ −0.33) | 0.333 (Δ 0.00) | 1.04 (Δ −0.14) | 1.67 (Δ +0.40) | 3.00 (Δ +0.93) | 0.727 (Δ −0.09) | 2.14 (Δ +0.54) | 3.00 (Δ +0.96) |
+| [M7 unique entities to total entities](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.857 (Δ +0.10) | 0.750 (Δ +0.33) | 0.667 (Δ +0.27) | 0.00 (Δ 0.00) | 1.00 (Δ 0.00) | 1.00 (Δ 0.00) | 0.500 (Δ 0.00) | 0.758 (Δ 0.00) | 1.00 (Δ +0.30) | 1.00 (Δ +0.18) | 1.00 (Δ +0.25) | 0.846 (Δ +0.29) | 1.00 (Δ +0.20) |
+| [M7 words before main verb](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 5.45 (Δ −1.06) | 6.25 (Δ −1.81) | 6.13 (Δ −2.31) | 3.00 (Δ −2.00) | 4.14 (Δ −1.43) | 4.00 (Δ −0.75) | 5.00 (Δ 0.00) | 6.90 (Δ −2.23) | 4.00 (Δ −3.18) | 6.00 (Δ −0.89) | 8.11 (Δ −1.23) | 6.33 (Δ −13.18) | 5.67 (Δ −1.19) |
+| [M7 words over 8 chars](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.142 (Δ −0.01) | 0.201 (Δ +0.04) | 0.125 (Δ −0.03) | 0.0870 (Δ −0.03) | 0.0800 (Δ −0.02) | 0.0857 (Δ −0.02) | 0.111 (Δ −0.02) | 0.0667 (Δ −0.02) | 0.0833 (Δ 0.00) | 0.0800 (Δ 0.00) | 0.194 (Δ +0.02) | 0.185 (Δ +0.01) | 0.103 (Δ 0.00) |
+| [M7 words per sentence](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.111 (Δ +0.03) | 0.125 (Δ +0.12) | 0.0588 (Δ +0.06) | 1.00 (Δ +0.30) | 0.333 (Δ 0.00) | 0.333 (Δ 0.00) | 1.00 (Δ 0.00) | 0.0312 (Δ 0.00) | 0.250 (Δ +0.23) | 1.00 (Δ +0.93) | 0.143 (Δ +0.13) | 0.250 (Δ +0.21) | 0.333 (Δ +0.32) |
 | [BLEU(target, source)](docs/metrics.md#pair_similaritybleu--bleutarget-source)† ↑ closer to source wording | 11.9 | 0.00 | 0.00 | 0.0913 | 15.4 | 23.6 | 39.7 | 34.1 | <0.001 | 0.00 | <0.001 | 0.0184 | <0.001 |
+| [BERTScore F1(target, source)](docs/metrics.md#pair_similaritybertscore_f1--bertscore-f1)† ↑ closer to source meaning | 0.157 | 0.178 | −0.00710 | 0.150 | 0.297 | 0.496 | 0.676 | 0.471 | 0.0903 | 0.0606 | 0.00941 | −0.309 | −0.0308 |
 
 Not yet computed for any dataset: SummaC precision (document), QAFactEval precision, SummaC recall (document), QAFactEval recall, SummaC-Conv (sentence).
 
@@ -493,8 +534,9 @@ Here domain is held constant, so a difference between columns is not a differenc
 | *dataset task* | PLS | PLS | PLS | DS | SUM |
 | **SUM metrics** |  |  |  |  |  |
 | [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.584 | 0.0311 | 0.0408 | 0.957 | 0.0769 |
-| [Coverage](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ more copied | 0.704 | 0.913 | 0.826 | 0.700 | 0.903 |
-| [Density](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ longer copied spans | 1.95 | 2.48 | 1.46 | 2.91 | 3.24 |
+| [Sentence split ratio](docs/metrics.md#lengthsentence_ratio--sentence-split-ratio) ↑ more target sentences per source sentence | 0.667 | 0.0274 | 0.0343 | 1.00 | 0.0822 |
+| [Coverage](docs/metrics.md#abstractivenesscoverage--coverage) ↑ more copied | 0.704 | 0.913 | 0.826 | 0.700 | 0.903 |
+| [Density](docs/metrics.md#abstractivenessdensity--density) ↑ longer copied spans | 1.95 | 2.48 | 1.46 | 2.91 | 3.24 |
 | [Abstractivity](docs/metrics.md#abstractivenessabstractivity_p1--abstractivity) ↑ more abstractive | 0.296 | 0.0870 | 0.174 | 0.300 | 0.0966 |
 | [Redundancy](docs/metrics.md#abstractivenessredundancy--redundancy) ↑ more repetitive target | 0.116 | 0.120 | 0.112 | 0.119 | 0.125 |
 | [Topic similarity](docs/metrics.md#abstractivenesstopic_similarity--topic-similarity) ↑ closer topic mix to source | 0.553 | 0.686 | 0.558 | 0.692 | 0.747 |
@@ -503,6 +545,7 @@ Here domain is held constant, so a difference between columns is not a differenc
 | [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.854 | 0.770 | 0.927 | 0.650 | 0.697 |
 | [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.913 | 0.889 | 0.983 | 0.750 | 0.816 |
 | [Semantic coherence](docs/metrics.md#readabilitym3d_model_basedsemantic_coherence--semantic-coherence)† ↑ more coherent | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ fewer entities absent from source | 0.621 | 1.00 | 0.600 | 0.667 | 0.750 |
 | **PLS metrics** |  |  |  |  |  |
 | [ROUGE-1/2/L(abstract, target)](docs/metrics.md#abstractivenessrouge_abstract_target--rougeabstract-target) ↑ closer to the abstract | — | 0.460 / 0.158 / 0.239 | 0.292 / 0.0590 / 0.152 | — | — |
 | [Abstract content-word overlap](docs/metrics.md#abstractivenessabstract_content_overlap--abstract-content-word-overlap-by-rarity) ↑ more abstract terms kept | — | 0.333 | 0.300 | — | — |
@@ -511,8 +554,9 @@ Here domain is held constant, so a difference between columns is not a differenc
 | [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.854 | 0.770 | 0.927 | 0.650 | 0.697 |
 | [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.913 | 0.889 | 0.983 | 0.750 | 0.816 |
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 12.6 (Δ −1.60) | 14.6 (Δ +1.80) | 11.2 (Δ −1.40) | 10.2 (Δ −1.35) | 15.1 (Δ +0.30) |
-| [CLI](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 13.9 (Δ +0.05) | 15.8 (Δ +2.27) | 12.5 (Δ −0.99) | 11.4 (Δ −1.23) | 15.5 (Δ +1.62) |
-| [DCRS](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 9.49 (Δ −0.49) | 10.9 (Δ +3.26) | 8.94 (Δ +1.56) | 10.8 (Δ −0.63) | 11.1 (Δ +2.63) |
+| [CLI](docs/metrics.md#readabilitym3a_surfacecli--colemanliau-index) ↓ easier | 13.9 (Δ +0.05) | 15.8 (Δ +2.27) | 12.5 (Δ −0.99) | 11.4 (Δ −1.23) | 15.5 (Δ +1.62) |
+| [DCRS](docs/metrics.md#readabilitym3a_surfacedcrs--dalechall-readability-score) ↓ easier | 9.49 (Δ −0.49) | 10.9 (Δ +3.26) | 8.94 (Δ +1.56) | 10.8 (Δ −0.63) | 11.1 (Δ +2.63) |
+| [ARI](docs/metrics.md#readabilitym3a_surfaceari--automated-readability-index) ↓ easier | 15.2 (Δ −2.00) | 17.1 (Δ +1.85) | 13.6 (Δ −2.10) | 12.3 (Δ −1.50) | 18.0 (Δ +0.20) |
 | [WordRank](docs/metrics.md#readabilitym3b_length_invariantwordrank--wordrank) ↓ more frequent words | 7.71 (Δ −0.76) | 8.64 (Δ −0.49) | 8.09 (Δ −1.49) | 8.15 (Δ −0.21) | 8.84 (Δ +0.10) |
 | [Background sentence share](docs/metrics.md#elaborationrhetorical_roles--rhetorical-role-distribution)† ↑ more background sentences | 0.143 | 0.481 | 0.353 | 0.00 | 0.200 |
 | **DS metrics** |  |  |  |  |  |
@@ -521,19 +565,55 @@ Here domain is held constant, so a difference between columns is not a differenc
 | [Compression ratio (characters)](docs/metrics.md#lengthchar_compression_ratio--compression-ratio-characters) ↓ more compressed | 0.583 | 0.0326 | 0.0392 | 0.939 | 0.0804 |
 | [Source length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 326 | 5865 | 8666 | 20 | 2340 |
 | [Target length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 199 | 188 | 352 | 18 | 186 |
-| [Exact copies](docs/metrics.md#abstractivenessexact_copies--exact-copies) ↑ more source sentences kept verbatim | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| [Mean source sentence length](docs/metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) | 24.7 | 19.7 | 17.6 | 19.8 | 25.7 |
+| [Mean target sentence length](docs/metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) ↓ shorter target sentences | 21.4 | 22.4 | 20.7 | 17.0 | 24.0 |
 | [Additions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words added | 0.220 | 0.00314 | 0.00841 | 0.236 | 0.00766 |
 | [Deletions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words deleted | 0.649 | 0.973 | 0.968 | 0.353 | 0.932 |
 | [Levenshtein similarity](docs/metrics.md#abstractivenesslevenshtein_similarity--levenshtein-similarity) ↑ closer to source text | 0.441 | 0.0627 | 0.0749 | 0.688 | 0.142 |
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 12.6 (Δ −1.60) | 14.6 (Δ +1.80) | 11.2 (Δ −1.40) | 10.2 (Δ −1.35) | 15.1 (Δ +0.30) |
 | [FRE](docs/metrics.md#readabilitym3a_surfacefre--flesch-reading-ease) ↑ easier | 42.8 (Δ +5.62) | 30.0 (Δ −11.25) | 51.4 (Δ +8.59) | 55.9 (Δ +8.46) | 29.1 (Δ −6.13) |
+| [Syllables per word](docs/metrics.md#readabilitym3b_length_invariantsyllables_per_word--syllables-per-word) ↓ shorter words | 1.78 (Δ −0.01) | 1.93 (Δ +0.14) | 1.70 (Δ −0.05) | 1.67 (Δ −0.07) | 1.94 (Δ +0.09) |
 | [Lexical complexity](docs/metrics.md#readabilitym3b_length_invariantlexical_complexity--lexical-complexity) ↓ more frequent words | 62.9 (Δ −4.63) | 74.0 (Δ −4.18) | 67.7 (Δ −12.78) | 67.5 (Δ −2.08) | 75.7 (Δ +0.76) |
 | [SLE (document)](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler | 0.134 | 0.283 | 1.18 | 1.41 | 0.424 |
 | [SLE gain](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler than source | 0.394 | −0.663 | −0.307 | 0.738 | −0.0162 |
-| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ fewer entities absent from source | 0.621 | 1.00 | 0.600 | 0.667 | 0.750 |
-| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more source entities kept | 0.167 | 0.0160 | 0.00820 | 0.500 | 0.0541 |
-| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more entity overlap | 0.259 | 0.0315 | 0.0162 | 0.500 | 0.101 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ fewer entities absent from source | 0.621 | 1.00 | 0.600 | 0.667 | 0.750 |
+| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ more source entities kept | 0.167 | 0.0160 | 0.00820 | 0.500 | 0.0541 |
+| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ more entity overlap | 0.259 | 0.0315 | 0.0162 | 0.500 | 0.101 |
+| [M7 appositions ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00734 (Δ −0.04) | 0.00649 (Δ −0.01) | 0.00490 (Δ −0.04) | 0.00 (Δ 0.00) | 0.0134 (Δ −0.01) |
+| [M7 avg same entity distance](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 23.8 (Δ −38.55) | 25.2 (Δ −1074.21) | 68.2 (Δ −1475.07) | 0.00 (Δ 0.00) | 0.00 (Δ −443.66) |
+| [M7 avg word length](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 5.29 (Δ +0.05) | 5.58 (Δ +0.42) | 5.07 (Δ −0.01) | 5.00 (Δ −0.16) | 5.61 (Δ +0.28) |
+| [M7 conditional clauses ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00221 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 conjunctions ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.0551 (Δ +0.01) | 0.0500 (Δ 0.00) | 0.0554 (Δ +0.01) | 0.0526 (Δ 0.00) | 0.0492 (Δ 0.00) |
+| [M7 consecutive entity distance](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 16.9 (Δ +5.66) | 19.0 (Δ +6.93) | 29.9 (Δ +18.97) | 0.00 (Δ 0.00) | 15.1 (Δ −4.54) |
+| [M7 content words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.558 (Δ +0.01) | 0.576 (Δ +0.06) | 0.546 (Δ +0.05) | 0.540 (Δ 0.00) | 0.582 (Δ +0.03) |
+| [M7 entity to token ratio](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.0420 (Δ −0.05) | 0.0304 (Δ −0.06) | 0.0270 (Δ −0.09) | 0.0171 (Δ 0.00) | 0.0361 (Δ −0.01) |
+| [M7 flesch kincaid grade](docs/metrics.md#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | 12.6 (Δ −1.60) | 14.6 (Δ +1.80) | 11.2 (Δ −1.40) | 10.2 (Δ −1.35) | 15.1 (Δ +0.30) |
+| [M7 flesch reading ease](docs/metrics.md#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | 42.8 (Δ +5.62) | 30.0 (Δ −11.25) | 51.4 (Δ +8.59) | 55.9 (Δ +8.46) | 29.1 (Δ −6.13) |
+| [M7 infrequent words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.00 (Δ 0.00) | 0.00941 (Δ −0.02) | 0.00637 (Δ −0.04) | 0.00 (Δ 0.00) | 0.0230 (Δ 0.00) |
+| [M7 lexical richness](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.573 (Δ +0.08) | 0.616 (Δ +0.39) | 0.495 (Δ +0.29) | 0.929 (Δ 0.00) | 0.605 (Δ +0.31) |
+| [M7 long words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.0888 (Δ −0.01) | 0.129 (Δ +0.02) | 0.0721 (Δ −0.03) | 0.0583 (Δ 0.00) | 0.131 (Δ +0.02) |
+| [M7 max same entity distances](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 33.0 (Δ −150.50) | 46.0 (Δ −6730.50) | 160 (Δ −10257.00) | 0.00 (Δ 0.00) | 0.00 (Δ −2185.50) |
+| [M7 modifiers ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.139 (Δ 0.00) | 0.156 (Δ +0.03) | 0.130 (Δ +0.01) | 0.129 (Δ 0.00) | 0.153 (Δ +0.01) |
+| [M7 negations ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.0134 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00326 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 noun phrases ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.291 (Δ −0.01) | 0.284 (Δ +0.01) | 0.282 (Δ 0.00) | 0.296 (Δ 0.00) | 0.277 (Δ +0.01) |
+| [M7 passive voice ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.101 (Δ 0.00) | 0.100 (Δ −0.07) | 0.0949 (Δ −0.08) | 0.00 (Δ 0.00) | 0.172 (Δ 0.00) |
+| [M7 past perfect verbs](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 past tense verbs](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.755 (Δ −0.06) | 0.400 (Δ −0.28) | 0.383 (Δ −0.30) | 0.333 (Δ 0.00) | 0.750 (Δ −0.02) |
+| [M7 punctuation ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.103 (Δ −0.04) | 0.103 (Δ −0.04) | 0.100 (Δ −0.08) | 0.118 (Δ 0.00) | 0.121 (Δ −0.01) |
+| [M7 relative clauses ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.0170 (Δ +0.01) | 0.0219 (Δ +0.01) | 0.0304 (Δ +0.02) | 0.00 (Δ 0.00) | 0.00930 (Δ 0.00) |
+| [M7 sentences number](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 9.00 (Δ −4.00) | 8.00 (Δ −292.00) | 17.0 (Δ −456.00) | 1.00 (Δ 0.00) | 7.00 (Δ −79.00) |
+| [M7 short sentences ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.125 (Δ 0.00) | 0.00 (Δ −0.18) | 0.118 (Δ −0.24) | 0.00 (Δ 0.00) | 0.00 (Δ −0.01) |
+| [M7 syllables ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 1.78 (Δ −0.01) | 1.93 (Δ +0.14) | 1.70 (Δ −0.05) | 1.67 (Δ −0.07) | 1.94 (Δ +0.09) |
+| [M7 syntactic tree depth](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 11.0 (Δ −1.00) | 10.0 (Δ −5.00) | 11.0 (Δ −5.00) | 5.00 (Δ 0.00) | 10.0 (Δ −4.00) |
+| [M7 third person pronouns ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00507 (Δ 0.00) | 0.00597 (Δ 0.00) | 0.0154 (Δ +0.01) | 0.00 (Δ 0.00) | 0.00405 (Δ 0.00) |
+| [M7 unique entities](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 7.00 (Δ −16.00) | 4.00 (Δ −233.00) | 6.00 (Δ −359.00) | 1.00 (Δ 0.00) | 5.00 (Δ −65.00) |
+| [M7 unique entities average](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.714 (Δ −0.95) | 0.500 (Δ −0.30) | 0.348 (Δ −0.39) | 0.333 (Δ 0.00) | 0.727 (Δ −0.09) |
+| [M7 unique entities to total entities](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.857 (Δ +0.10) | 0.750 (Δ +0.33) | 0.667 (Δ +0.27) | 0.500 (Δ 0.00) | 1.00 (Δ +0.25) |
+| [M7 words before main verb](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 5.45 (Δ −1.06) | 6.25 (Δ −1.81) | 6.13 (Δ −2.31) | 5.00 (Δ 0.00) | 8.11 (Δ −1.23) |
+| [M7 words over 8 chars](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.142 (Δ −0.01) | 0.201 (Δ +0.04) | 0.125 (Δ −0.03) | 0.111 (Δ −0.02) | 0.194 (Δ +0.02) |
+| [M7 words per sentence](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.111 (Δ +0.03) | 0.125 (Δ +0.12) | 0.0588 (Δ +0.06) | 1.00 (Δ 0.00) | 0.143 (Δ +0.13) |
 | [BLEU(target, source)](docs/metrics.md#pair_similaritybleu--bleutarget-source)† ↑ closer to source wording | 11.9 | 0.00 | 0.00 | 39.7 | <0.001 |
+| [BERTScore F1(target, source)](docs/metrics.md#pair_similaritybertscore_f1--bertscore-f1)† ↑ closer to source meaning | 0.157 | 0.178 | −0.00710 | 0.676 | 0.00941 |
 
 #### Legal
 
@@ -542,8 +622,9 @@ Here domain is held constant, so a difference between columns is not a differenc
 | *dataset task* | PLS | SUM |
 | **SUM metrics** |  |  |
 | [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.242 | 0.123 |
-| [Coverage](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ more copied | 0.500 | 0.906 |
-| [Density](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ longer copied spans | 0.718 | 5.42 |
+| [Sentence split ratio](docs/metrics.md#lengthsentence_ratio--sentence-split-ratio) ↑ more target sentences per source sentence | 0.500 | 0.125 |
+| [Coverage](docs/metrics.md#abstractivenesscoverage--coverage) ↑ more copied | 0.500 | 0.906 |
+| [Density](docs/metrics.md#abstractivenessdensity--density) ↑ longer copied spans | 0.718 | 5.42 |
 | [Abstractivity](docs/metrics.md#abstractivenessabstractivity_p1--abstractivity) ↑ more abstractive | 0.500 | 0.0938 |
 | [Redundancy](docs/metrics.md#abstractivenessredundancy--redundancy) ↑ more repetitive target | 0.139 | 0.150 |
 | [Topic similarity](docs/metrics.md#abstractivenesstopic_similarity--topic-similarity) ↑ closer topic mix to source | 0.335 | 0.666 |
@@ -552,14 +633,16 @@ Here domain is held constant, so a difference between columns is not a differenc
 | [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 1.00 | 0.543 |
 | [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 1.00 | 0.657 |
 | [Semantic coherence](docs/metrics.md#readabilitym3d_model_basedsemantic_coherence--semantic-coherence)† ↑ more coherent | 1.00 | 1.00 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ fewer entities absent from source | 0.00 | 0.625 |
 | **PLS metrics** |  |  |
 | [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.500 | 0.0938 |
 | [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.889 | 0.372 |
 | [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 1.00 | 0.543 |
 | [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 1.00 | 0.657 |
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 7.60 (Δ −6.15) | 20.7 (Δ 0.00) |
-| [CLI](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 9.35 (Δ −1.34) | 15.3 (Δ +1.80) |
-| [DCRS](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 9.35 (Δ −0.06) | 11.3 (Δ +2.40) |
+| [CLI](docs/metrics.md#readabilitym3a_surfacecli--colemanliau-index) ↓ easier | 9.35 (Δ −1.34) | 15.3 (Δ +1.80) |
+| [DCRS](docs/metrics.md#readabilitym3a_surfacedcrs--dalechall-readability-score) ↓ easier | 9.35 (Δ −0.06) | 11.3 (Δ +2.40) |
+| [ARI](docs/metrics.md#readabilitym3a_surfaceari--automated-readability-index) ↓ easier | 8.50 (Δ −6.80) | 24.2 (Δ −0.70) |
 | [WordRank](docs/metrics.md#readabilitym3b_length_invariantwordrank--wordrank) ↓ more frequent words | 6.97 (Δ −0.21) | 7.98 (Δ −0.21) |
 | [Background sentence share](docs/metrics.md#elaborationrhetorical_roles--rhetorical-role-distribution)† ↑ more background sentences | 0.00 | 0.354 |
 | **DS metrics** |  |  |
@@ -568,19 +651,55 @@ Here domain is held constant, so a difference between columns is not a differenc
 | [Compression ratio (characters)](docs/metrics.md#lengthchar_compression_ratio--compression-ratio-characters) ↓ more compressed | 0.232 | 0.106 |
 | [Source length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 58 | 1218 |
 | [Target length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 13 | 161 |
-| [Exact copies](docs/metrics.md#abstractivenessexact_copies--exact-copies) ↑ more source sentences kept verbatim | 0.00 | 0.00 |
+| [Mean source sentence length](docs/metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) | 26.2 | 37.6 |
+| [Mean target sentence length](docs/metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) ↓ shorter target sentences | 12.0 | 38.0 |
 | [Additions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words added | 0.105 | 0.0149 |
 | [Deletions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words deleted | 0.896 | 0.894 |
 | [Levenshtein similarity](docs/metrics.md#abstractivenesslevenshtein_similarity--levenshtein-similarity) ↑ closer to source text | 0.303 | 0.178 |
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 7.60 (Δ −6.15) | 20.7 (Δ 0.00) |
 | [FRE](docs/metrics.md#readabilitym3a_surfacefre--flesch-reading-ease) ↑ easier | 64.0 (Δ +18.71) | 14.8 (Δ −5.45) |
+| [Syllables per word](docs/metrics.md#readabilitym3b_length_invariantsyllables_per_word--syllables-per-word) ↓ shorter words | 1.63 (Δ −0.03) | 1.90 (Δ +0.12) |
 | [Lexical complexity](docs/metrics.md#readabilitym3b_length_invariantlexical_complexity--lexical-complexity) ↓ more frequent words | 53.3 (Δ −4.00) | 61.7 (Δ −0.62) |
 | [SLE (document)](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler | 1.14 | −0.530 |
 | [SLE gain](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler than source | 1.24 | −2.38 |
-| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ fewer entities absent from source | 0.00 | 0.625 |
-| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more source entities kept | 0.00 | 0.102 |
-| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more entity overlap | 0.00 | 0.174 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ fewer entities absent from source | 0.00 | 0.625 |
+| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ more source entities kept | 0.00 | 0.102 |
+| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ more entity overlap | 0.00 | 0.174 |
+| [M7 appositions ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.00810 (Δ −0.02) |
+| [M7 avg same entity distance](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.00 (Δ 0.00) | 37.6 (Δ −298.95) |
+| [M7 avg word length](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 4.81 (Δ −0.02) | 5.45 (Δ +0.39) |
+| [M7 conditional clauses ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 conjunctions ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ −0.05) | 0.0600 (Δ +0.01) |
+| [M7 consecutive entity distance](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.00 (Δ 0.00) | 13.7 (Δ −2.88) |
+| [M7 content words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.500 (Δ +0.01) | 0.459 (Δ +0.05) |
+| [M7 entity to token ratio](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.00 (Δ 0.00) | 0.0738 (Δ 0.00) |
+| [M7 flesch kincaid grade](docs/metrics.md#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | 7.60 (Δ −6.15) | 20.7 (Δ 0.00) |
+| [M7 flesch reading ease](docs/metrics.md#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | 64.0 (Δ +18.71) | 14.8 (Δ −5.45) |
+| [M7 infrequent words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.00 (Δ 0.00) | 0.00 (Δ −0.04) |
+| [M7 lexical richness](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 1.00 (Δ +0.21) | 0.564 (Δ +0.28) |
+| [M7 long words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.0293 (Δ −0.03) | 0.117 (Δ +0.01) |
+| [M7 max same entity distances](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.00 (Δ 0.00) | 61.0 (Δ −1379.50) |
+| [M7 modifiers ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.0698 (Δ −0.02) | 0.0878 (Δ +0.01) |
+| [M7 negations ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 noun phrases ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.308 (Δ +0.03) | 0.266 (Δ 0.00) |
+| [M7 passive voice ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.0286 (Δ −0.05) |
+| [M7 past perfect verbs](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 past tense verbs](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ −0.08) | 0.229 (Δ −0.18) |
+| [M7 punctuation ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.0769 (Δ +0.04) | 0.116 (Δ −0.08) |
+| [M7 relative clauses ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.0109 (Δ 0.00) |
+| [M7 sentences number](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 1.00 (Δ −1.00) | 4.00 (Δ −28.00) |
+| [M7 short sentences ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.00 (Δ −0.23) |
+| [M7 syllables ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 1.63 (Δ −0.03) | 1.90 (Δ +0.12) |
+| [M7 syntactic tree depth](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 4.00 (Δ −5.00) | 13.0 (Δ −5.00) |
+| [M7 third person pronouns ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 unique entities](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.00 (Δ 0.00) | 9.00 (Δ −42.00) |
+| [M7 unique entities average](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.00 (Δ 0.00) | 2.14 (Δ +0.54) |
+| [M7 unique entities to total entities](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.00 (Δ 0.00) | 0.846 (Δ +0.29) |
+| [M7 words before main verb](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 3.00 (Δ −2.00) | 6.33 (Δ −13.18) |
+| [M7 words over 8 chars](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.0870 (Δ −0.03) | 0.185 (Δ +0.01) |
+| [M7 words per sentence](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 1.00 (Δ +0.30) | 0.250 (Δ +0.21) |
 | [BLEU(target, source)](docs/metrics.md#pair_similaritybleu--bleutarget-source)† ↑ closer to source wording | 0.0913 | 0.0184 |
+| [BERTScore F1(target, source)](docs/metrics.md#pair_similaritybertscore_f1--bertscore-f1)† ↑ closer to source meaning | 0.150 | −0.309 |
 
 #### Encyclopedia
 
@@ -589,8 +708,9 @@ Here domain is held constant, so a difference between columns is not a differenc
 | *dataset task* | DS | DS | SUM |
 | **SUM metrics** |  |  |  |
 | [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.642 | 0.687 | 0.0828 |
-| [Coverage](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ more copied | 0.750 | 0.875 | 0.722 |
-| [Density](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ longer copied spans | 2.70 | 6.82 | 1.33 |
+| [Sentence split ratio](docs/metrics.md#lengthsentence_ratio--sentence-split-ratio) ↑ more target sentences per source sentence | 1.00 | 1.00 | 0.0870 |
+| [Coverage](docs/metrics.md#abstractivenesscoverage--coverage) ↑ more copied | 0.750 | 0.875 | 0.722 |
+| [Density](docs/metrics.md#abstractivenessdensity--density) ↑ longer copied spans | 2.70 | 6.82 | 1.33 |
 | [Abstractivity](docs/metrics.md#abstractivenessabstractivity_p1--abstractivity) ↑ more abstractive | 0.250 | 0.125 | 0.278 |
 | [Redundancy](docs/metrics.md#abstractivenessredundancy--redundancy) ↑ more repetitive target | 0.124 | 0.125 | 0.131 |
 | [Topic similarity](docs/metrics.md#abstractivenesstopic_similarity--topic-similarity) ↑ closer topic mix to source | 0.632 | 0.791 | 0.585 |
@@ -599,14 +719,16 @@ Here domain is held constant, so a difference between columns is not a differenc
 | [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.742 | 0.494 | 0.923 |
 | [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.826 | 0.584 | 0.981 |
 | [Semantic coherence](docs/metrics.md#readabilitym3d_model_basedsemantic_coherence--semantic-coherence)† ↑ more coherent | 1.00 | 1.00 | 1.00 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ fewer entities absent from source | 0.500 | 0.800 | 0.444 |
 | **PLS metrics** |  |  |  |
 | [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.250 | 0.125 | 0.278 |
 | [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.588 | 0.359 | 0.750 |
 | [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.742 | 0.494 | 0.923 |
 | [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.826 | 0.584 | 0.981 |
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 7.60 (Δ −3.40) | 7.60 (Δ −2.60) | 11.0 (Δ +0.20) |
-| [CLI](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 9.16 (Δ −2.04) | 9.39 (Δ −1.50) | 11.4 (Δ +0.14) |
-| [DCRS](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 10.2 (Δ −0.73) | 10.3 (Δ −0.50) | 11.1 (Δ +1.74) |
+| [CLI](docs/metrics.md#readabilitym3a_surfacecli--colemanliau-index) ↓ easier | 9.16 (Δ −2.04) | 9.39 (Δ −1.50) | 11.4 (Δ +0.14) |
+| [DCRS](docs/metrics.md#readabilitym3a_surfacedcrs--dalechall-readability-score) ↓ easier | 10.2 (Δ −0.73) | 10.3 (Δ −0.50) | 11.1 (Δ +1.74) |
+| [ARI](docs/metrics.md#readabilitym3a_surfaceari--automated-readability-index) ↓ easier | 9.20 (Δ −4.60) | 9.00 (Δ −3.30) | 13.4 (Δ −0.10) |
 | [WordRank](docs/metrics.md#readabilitym3b_length_invariantwordrank--wordrank) ↓ more frequent words | 8.28 (Δ −0.29) | 8.34 (Δ −0.09) | 8.47 (Δ +0.20) |
 | [Background sentence share](docs/metrics.md#elaborationrhetorical_roles--rhetorical-role-distribution)† ↑ more background sentences | 0.333 | 0.333 | 0.200 |
 | **DS metrics** |  |  |  |
@@ -615,19 +737,55 @@ Here domain is held constant, so a difference between columns is not a differenc
 | [Compression ratio (characters)](docs/metrics.md#lengthchar_compression_ratio--compression-ratio-characters) ↓ more compressed | 0.608 | 0.655 | 0.0835 |
 | [Source length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 85 | 86 | 600 |
 | [Target length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 52 | 47 | 53 |
-| [Exact copies](docs/metrics.md#abstractivenessexact_copies--exact-copies) ↑ more source sentences kept verbatim | 0.00 | 0.00 | 0.00 |
+| [Mean source sentence length](docs/metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) | 23.0 | 20.3 | 21.5 |
+| [Mean target sentence length](docs/metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) ↓ shorter target sentences | 15.0 | 14.4 | 20.8 |
 | [Additions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words added | 0.162 | 0.0779 | 0.0250 |
 | [Deletions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words deleted | 0.584 | 0.482 | 0.945 |
 | [Levenshtein similarity](docs/metrics.md#abstractivenesslevenshtein_similarity--levenshtein-similarity) ↑ closer to source text | 0.470 | 0.577 | 0.139 |
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 7.60 (Δ −3.40) | 7.60 (Δ −2.60) | 11.0 (Δ +0.20) |
 | [FRE](docs/metrics.md#readabilitym3a_surfacefre--flesch-reading-ease) ↑ easier | 67.5 (Δ +14.38) | 67.1 (Δ +10.14) | 54.2 (Δ −2.35) |
+| [Syllables per word](docs/metrics.md#readabilitym3b_length_invariantsyllables_per_word--syllables-per-word) ↓ shorter words | 1.58 (Δ −0.07) | 1.60 (Δ −0.05) | 1.68 (Δ +0.04) |
 | [Lexical complexity](docs/metrics.md#readabilitym3b_length_invariantlexical_complexity--lexical-complexity) ↓ more frequent words | 65.6 (Δ −2.05) | 67.7 (Δ −0.61) | 68.4 (Δ +0.62) |
 | [SLE (document)](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler | 2.72 | 2.02 | 1.05 |
 | [SLE gain](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler than source | 1.01 | 0.955 | 0.102 |
-| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ fewer entities absent from source | 0.500 | 0.800 | 0.444 |
-| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more source entities kept | 0.315 | 0.500 | 0.0523 |
-| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more entity overlap | 0.364 | 0.538 | 0.0920 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ fewer entities absent from source | 0.500 | 0.800 | 0.444 |
+| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ more source entities kept | 0.315 | 0.500 | 0.0523 |
+| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ more entity overlap | 0.364 | 0.538 | 0.0920 |
+| [M7 appositions ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.0102 (Δ 0.00) | 0.0234 (Δ 0.00) | 0.0233 (Δ +0.01) |
+| [M7 avg same entity distance](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ −128.59) |
+| [M7 avg word length](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 4.58 (Δ −0.22) | 4.67 (Δ −0.15) | 4.88 (Δ +0.04) |
+| [M7 conditional clauses ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 conjunctions ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.0282 (Δ 0.00) | 0.0303 (Δ 0.00) | 0.0385 (Δ −0.01) |
+| [M7 consecutive entity distance](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 7.37 (Δ −0.72) | 6.00 (Δ −0.30) | 6.38 (Δ −1.83) |
+| [M7 content words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.396 (Δ −0.03) | 0.303 (Δ −0.02) | 0.333 (Δ −0.05) |
+| [M7 entity to token ratio](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.125 (Δ +0.01) | 0.186 (Δ +0.01) | 0.168 (Δ +0.03) |
+| [M7 flesch kincaid grade](docs/metrics.md#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | 7.60 (Δ −3.40) | 7.60 (Δ −2.60) | 11.0 (Δ +0.20) |
+| [M7 flesch reading ease](docs/metrics.md#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | 67.5 (Δ +14.38) | 67.1 (Δ +10.14) | 54.2 (Δ −2.35) |
+| [M7 infrequent words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.0338 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00881 (Δ 0.00) |
+| [M7 lexical richness](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.742 (Δ +0.04) | 0.750 (Δ +0.02) | 0.774 (Δ +0.30) |
+| [M7 long words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.0457 (Δ −0.01) | 0.0467 (Δ −0.01) | 0.0588 (Δ 0.00) |
+| [M7 max same entity distances](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ −550.00) |
+| [M7 modifiers ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.0860 (Δ −0.01) | 0.0714 (Δ 0.00) | 0.0870 (Δ 0.00) |
+| [M7 negations ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 noun phrases ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.292 (Δ +0.02) | 0.302 (Δ +0.01) | 0.282 (Δ +0.01) |
+| [M7 passive voice ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.125 (Δ 0.00) | 0.156 (Δ 0.00) | 0.100 (Δ −0.04) |
+| [M7 past perfect verbs](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 past tense verbs](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.833 (Δ 0.00) | 1.00 (Δ 0.00) | 1.00 (Δ +0.09) |
+| [M7 punctuation ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.148 (Δ 0.00) | 0.141 (Δ 0.00) | 0.147 (Δ +0.02) |
+| [M7 relative clauses ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ −0.01) |
+| [M7 sentences number](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 3.00 (Δ 0.00) | 3.00 (Δ 0.00) | 3.00 (Δ −25.00) |
+| [M7 short sentences ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.286 (Δ +0.12) | 0.333 (Δ +0.08) | 0.00 (Δ −0.07) |
+| [M7 syllables ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 1.58 (Δ −0.07) | 1.60 (Δ −0.05) | 1.68 (Δ +0.04) |
+| [M7 syntactic tree depth](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 6.00 (Δ −1.00) | 6.00 (Δ −1.00) | 8.00 (Δ −4.00) |
+| [M7 third person pronouns ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.0323 (Δ +0.01) | 0.0326 (Δ 0.00) | 0.0222 (Δ −0.01) |
+| [M7 unique entities](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 5.00 (Δ −2.00) | 7.00 (Δ −2.00) | 8.00 (Δ −50.00) |
+| [M7 unique entities average](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 1.67 (Δ −0.33) | 2.33 (Δ −0.33) | 3.00 (Δ +0.96) |
+| [M7 unique entities to total entities](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 1.00 (Δ 0.00) | 1.00 (Δ 0.00) | 1.00 (Δ +0.20) |
+| [M7 words before main verb](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 4.14 (Δ −1.43) | 4.00 (Δ −0.75) | 5.67 (Δ −1.19) |
+| [M7 words over 8 chars](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.0800 (Δ −0.02) | 0.0857 (Δ −0.02) | 0.103 (Δ 0.00) |
+| [M7 words per sentence](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.333 (Δ 0.00) | 0.333 (Δ 0.00) | 0.333 (Δ +0.32) |
 | [BLEU(target, source)](docs/metrics.md#pair_similaritybleu--bleutarget-source)† ↑ closer to source wording | 15.4 | 23.6 | <0.001 |
+| [BERTScore F1(target, source)](docs/metrics.md#pair_similaritybertscore_f1--bertscore-f1)† ↑ closer to source meaning | 0.297 | 0.496 | −0.0308 |
 
 #### News
 
@@ -636,8 +794,9 @@ Here domain is held constant, so a difference between columns is not a differenc
 | *dataset task* | DS | SUM | SUM |
 | **SUM metrics** |  |  |  |
 | [Compression ratio (tokens)](docs/metrics.md#lengthcompression_ratio--compression-ratio-tokens) ↓ more compressed | 0.649 | 0.0770 | 0.0694 |
-| [Coverage](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ more copied | 0.922 | 0.881 | 0.650 |
-| [Density](docs/metrics.md#abstractivenesscoverage-abstractivenessdensity--coverage-and-density) ↑ longer copied spans | 8.18 | 2.65 | 0.957 |
+| [Sentence split ratio](docs/metrics.md#lengthsentence_ratio--sentence-split-ratio) ↑ more target sentences per source sentence | 0.852 | 0.109 | 0.0667 |
+| [Coverage](docs/metrics.md#abstractivenesscoverage--coverage) ↑ more copied | 0.922 | 0.881 | 0.650 |
+| [Density](docs/metrics.md#abstractivenessdensity--density) ↑ longer copied spans | 8.18 | 2.65 | 0.957 |
 | [Abstractivity](docs/metrics.md#abstractivenessabstractivity_p1--abstractivity) ↑ more abstractive | 0.0785 | 0.119 | 0.350 |
 | [Redundancy](docs/metrics.md#abstractivenessredundancy--redundancy) ↑ more repetitive target | 0.0930 | 0.0787 | 0.00 |
 | [Topic similarity](docs/metrics.md#abstractivenesstopic_similarity--topic-similarity) ↑ closer topic mix to source | 0.763 | 0.715 | 0.462 |
@@ -646,14 +805,16 @@ Here domain is held constant, so a difference between columns is not a differenc
 | [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.503 | 0.752 | 1.00 |
 | [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.595 | 0.865 | 1.00 |
 | [Semantic coherence](docs/metrics.md#readabilitym3d_model_basedsemantic_coherence--semantic-coherence)† ↑ more coherent | 0.947 | 1.00 | 0.00 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ fewer entities absent from source | 0.900 | 0.800 | 0.333 |
 | **PLS metrics** |  |  |  |
 | [Novel 1-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.0785 | 0.119 | 0.350 |
 | [Novel 2-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.347 | 0.538 | 0.850 |
 | [Novel 3-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.503 | 0.752 | 1.00 |
 | [Novel 4-grams](docs/metrics.md#abstractivenessnovel_1gram-abstractivenessnovel_2gram-abstractivenessnovel_3gram-abstractivenessnovel_4gram--novel-n-grams) ↑ more abstractive | 0.595 | 0.865 | 1.00 |
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 7.50 (Δ −2.80) | 6.90 (Δ −2.10) | 10.3 (Δ +0.60) |
-| [CLI](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 8.82 (Δ −1.56) | 10.5 (Δ +0.33) | 11.1 (Δ +0.95) |
-| [DCRS](docs/metrics.md#readabilitym3a_surfacecli-readabilitym3a_surfacedcrs--colemanliau-index-and-dalechall-readability-score) ↓ easier | 7.85 (Δ −0.97) | 10.8 (Δ +2.12) | 11.0 (Δ +1.78) |
+| [CLI](docs/metrics.md#readabilitym3a_surfacecli--colemanliau-index) ↓ easier | 8.82 (Δ −1.56) | 10.5 (Δ +0.33) | 11.1 (Δ +0.95) |
+| [DCRS](docs/metrics.md#readabilitym3a_surfacedcrs--dalechall-readability-score) ↓ easier | 7.85 (Δ −0.97) | 10.8 (Δ +2.12) | 11.0 (Δ +1.78) |
+| [ARI](docs/metrics.md#readabilitym3a_surfaceari--automated-readability-index) ↓ easier | 9.20 (Δ −3.40) | 9.40 (Δ −2.10) | 13.1 (Δ +1.00) |
 | [WordRank](docs/metrics.md#readabilitym3b_length_invariantwordrank--wordrank) ↓ more frequent words | 7.12 (Δ −0.35) | 8.07 (Δ +0.47) | 7.84 (Δ +0.23) |
 | [Background sentence share](docs/metrics.md#elaborationrhetorical_roles--rhetorical-role-distribution)† ↑ more background sentences | 0.239 | 0.200 | 0.00 |
 | **DS metrics** |  |  |  |
@@ -662,19 +823,55 @@ Here domain is held constant, so a difference between columns is not a differenc
 | [Compression ratio (characters)](docs/metrics.md#lengthchar_compression_ratio--compression-ratio-characters) ↓ more compressed | 0.628 | 0.0804 | 0.0686 |
 | [Source length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 844 | 634 | 306 |
 | [Target length (tokens)](docs/metrics.md#lengthsrc_tokens-lengthtgt_tokens--length) | 557 | 46 | 21 |
-| [Exact copies](docs/metrics.md#abstractivenessexact_copies--exact-copies) ↑ more source sentences kept verbatim | 0.0600 | 0.00 | 0.00 |
+| [Mean source sentence length](docs/metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) | 22.5 | 18.8 | 20.7 |
+| [Mean target sentence length](docs/metrics.md#lengthmean_src_sent_len-lengthmean_tgt_sent_len--mean-sentence-length) ↓ shorter target sentences | 17.2 | 12.7 | 21.0 |
 | [Additions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words added | 0.0930 | 0.0106 | 0.0243 |
 | [Deletions proportion](docs/metrics.md#abstractivenessadditions_proportion-abstractivenessdeletions_proportion--addition-and-deletion-proportions) ↑ more words deleted | 0.447 | 0.934 | 0.957 |
 | [Levenshtein similarity](docs/metrics.md#abstractivenesslevenshtein_similarity--levenshtein-similarity) ↑ closer to source text | 0.652 | 0.139 | 0.121 |
 | [FKGL](docs/metrics.md#readabilitym3a_surfacefkgl--fleschkincaid-grade-level) ↓ easier | 7.50 (Δ −2.80) | 6.90 (Δ −2.10) | 10.3 (Δ +0.60) |
 | [FRE](docs/metrics.md#readabilitym3a_surfacefre--flesch-reading-ease) ↑ easier | 71.8 (Δ +12.02) | 68.3 (Δ +3.90) | 59.6 (Δ −2.85) |
+| [Syllables per word](docs/metrics.md#readabilitym3b_length_invariantsyllables_per_word--syllables-per-word) ↓ shorter words | 1.48 (Δ −0.07) | 1.59 (Δ +0.04) | 1.58 (Δ +0.04) |
 | [Lexical complexity](docs/metrics.md#readabilitym3b_length_invariantlexical_complexity--lexical-complexity) ↓ more frequent words | 55.8 (Δ −4.68) | 62.8 (Δ +1.65) | 60.6 (Δ +0.33) |
 | [SLE (document)](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler | 2.13 | 2.63 | 0.475 |
 | [SLE gain](docs/metrics.md#readabilitym3d_model_basedsle_doc-readabilitym3d_model_basedsle_gain--sle-document-level-and-its-gain)† ↑ simpler than source | 1.27 | 1.39 | −0.414 |
-| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ fewer entities absent from source | 0.900 | 0.800 | 0.333 |
-| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more source entities kept | 0.652 | 0.120 | 0.0339 |
-| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-alignmententity_preservationentity_recall-alignmententity_preservationentity_f1--entity-matching)† ↑ more entity overlap | 0.753 | 0.203 | 0.0616 |
+| [Entity precision](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ fewer entities absent from source | 0.900 | 0.800 | 0.333 |
+| [Entity recall](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ more source entities kept | 0.652 | 0.120 | 0.0339 |
+| [Entity F1](docs/metrics.md#alignmententity_preservationentity_precision-and-related--entity-matching)† ↑ more entity overlap | 0.753 | 0.203 | 0.0616 |
+| [M7 appositions ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00816 (Δ 0.00) | 0.00 (Δ −0.01) | 0.00 (Δ −0.01) |
+| [M7 avg same entity distance](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 158 (Δ −75.51) | 0.00 (Δ −160.90) | 0.00 (Δ −107.82) |
+| [M7 avg word length](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 4.47 (Δ −0.18) | 4.82 (Δ +0.17) | 4.75 (Δ +0.10) |
+| [M7 conditional clauses ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00177 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 conjunctions ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.0577 (Δ 0.00) | 0.0286 (Δ −0.02) | 0.00 (Δ −0.03) |
+| [M7 consecutive entity distance](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 13.8 (Δ −1.63) | 7.50 (Δ −3.19) | 5.33 (Δ −5.25) |
+| [M7 content words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.462 (Δ −0.01) | 0.464 (Δ +0.03) | 0.433 (Δ +0.01) |
+| [M7 entity to token ratio](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.0820 (Δ +0.01) | 0.135 (Δ +0.03) | 0.130 (Δ +0.02) |
+| [M7 flesch kincaid grade](docs/metrics.md#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | 7.50 (Δ −2.80) | 6.90 (Δ −2.10) | 10.3 (Δ +0.60) |
+| [M7 flesch reading ease](docs/metrics.md#linguistic_featuresflesch_reading_ease-linguistic_featuresflesch_kincaid_grade--flesch-readability-m7-copies) | 71.8 (Δ +12.02) | 68.3 (Δ +3.90) | 59.6 (Δ −2.85) |
+| [M7 infrequent words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.00573 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 lexical richness](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.461 (Δ −0.01) | 0.861 (Δ +0.39) | 0.947 (Δ +0.36) |
+| [M7 long words ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.0334 (Δ −0.01) | 0.0400 (Δ 0.00) | 0.0417 (Δ −0.01) |
+| [M7 max same entity distances](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 488 (Δ −306.00) | 0.00 (Δ −588.50) | 0.00 (Δ −256.50) |
+| [M7 modifiers ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.117 (Δ 0.00) | 0.0889 (Δ −0.01) | 0.0800 (Δ −0.02) |
+| [M7 negations ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.00702 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 noun phrases ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.292 (Δ +0.01) | 0.292 (Δ +0.01) | 0.259 (Δ −0.02) |
+| [M7 passive voice ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.0357 (Δ −0.03) | 0.0667 (Δ −0.02) | 0.00 (Δ −0.05) |
+| [M7 past perfect verbs](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) | 0.00 (Δ 0.00) |
+| [M7 past tense verbs](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.385 (Δ −0.06) | 0.600 (Δ −0.03) | 0.667 (Δ −0.03) |
+| [M7 punctuation ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.128 (Δ 0.00) | 0.118 (Δ −0.01) | 0.0800 (Δ −0.04) |
+| [M7 relative clauses ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.0229 (Δ 0.00) | 0.00 (Δ −0.01) | 0.00 (Δ −0.01) |
+| [M7 sentences number](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 32.0 (Δ −5.00) | 4.00 (Δ −30.00) | 1.00 (Δ −14.00) |
+| [M7 short sentences ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.206 (Δ +0.07) | 0.200 (Δ −0.06) | 0.00 (Δ −0.09) |
+| [M7 syllables ratio](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 1.48 (Δ −0.07) | 1.59 (Δ +0.04) | 1.58 (Δ +0.04) |
+| [M7 syntactic tree depth](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 10.0 (Δ −2.00) | 6.00 (Δ −5.00) | 6.00 (Δ −4.00) |
+| [M7 third person pronouns ratio](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.0381 (Δ +0.01) | 0.0256 (Δ −0.01) | 0.00 (Δ −0.02) |
+| [M7 unique entities](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 32.0 (Δ −11.00) | 6.00 (Δ −33.00) | 3.00 (Δ −21.00) |
+| [M7 unique entities average](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 1.04 (Δ −0.14) | 1.67 (Δ +0.40) | 3.00 (Δ +0.93) |
+| [M7 unique entities to total entities](docs/metrics.md#linguistic_featuresunique_entities-and-related--entity-coherence-features) | 0.758 (Δ 0.00) | 1.00 (Δ +0.30) | 1.00 (Δ +0.18) |
+| [M7 words before main verb](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 6.90 (Δ −2.23) | 4.00 (Δ −3.18) | 6.00 (Δ −0.89) |
+| [M7 words over 8 chars](docs/metrics.md#linguistic_featureslexical_richness-and-related--lexical-features) | 0.0667 (Δ −0.02) | 0.0833 (Δ 0.00) | 0.0800 (Δ 0.00) |
+| [M7 words per sentence](docs/metrics.md#linguistic_featuressyntactic_tree_depth-and-related--syntactic-and-sentence-features) | 0.0312 (Δ 0.00) | 0.250 (Δ +0.23) | 1.00 (Δ +0.93) |
 | [BLEU(target, source)](docs/metrics.md#pair_similaritybleu--bleutarget-source)† ↑ closer to source wording | 34.1 | <0.001 | 0.00 |
+| [BERTScore F1(target, source)](docs/metrics.md#pair_similaritybertscore_f1--bertscore-f1)† ↑ closer to source meaning | 0.471 | 0.0903 | 0.0606 |
 
 † Computed on a seeded sample: 60 pairs for plos and elife, 189 pairs for onestop, 250 for every other dataset. Unmarked metrics use the full corpus: 189 pairs for onestop, 446 pairs for contracts, 1,000 for every other dataset.
 

@@ -7,7 +7,7 @@ Each metric module computes:
 * ``corpus`` — a JSON-serialisable dict of corpus-level metrics for
   ``metrics.json``. Every summarised statistic is a :class:`~profiler.stats.Summary`
   (or a nested dict of them) so the mean/median/IQR/CI/n contract holds.
-* ``params`` — the parameters the numbers depend on (e.g. tau, thresholds),
+* ``params`` — the parameters the numbers depend on (e.g. n-gram orders, models),
   recorded verbatim in ``metrics.json`` (acceptance criterion 4).
 * ``notes`` — human-readable caveats specific to this run of this module.
 """
@@ -33,7 +33,7 @@ class Context:
     processor: Processor
     cache: "Cache"
     seed: int
-    # Populated by the orchestrator as modules run; M5/M6 read M4's output here.
+    # Populated by the orchestrator as modules run; M5 reads M4's output here.
     shared: dict = field(default_factory=dict)
 
     @property
@@ -50,8 +50,6 @@ class ModuleResult:
     notes: list[str] = field(default_factory=list)
     # Bulk data used only for plotting; kept out of metrics.json.
     plot_data: dict = field(default_factory=dict)
-    # Tabular exports (e.g. the M5 annotation sample) written as their own files.
-    exports: dict = field(default_factory=dict)
 
 
 def rows_by_id(pairs: Sequence[Pair]) -> dict[str, Pair]:

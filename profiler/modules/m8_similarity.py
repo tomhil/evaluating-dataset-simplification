@@ -7,17 +7,17 @@ Two of its five metrics apply to a monolingual English corpus:
 
 The other three are cross-lingual or French-only and are structurally undefined
 here rather than merely unmeasured, so they are recorded in ``params`` with the
-reason -- the treatment XSum's impossible 1:n split rate already gets:
+reason:
 
 * ``camembert_score_french`` - French monolingual similarity.
 * ``simplification_mbert_fr`` / ``simplification_mbert_en`` - cross-lingual
   mBERT F1 between a French and an English side.
 
-**Neither computed metric is independent evidence.** M2 already reports ROUGE
-recall and Grusky coverage/density over the same pair, M4 reports SBERT
-target groundedness, and M5 reports entailment. BLEU is an n-gram overlap in the
-same family as ROUGE, and BERTScore is an embedding similarity in the same family
-as M4's cosine alignment. They are here because the feature set was adopted
+**Neither computed metric is independent evidence.** M2 already reports Grusky
+coverage/density and novel n-grams over the same pair, and M5 reports SummaC and
+AlignScore. BLEU is an n-gram overlap in the same family as ROUGE and M2's copy
+measures, and BERTScore, like M5's scorers, compares the pair's meaning with a
+model. They are here because the feature set was adopted
 whole; they should not be read as a second opinion on meaning preservation.
 
 Two deviations from the paper:
@@ -92,9 +92,8 @@ def _bleu(sources: list[str], targets: list[str]) -> float | None:
 def _bertscore(pairs: Sequence[Pair], ctx: Context) -> tuple[list[float], int]:
     """Per-pair BERTScore F1, cached. Returns (scores, n_cache_misses).
 
-    Cached on ``(model, source, target)`` the way ``CachedEmbedder`` caches
-    embeddings, so a rerun of the same config costs nothing and the run stays
-    deterministic. Scores are stored as one-element arrays because
+    Cached on ``(model, source, target)`` in the content-hash cache, so a
+    rerun of the same config costs nothing and the run stays deterministic. Scores are stored as one-element arrays because
     ``Cache.put_array`` is the array path; ``put_json`` would work equally well
     but this keeps one serialisation format for model output.
     """
@@ -115,7 +114,7 @@ def _bertscore(pairs: Sequence[Pair], ctx: Context) -> tuple[list[float], int]:
     if todo:
         from bert_score import score as bert_score_fn
 
-        from ..embeddings import resolve_device
+        from ..devices import resolve_device
 
         device = resolve_device(ctx.config.run.device)
         cands = [pairs[i].target for i in todo]
@@ -177,9 +176,10 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
 
     notes = [
         "Neither metric is independent evidence of meaning preservation: BLEU "
-        "is in the same n-gram-overlap family as M2's ROUGE recall, and "
-        "BERTScore is in the same embedding-similarity family as M4's target "
-        "groundedness. Read them alongside those, not as a second opinion.",
+        "is in the same n-gram-overlap family as ROUGE and M2's copy measures, "
+        "and BERTScore, like M5's SummaC and AlignScore, compares the pair's "
+        "meaning with a model. Read them alongside M2 and M5, not as a second "
+        "opinion.",
         "BLEU is corpus-level and has no confidence interval; averaging "
         "sentence BLEU would be a different and noisier quantity.",
         f"{len(NOT_APPLICABLE)} of the paper's 5 metrics are cross-lingual or "

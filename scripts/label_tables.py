@@ -58,7 +58,6 @@ NAMES = {
     "abstractiveness.redundancy": "Redundancy",
     "abstractiveness.topic_similarity": "Topic similarity",
     "abstractiveness.levenshtein_similarity": "Levenshtein similarity",
-    "abstractiveness.exact_copies": "Exact copies",
     "abstractiveness.additions_proportion": "Additions proportion",
     "abstractiveness.deletions_proportion": "Deletions proportion",
     "abstractiveness.rouge_abstract_target": "ROUGE-1/2/L(abstract, target)",
@@ -67,6 +66,7 @@ NAMES = {
     "readability.m3a_surface.fre": "FRE",
     "readability.m3a_surface.cli": "CLI",
     "readability.m3a_surface.dcrs": "DCRS",
+    "readability.m3b_length_invariant.syllables_per_word": "Syllables per word",
     "readability.m3b_length_invariant.wordrank": "WordRank",
     "readability.m3b_length_invariant.lexical_complexity": "Lexical complexity",
     "readability.m3d_model_based.sle_doc": "SLE (document)",
@@ -75,6 +75,27 @@ NAMES = {
     "alignment.entity_preservation.entity_precision": "Entity precision",
     "alignment.entity_preservation.entity_recall": "Entity recall",
     "alignment.entity_preservation.entity_f1": "Entity F1",
+    # Labelled by the 2026-10 citation audit.
+    "length.mean_src_sent_len": "Mean source sentence length",
+    "length.mean_tgt_sent_len": "Mean target sentence length",
+    "readability.m3a_surface.ari": "ARI",
+    "pair_similarity.bertscore_f1": "BERTScore F1(target, source)",
+    **{
+        f"linguistic_features.{f}": "M7 " + f.replace("_", " ")
+        for f in (
+            "appositions_ratio", "avg_same_entity_distance", "avg_word_length",
+            "conditional_clauses_ratio", "conjunctions_ratio", "consecutive_entity_distance",
+            "content_words_ratio", "entity_to_token_ratio", "flesch_kincaid_grade",
+            "flesch_reading_ease", "infrequent_words_ratio", "lexical_richness",
+            "long_words_ratio", "max_same_entity_distances", "modifiers_ratio",
+            "negations_ratio", "noun_phrases_ratio", "passive_voice_ratio",
+            "past_perfect_verbs", "past_tense_verbs", "punctuation_ratio",
+            "relative_clauses_ratio", "sentences_number", "short_sentences_ratio",
+            "syllables_ratio", "syntactic_tree_depth", "third_person_pronouns_ratio",
+            "unique_entities", "unique_entities_average", "unique_entities_to_total_entities",
+            "words_before_main_verb", "words_over_8_chars", "words_per_sentence",
+        )
+    },
     "elaboration.per_scorer.summac_conv": "SummaC-Conv (sentence)",
     "elaboration.per_scorer.alignscore": "AlignScore (sentence)",
     "elaboration.document_level.summac_precision": "SummaC precision (document)",

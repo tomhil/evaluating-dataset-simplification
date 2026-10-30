@@ -8,6 +8,11 @@
 
 A section's keys are the registry keys written in backticks in its heading or
 on its ``**Keys:**`` line (for sections that group closely related features).
+
+A section gives its keys' label, evidence and needs either on one header line
+(``**Label:** … · **Evidence:** … · **Needs:** … · **Module:** …``) or, when
+they differ by key, in a per-key table (PRD 5.3) whose ``Key`` cell is the
+key's suffix; such a section links its module page on a ``**Module:**`` line.
 """
 
 from __future__ import annotations
@@ -29,7 +34,6 @@ MODULE_PAGES = {
     "M3": "m3-readability.md",
     "M4": "m4-alignment.md",
     "M5": "m5-elaboration.md",
-    "M6": "m6-deletion-profile.md",
     "M7": "m7-linguistic-features.md",
     "M8": "m8-pair-similarity.md",
 }
@@ -56,14 +60,92 @@ def test_every_key_has_one_section(m):
     assert len(owners) == 1, f"{m.key}: sections {owners}"
 
 
+HEADER_LINE = re.compile(
+    r"\*\*Label:\*\* (.+?) · \*\*Evidence:\*\* (.+?) · \*\*Needs:\*\* (.+?) · \*\*Module:\*\*"
+)
+TABLE_HEADER = re.compile(r"^\| Key \| Label \| Evidence \| Needs \|$", flags=re.M)
+TABLE_ROW = re.compile(r"^\| `([^`]+)` \| (.+?) \| (.+?) \| (.+?) \|$", flags=re.M)
+MODULE_LINE = re.compile(r"^\*\*Module:\*\* \[[^\]]+\]\(modules/([^)]+)\)$", flags=re.M)
+
+
+def table_rows(body: str) -> list[tuple[str, str, str, str]]:
+    """Rows (suffix, label, evidence, needs) of a section's per-key table."""
+
+    header = TABLE_HEADER.search(body)
+    if not header:
+        return []
+    block = body[header.end():].lstrip("\n").split("\n\n")[0]
+    return TABLE_ROW.findall(block)
+
+
+def section_label(body: str, key: str) -> tuple[str, str, str]:
+    """(label, evidence, needs) for ``key``: from the header line when the
+    section has one, otherwise from the table row whose suffix matches."""
+
+    line = HEADER_LINE.search(body)
+    if line:
+        return line.group(1), line.group(2), line.group(3)
+    rows = [r for r in table_rows(body) if key == r[0] or key.endswith("." + r[0])]
+    assert rows, f"{key}: no Label/Evidence/Needs/Module line and no table row"
+    assert len(rows) == 1, f"{key}: {len(rows)} table rows match"
+    return rows[0][1], rows[0][2], rows[0][3]
+
+
 @pytest.mark.parametrize("m", ENTRIES, ids=lambda m: m.key)
 def test_section_label_matches_registry(m):
-    body = SECTION_OF[m.key]["body"]
-    line = re.search(r"\*\*Label:\*\* (.+?) · \*\*Evidence:\*\* (.+?) · \*\*Needs:\*\* (.+?) · \*\*Module:\*\*", body)
-    assert line, f"{m.key}: no Label/Evidence/Needs/Module line"
-    assert line.group(1) == label_text(m), m.key
-    assert line.group(2) == m.evidence, m.key
-    assert line.group(3) == m.needs, m.key
+    label, evidence, needs = section_label(SECTION_OF[m.key]["body"], m.key)
+    assert label == label_text(m), m.key
+    assert evidence == m.evidence, m.key
+    assert needs == m.needs, m.key
+
+
+TABLE_SECTIONS = [s for s in SECTIONS if not HEADER_LINE.search(s["body"])]
+
+
+@pytest.mark.parametrize("s", TABLE_SECTIONS, ids=lambda s: s["anchor"])
+def test_table_section_is_well_formed(s):
+    rows = table_rows(s["body"])
+    assert rows, f"{s['heading']}: neither a header line nor a per-key table"
+    for suffix, *_ in rows:
+        owners = sorted({k for k in s["keys"] if k == suffix or k.endswith("." + suffix)})
+        assert len(owners) == 1, f"{s['heading']}: row `{suffix}` matches {owners}"
+    module = MODULE_LINE.search(s["body"])
+    assert module, f"{s['heading']}: no **Module:** line"
+    assert module.group(1) in MODULE_PAGES.values(), module.group(1)
+
+
+def test_table_sections_exist():
+    # The entity matching, SummaC and QAFactEval sections use per-key tables.
+    assert len(TABLE_SECTIONS) == 3, [s["heading"] for s in TABLE_SECTIONS]
+
+
+def test_per_key_table_parses():
+    body = """
+**Keys:** `x.a.first`, `x.a.second`, `x.b.first`
+
+| Key | Label | Evidence | Needs |
+|---|---|---|---|
+| `a.first` | SUM, DS | introduced | source+target |
+| `a.second` | DS | validated | target |
+| `b.first` | project-specific | project-specific | source |
+
+**Module:** [M9 — Example](modules/m9-example.md)
+
+| Key | Label | Evidence | Needs |
+|---|---|---|---|
+| `a.second` | PLS | ignored | after the first table |
+"""
+    assert table_rows(body)[0] == ("a.first", "SUM, DS", "introduced", "source+target")
+    assert len(table_rows(body)) == 3
+    assert section_label(body, "x.a.first") == ("SUM, DS", "introduced", "source+target")
+    assert section_label(body, "x.a.second") == ("DS", "validated", "target")
+    assert section_label(body, "x.b.first") == ("project-specific", "project-specific", "source")
+    assert MODULE_LINE.search(body).group(1) == "m9-example.md"
+    with pytest.raises(AssertionError):
+        section_label(body, "x.c.first")
+    # A header line wins over a table.
+    header = "**Label:** DS · **Evidence:** validated · **Needs:** target · **Module:** [M1](modules/m1-length.md)\n"
+    assert section_label(header + body, "x.a.first") == ("DS", "validated", "target")
 
 
 @pytest.mark.parametrize("m", ENTRIES, ids=lambda m: m.key)

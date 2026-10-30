@@ -52,7 +52,7 @@ def test_bleu_records_its_tokenizer():
 
 def test_inapplicable_metrics_are_recorded_with_reasons(ctx):
     """The three cross-lingual metrics must be visible as inapplicable, not
-    silently absent -- the treatment XSum's impossible split rate gets."""
+    silently absent."""
     result = m8.compute(_pairs(), ctx)
     na = result.params["not_applicable"]
 
@@ -66,16 +66,18 @@ def test_inapplicable_metrics_are_recorded_with_reasons(ctx):
     assert any("cross-lingual" in n or "French-only" in n for n in result.notes)
 
 
-def test_notes_state_the_overlap_with_m2_m4_m5(ctx):
-    """BLEU is an n-gram overlap like M2's ROUGE; BERTScore is an embedding
-    similarity like M4's groundedness. A reader must not treat them as a
-    second opinion on meaning preservation."""
+def test_notes_state_the_overlap_with_m2_m5(ctx):
+    """BLEU is an n-gram overlap like ROUGE and M2's copy measures; BERTScore,
+    like M5's SummaC and AlignScore, compares meaning with a model. A reader
+    must not treat them as a second opinion on meaning preservation."""
     result = m8.compute(_pairs(), ctx)
     joined = " ".join(result.notes).lower()
     assert "independent evidence" in joined
-    assert "rouge" in joined and "groundedness" in joined
+    assert "rouge" in joined and "summac" in joined and "alignscore" in joined
     # And the module must name what they overlap with, not just hedge.
-    assert "m2" in joined and "m4" in joined
+    assert "m2" in joined and "m5" in joined
+    # M4 no longer computes groundedness (October 2026 revision).
+    assert "groundedness" not in joined
 
 
 def test_bleu_has_no_confidence_interval(ctx):

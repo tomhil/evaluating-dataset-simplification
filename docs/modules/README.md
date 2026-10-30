@@ -8,20 +8,23 @@ every metric's definition, task label and papers.
 |---|---|---|---|
 | M1 | [m1-length.md](m1-length.md) | full corpus | length, compression, sentence counts |
 | M2 | [m2-abstractiveness.md](m2-abstractiveness.md) | full corpus | copying vs. rewriting |
-| M3 | [m3-readability.md](m3-readability.md) | full corpus | readability, decomposed against length |
-| M4 | [m4-alignment.md](m4-alignment.md) | sample | sentence alignment, content preservation |
-| M5 | [m5-elaboration.md](m5-elaboration.md) | sample | content addition |
-| M6 | [m6-deletion-profile.md](m6-deletion-profile.md) | sample | what gets deleted, and on what basis |
+| M3 | [m3-readability.md](m3-readability.md) | full corpus (M3d on the sample) | surface formulas, word-level measures, model-based simplicity |
+| M4 | [m4-alignment.md](m4-alignment.md) | sample | entity preservation; sentence segmentation for M5 |
+| M5 | [m5-elaboration.md](m5-elaboration.md) | sample | factual consistency, rhetorical roles |
 | M7 | [m7-linguistic-features.md](m7-linguistic-features.md) | full corpus | 33 adopted lexical/syntactic/entity features |
 | M8 | [m8-pair-similarity.md](m8-pair-similarity.md) | sample | BLEU and BERTScore between the pair |
 
-M1–M3 are cheap and run over every ingested pair. M4–M6 need embeddings and an
-entailment model, so they run over a seeded random sample of `run.sample_size`
-pairs. **Every metric carries its own `n`**, so the two groups never get
-silently conflated.
+There is no M6: the deletion-profile module was removed in the October 2026
+metric revision, with every other metric no paper supports (listed in
+[the metric reference](../metrics.md#literature-status-at-a-glance)).
 
-Execution order is fixed: M4 must run before M5 and M6, which read its alignment
-out of the shared context. Both raise `RuntimeError` if M4 hasn't run.
+M1–M3 and M7 are cheap and run over every ingested pair. M3's model-based block
+(M3d), M4, M5 and M8 load models, so they run over a seeded random sample of
+`run.sample_size` pairs. **Every metric carries its own `n`**, so the two groups
+never get silently conflated.
+
+Execution order is fixed: M4 must run before M5, which reads M4's sentence
+lists out of the shared context and raises `RuntimeError` if M4 hasn't run.
 
 ## The statistics contract
 
@@ -45,42 +48,35 @@ column of deltas would not.
 
 ### Three traps worth knowing before reading any table
 
-**Ratio metrics are skewed.** `compression_ratio`, `sentence_ratio` and
-`share_attributable` are all per-pair ratios averaged across pairs (M3c also
-publishes a corpus-level ratio-of-sums, which is the figure to read; M1 does not). A pair with
-a tiny denominator produces an enormous ratio, and the mean follows it. The
-median and IQR are the honest summary; the `ci95` is a CI of the *mean*, so it
-inherits the same skew. This is not hypothetical — see the worked example in
+**Ratio metrics are skewed.** `compression_ratio` and `sentence_ratio` are
+per-pair ratios averaged across pairs. A pair with a tiny denominator produces
+an enormous ratio, and the mean follows it. The median and IQR are the honest
+summary; the `ci95` is a CI of the *mean*, so it inherits the same skew. This is
+not hypothetical — see the worked example in
 [the compression ratio's reference](../metrics.md#lengthcompression_ratio--compression-ratio-tokens).
 
 **Bootstrap CIs describe sampling error only.** They say nothing about whether
 the metric measures what you want, whether the model backend is reliable on your
-domain, or whether the corpus is a mixture of two populations. M1's dip
-statistic, M4's τ sweep and M5's scorer disagreement exist to surface those.
+domain, or whether the corpus is a mixture of two populations. M1's and M2's
+histograms are there to show the last of these.
 
-**Document length confounds anything pooled across documents.** Three separate
-metrics in this pipeline looked meaningful until length was controlled: M6's
-`textrank` correlates with its own document's sentence count at ρ = −0.92 when
-pooled, M6's `fkgl` double-counted sentence length, and a per-document *count*
-correlation hid the fact that M4's deletion split agrees with human labels at
-0.972 precision. Prefer statistics computed within a document (M6's
-`stratified_effect`) or invariant to length (M3b) over anything pooled.
+**Shorter is not simpler.** Every surface readability formula takes sentence
+length as an input, so a corpus that only shortens or splits sentences scores as
+easier. Read M3a against M1's mean sentence length and M3b's word-level
+measures, which take no length as input
+([m3-readability.md](m3-readability.md)).
 
 ## Configuration that changes the numbers
 
 | Setting | Affects | Effect |
 |---|---|---|
-| `sample_size` | M4–M6 | pairs drawn for the expensive modules |
-| `seed` | everything | sample draw, bootstrap, M5 annotation shuffle |
+| `sample_size` | M3d, M4, M5, M8 | pairs drawn for the expensive modules |
+| `seed` | everything | sample draw, bootstrap |
 | `bootstrap_resamples` | all CIs | precision of interval endpoints |
-| `tau_sweep` | M4 | thresholds reported |
-| `m6_tau` | M4→M5/M6 | the single alignment M5 and M6 consume; **genre-dependent**, validated per sentence against human labels ([m4-alignment.md](m4-alignment.md)) |
-| `nli_threshold` | M5 | score below which a sentence is "not entailed" |
-| `jargon_terms` | M3b, M6 | `jargon_rate` is `None` without a list |
-| `embedder`, `nli_backend` | M4–M6 | real models vs. offline stand-ins |
 | `model_metrics` | M3d, M5 roles | `false` skips SLE, BERT coherence and the PubMed-RCT classifier (no download); keys null |
 | `summac`, `alignscore` | M5 | optional scorers; `summac` also gates document-level SummaC |
-| `language` | M3, M5 | non-English corpora get M1/M2/M4 only |
+| `stand_ins` | M3d, M5 | `true` replaces SLE, coherence, document-level SummaC and the role classifier with deterministic offline stand-ins (tests, smoke); flagged in notes |
+| `language` | all | only `en` is supported; anything else is refused at load |
 
 Whatever a module's numbers depend on is recorded verbatim in its `params` block
 in `metrics.json`, so a result can always be traced back to the settings that
