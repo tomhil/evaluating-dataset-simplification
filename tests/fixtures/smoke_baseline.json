@@ -1037,7 +1037,7 @@
       "params": {
         "abstract_content_overlap": "share of the abstract's distinct nouns, proper nouns, verbs and numbers (spaCy POS, standing in for ScispaCy) found among the target's words; buckets by how many abstracts in this corpus contain the word",
         "abstractivity_p": 1,
-        "edit_features": "EASSE/tseval features on whole documents: Levenshtein = rapidfuzz fuzz.ratio(source, target)/100 on raw text; additions/deletions over case-preserving profiler word tokens; exact copies = share of source sentences found verbatim among target sentences",
+        "edit_features": "EASSE/tseval features on whole documents: Levenshtein = rapidfuzz fuzz.ratio(source, target)/100 on raw text; additions/deletions over case-preserving profiler word tokens",
         "lcs_cell_cap": 4000000,
         "topic_similarity": {
           "distance": "Jensen-Shannon distance, base 2",
@@ -2077,8 +2077,7 @@
           "dcrs",
           "cli",
           "fre",
-          "ari",
-          "smog"
+          "ari"
         ]
       }
     }

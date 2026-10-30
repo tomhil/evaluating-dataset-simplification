@@ -18,3 +18,7 @@ venv/
 data/*/
 # SummaC-Conv's released weights, fetched by summac into the working directory.
 summac_conv_vitc_sent_perc_e.bin
+
+# macOS Finder metadata and local results bundles (archived results live in results/).
+.DS_Store
+results-bundle-*.zip

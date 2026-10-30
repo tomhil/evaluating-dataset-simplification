@@ -399,14 +399,10 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
             "(spaCy POS, standing in for ScispaCy) found among the target's words; "
             "buckets by how many abstracts in this corpus contain the word"
         ),
-        # The "exact copies" clause describes a metric removed in the October
-        # 2026 revision. This string is a kept leaf under the smoke-baseline
-        # guard (scripts/update_smoke_baseline.py), so it is left as is.
         "edit_features": (
             "EASSE/tseval features on whole documents: Levenshtein = rapidfuzz "
             "fuzz.ratio(source, target)/100 on raw text; additions/deletions over "
-            "case-preserving profiler word tokens; exact copies = share of source "
-            "sentences found verbatim among target sentences"
+            "case-preserving profiler word tokens"
         ),
     }
     return ModuleResult(name=NAME, per_pair=per_pair, corpus=corpus, params=params, notes=notes)

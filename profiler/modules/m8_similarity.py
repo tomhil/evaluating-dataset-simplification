@@ -176,9 +176,10 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
 
     notes = [
         "Neither metric is independent evidence of meaning preservation: BLEU "
-        "is in the same n-gram-overlap family as M2's ROUGE recall, and "
-        "BERTScore is in the same embedding-similarity family as M4's target "
-        "groundedness. Read them alongside those, not as a second opinion.",
+        "is in the same n-gram-overlap family as ROUGE and M2's copy measures, "
+        "and BERTScore, like M5's SummaC and AlignScore, compares the pair's "
+        "meaning with a model. Read them alongside M2 and M5, not as a second "
+        "opinion.",
         "BLEU is corpus-level and has no confidence interval; averaging "
         "sentence BLEU would be a different and noisier quantity.",
         f"{len(NOT_APPLICABLE)} of the paper's 5 metrics are cross-lingual or "

@@ -149,11 +149,7 @@ def compute(pairs: Sequence[Pair], ctx: Context) -> ModuleResult:
     notes.extend(m3d_notes)
 
     params = {
-        # Unchanged since before the October 2026 revision, so it still lists
-        # "smog", which surface_scores computes but M3a no longer reports. The
-        # kept-value guard compares this leaf; rewording it needs Tom's
-        # approval (see the progress log, item 10).
-        "surface_measures": rd.SURFACE_MEASURES,
+        "surface_measures": M3A_MEASURES,
     }
     return ModuleResult(name=NAME, per_pair=per_pair, corpus=corpus, params=params, notes=notes)
 

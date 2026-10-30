@@ -313,3 +313,20 @@ Starting point: branch `refactor/paper-supported-metrics`, after the commit that
   10. Phase E: re-run the corpora with `run.summac` and `run.alignscore` (G3), archive the results, regenerate `RESULTS.md`'s generated block, decide G1 and G2 (rewrite the narrative quoting removed metrics).
 - **Next item:** none; the loop is complete. Phase E is Tom's.
 - **DEFERRED:** none.
+
+## 2026-10-30 — Follow-up: Tom's decisions on the open points
+
+- **Commit:** this commit on refactor/paper-supported-metrics.
+- **Item:** Tom approved rewording the three guarded strings that named removed metrics, and made the remaining quick calls.
+  - `modules.abstractiveness.params.edit_features`: dropped the clause "; exact copies = share of source sentences found verbatim among target sentences".
+  - `modules.readability.params.surface_measures`: now `M3A_MEASURES` (`fkgl`, `dcrs`, `cli`, `fre`, `ari`), so it no longer lists `smog`. `rd.SURFACE_MEASURES` and `surface_scores` are unchanged.
+  - M8's first note: "…BLEU is in the same n-gram-overlap family as M2's ROUGE recall, and BERTScore is in the same embedding-similarity family as M4's target groundedness. Read them alongside those, not as a second opinion." became "…BLEU is in the same n-gram-overlap family as ROUGE and M2's copy measures, and BERTScore, like M5's SummaC and AlignScore, compares the pair's meaning with a model. Read them alongside M2 and M5, not as a second opinion." This matches `docs/modules/m8-pair-similarity.md`. It is a text-only change to M8 output, approved by Tom; no M8 value changed.
+  - Kept as decided: SMOG still computed inside `surface_scores` (M7 uses it, never reported); `syllables_per_word` direction "↓ shorter words"; the two-axis interpretation guide.
+  - `docs/superpowers/plans/2026-08-05-docsimp-eval-walking-skeleton.md` moved to `docs/superpowers/plans/archive/` as history (nothing linked to it).
+  - `.gitignore` now ignores `.DS_Store` and `results-bundle-*.zip`.
+- **Removed leaves and notes:** none. The guard flagged exactly two changed leaves (`edit_features`, `surface_measures`); M8 does not run in smoke. The fixture was edited for those two leaves only, then verified: two fresh smoke runs and the fixture share sha1 `4cdc2cd61540394863fd23f20b72e52b49227f87`, and the guard reports 0 changes. The guard's rules are unchanged.
+- **Tests:** `tests/test_m8_similarity.py`: `test_notes_state_the_overlap_with_m2_m4_m5` became `test_notes_state_the_overlap_with_m2_m5`, asserting the note names M2, M5, ROUGE, SummaC and AlignScore and no longer says "groundedness".
+- **Result:** `pytest -q`: 846 passed, 2 skipped, 0 failed. Smoke byte-identical: yes. Kept-value guard: pass.
+- **Gates applied:** none.
+- **Still open for Tom:** review the five `docs/metrics.md` edits from item 18; Phase E (G3 re-runs, regenerate the `RESULTS.md` block, then G1 and G2, including retiring `swipe_gold.yaml` and `validate_against_swipe.py`).
+- **DEFERRED:** none.
