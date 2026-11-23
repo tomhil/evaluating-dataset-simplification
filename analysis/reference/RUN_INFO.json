@@ -1,0 +1,18 @@
+{
+ "git_commit": "ed58b86",
+ "profile": "production",
+ "settings": {
+  "seed": 13,
+  "repeats": 1000,
+  "domain_perms": 4999,
+  "boot": 2000
+ },
+ "check_seed": 14,
+ "runs_dir": "/mnt/user-data/uploads/evaluating-dataset-simplification/runs",
+ "seconds": 398.6,
+ "python": "3.13.18",
+ "numpy": "2.5.3",
+ "pandas": "3.0.5",
+ "platform": "Linux-6.18.44-fc-v726-x86_64-with-glibc2.39",
+ "scipy": "1.18.1"
+}

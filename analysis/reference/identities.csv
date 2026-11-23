@@ -1,0 +1,15 @@
+corpus,max|coverage+novel1-1|,max|coverage+abstractivity-1|,max|m7 syllables - m3b|,max|m7 fkgl - m3a|
+arxiv_pubmed,0.0,0.0,0.0,0.0
+billsum,0.0,0.0,0.0,0.0
+cnn_dailymail,0.0,0.0,0.0,0.0
+cochrane,0.0,0.0,0.0,0.0
+contracts,0.0,0.0,0.0,0.0
+dwikipedia,0.0,0.0,0.0,0.0
+elife,0.0,0.0,0.0,0.0
+med_easi,0.0,0.0,0.0,0.0
+onestop,0.0,0.0,0.0,0.0
+plos,0.0,0.0,0.0,0.0
+swipe,0.0,0.0,0.0,0.0
+swipe_gold,0.0,0.0,0.0,0.0
+xsum,0.0,0.0,0.0,0.0
+xwikis_en,0.0,0.0,0.0,0.0

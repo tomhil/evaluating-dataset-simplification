@@ -1,0 +1,265 @@
+corpus,metric,stat,archived,recomputed,source,ok
+arxiv_pubmed,compression_ratio,mean,0.114227,0.11422721849459992,results/arxiv_pubmed.json,True
+arxiv_pubmed,compression_ratio,median,0.076923,0.07692307692307693,results/arxiv_pubmed.json,True
+arxiv_pubmed,compression_ratio,n,1000.0,1000.0,results/arxiv_pubmed.json,True
+arxiv_pubmed,coverage,mean,0.884102,0.8841021481235742,results/arxiv_pubmed.json,True
+arxiv_pubmed,coverage,median,0.90335,0.9033503549632582,results/arxiv_pubmed.json,True
+arxiv_pubmed,coverage,n,1000.0,1000.0,results/arxiv_pubmed.json,True
+arxiv_pubmed,fkgl delta,mean,0.8014,0.8014000000000001,results/arxiv_pubmed.json,True
+arxiv_pubmed,fkgl delta,median,0.3,0.3000000000000007,results/arxiv_pubmed.json,True
+arxiv_pubmed,fkgl delta,n,1000.0,1000.0,results/arxiv_pubmed.json,True
+arxiv_pubmed,mean_zipf delta,mean,-0.028613,-0.02861281786879421,results/arxiv_pubmed.json,True
+arxiv_pubmed,mean_zipf delta,median,-0.046362,-0.046361552848987575,results/arxiv_pubmed.json,True
+arxiv_pubmed,mean_zipf delta,n,1000.0,1000.0,results/arxiv_pubmed.json,True
+arxiv_pubmed,m7 conjunctions delta,mean,-0.002899,-0.0028989934749954864,results/arxiv_pubmed.json,True
+arxiv_pubmed,m7 conjunctions delta,median,-0.003036,-0.0030363534598161004,results/arxiv_pubmed.json,True
+arxiv_pubmed,m7 conjunctions delta,n,1000.0,1000.0,results/arxiv_pubmed.json,True
+arxiv_pubmed,bertscore_f1,mean,0.004234,0.004233569866511971,results/arxiv_pubmed.json,True
+arxiv_pubmed,bertscore_f1,median,0.009411,0.009411060251295567,results/arxiv_pubmed.json,True
+arxiv_pubmed,bertscore_f1,n,250.0,250.0,results/arxiv_pubmed.json,True
+billsum,compression_ratio,mean,0.141007,0.141006761568991,results/billsum.json,True
+billsum,compression_ratio,median,0.122996,0.12299551727917041,results/billsum.json,True
+billsum,compression_ratio,n,1000.0,1000.0,results/billsum.json,True
+billsum,coverage,mean,0.893183,0.8931834211277991,results/billsum.json,True
+billsum,coverage,median,0.90625,0.90625,results/billsum.json,True
+billsum,coverage,n,1000.0,1000.0,results/billsum.json,True
+billsum,fkgl delta,mean,0.9243,0.9243000000000001,results/billsum.json,True
+billsum,fkgl delta,median,0.0,0.0,results/billsum.json,True
+billsum,fkgl delta,n,1000.0,1000.0,results/billsum.json,True
+billsum,mean_zipf delta,mean,-0.061281,-0.06128051237029557,results/billsum.json,True
+billsum,mean_zipf delta,median,-0.062236,-0.06223571243714865,results/billsum.json,True
+billsum,mean_zipf delta,n,1000.0,1000.0,results/billsum.json,True
+billsum,m7 conjunctions delta,mean,0.006853,0.0068534383373811065,results/billsum.json,True
+billsum,m7 conjunctions delta,median,0.006766,0.006766018150288395,results/billsum.json,True
+billsum,m7 conjunctions delta,n,1000.0,1000.0,results/billsum.json,True
+billsum,bertscore_f1,mean,-0.305711,-0.3057111430391669,results/billsum.json,True
+billsum,bertscore_f1,median,-0.308836,-0.30883607268333435,results/billsum.json,True
+billsum,bertscore_f1,n,250.0,250.0,results/billsum.json,True
+cnn_dailymail,compression_ratio,mean,0.088972,0.08897249281467079,results/cnn_dailymail.json,True
+cnn_dailymail,compression_ratio,median,0.076986,0.07698612862547288,results/cnn_dailymail.json,True
+cnn_dailymail,compression_ratio,n,1000.0,1000.0,results/cnn_dailymail.json,True
+cnn_dailymail,coverage,mean,0.872663,0.8726627988090327,results/cnn_dailymail.json,True
+cnn_dailymail,coverage,median,0.880952,0.8809523809523809,results/cnn_dailymail.json,True
+cnn_dailymail,coverage,n,1000.0,1000.0,results/cnn_dailymail.json,True
+cnn_dailymail,fkgl delta,mean,-2.0696,-2.0696,results/cnn_dailymail.json,True
+cnn_dailymail,fkgl delta,median,-2.1,-2.0999999999999996,results/cnn_dailymail.json,True
+cnn_dailymail,fkgl delta,n,1000.0,1000.0,results/cnn_dailymail.json,True
+cnn_dailymail,mean_zipf delta,mean,-0.052536,-0.05253624297303623,results/cnn_dailymail.json,True
+cnn_dailymail,mean_zipf delta,median,-0.03523,-0.03523031520908804,results/cnn_dailymail.json,True
+cnn_dailymail,mean_zipf delta,n,1000.0,1000.0,results/cnn_dailymail.json,True
+cnn_dailymail,m7 conjunctions delta,mean,-0.01643,-0.016430106393254536,results/cnn_dailymail.json,True
+cnn_dailymail,m7 conjunctions delta,median,-0.017152,-0.01715174128393503,results/cnn_dailymail.json,True
+cnn_dailymail,m7 conjunctions delta,n,1000.0,1000.0,results/cnn_dailymail.json,True
+cnn_dailymail,bertscore_f1,mean,0.085043,0.08504339300235733,results/cnn_dailymail.json,True
+cnn_dailymail,bertscore_f1,median,0.090349,0.09034889563918114,results/cnn_dailymail.json,True
+cnn_dailymail,bertscore_f1,n,250.0,250.0,results/cnn_dailymail.json,True
+cochrane,compression_ratio,mean,0.616082,0.6160823139612864,results/cochrane.json,True
+cochrane,compression_ratio,median,0.583555,0.5835549645390071,results/cochrane.json,True
+cochrane,compression_ratio,n,1000.0,1000.0,results/cochrane.json,True
+cochrane,coverage,mean,0.701469,0.7014688137344502,results/cochrane.json,True
+cochrane,coverage,median,0.704215,0.7042147031402779,results/cochrane.json,True
+cochrane,coverage,n,1000.0,1000.0,results/cochrane.json,True
+cochrane,fkgl delta,mean,-1.5171,-1.5171,results/cochrane.json,True
+cochrane,fkgl delta,median,-1.6,-1.5999999999999996,results/cochrane.json,True
+cochrane,fkgl delta,n,1000.0,1000.0,results/cochrane.json,True
+cochrane,mean_zipf delta,mean,0.1797,0.1797000672274248,results/cochrane.json,True
+cochrane,mean_zipf delta,median,0.16442,0.1644197978355466,results/cochrane.json,True
+cochrane,mean_zipf delta,n,1000.0,1000.0,results/cochrane.json,True
+cochrane,m7 conjunctions delta,mean,0.008734,0.008734010847045389,results/cochrane.json,True
+cochrane,m7 conjunctions delta,median,0.008719,0.00871927022976694,results/cochrane.json,True
+cochrane,m7 conjunctions delta,n,1000.0,1000.0,results/cochrane.json,True
+cochrane,bertscore_f1,mean,0.168291,0.16829092865576967,results/cochrane.json,True
+cochrane,bertscore_f1,median,0.157263,0.15726301819086075,results/cochrane.json,True
+cochrane,bertscore_f1,n,250.0,250.0,results/cochrane.json,True
+contracts,compression_ratio,mean,0.302213,0.3022130631560486,results/contracts.json,True
+contracts,compression_ratio,median,0.241847,0.24184686281460477,results/contracts.json,True
+contracts,compression_ratio,n,446.0,446.0,results/contracts.json,True
+contracts,coverage,mean,0.504225,0.5042248860327461,results/contracts.json,True
+contracts,coverage,median,0.5,0.5,results/contracts.json,True
+contracts,coverage,n,446.0,446.0,results/contracts.json,True
+contracts,fkgl delta,mean,-7.322646,-7.322645739910313,results/contracts.json,True
+contracts,fkgl delta,median,-6.15,-6.15,results/contracts.json,True
+contracts,fkgl delta,n,446.0,446.0,results/contracts.json,True
+contracts,mean_zipf delta,mean,0.126292,0.12629204171718364,results/contracts.json,True
+contracts,mean_zipf delta,median,0.150972,0.15097222222222229,results/contracts.json,True
+contracts,mean_zipf delta,n,445.0,445.0,results/contracts.json,True
+contracts,m7 conjunctions delta,mean,-0.044039,-0.04403879352515424,results/contracts.json,True
+contracts,m7 conjunctions delta,median,-0.045316,-0.04531550802139037,results/contracts.json,True
+contracts,m7 conjunctions delta,n,446.0,446.0,results/contracts.json,True
+contracts,bertscore_f1,mean,0.158015,0.15801464793478226,results/contracts.json,True
+contracts,bertscore_f1,median,0.150407,0.15040744841098785,results/contracts.json,True
+contracts,bertscore_f1,n,250.0,250.0,results/contracts.json,True
+dwikipedia,compression_ratio,mean,1.227539,1.227539068463821,results/dwikipedia.json,True
+dwikipedia,compression_ratio,median,0.641888,0.6418876799274623,results/dwikipedia.json,True
+dwikipedia,compression_ratio,n,1000.0,1000.0,results/dwikipedia.json,True
+dwikipedia,coverage,mean,0.711074,0.7110742328695171,results/dwikipedia.json,True
+dwikipedia,coverage,median,0.75,0.75,results/dwikipedia.json,True
+dwikipedia,coverage,n,1000.0,1000.0,results/dwikipedia.json,True
+dwikipedia,fkgl delta,mean,-3.5941,-3.5941000000000005,results/dwikipedia.json,True
+dwikipedia,fkgl delta,median,-3.4,-3.4000000000000004,results/dwikipedia.json,True
+dwikipedia,fkgl delta,n,1000.0,1000.0,results/dwikipedia.json,True
+dwikipedia,mean_zipf delta,mean,0.079677,0.07967660054813132,results/dwikipedia.json,True
+dwikipedia,mean_zipf delta,median,0.070505,0.07050479112833763,results/dwikipedia.json,True
+dwikipedia,mean_zipf delta,n,1000.0,1000.0,results/dwikipedia.json,True
+dwikipedia,m7 conjunctions delta,mean,-0.007646,-0.007646420293571029,results/dwikipedia.json,True
+dwikipedia,m7 conjunctions delta,median,-0.003207,-0.0032066853696939793,results/dwikipedia.json,True
+dwikipedia,m7 conjunctions delta,n,1000.0,1000.0,results/dwikipedia.json,True
+dwikipedia,bertscore_f1,mean,0.352627,0.35262664234358815,results/dwikipedia.json,True
+dwikipedia,bertscore_f1,median,0.297252,0.29725201427936554,results/dwikipedia.json,True
+dwikipedia,bertscore_f1,n,250.0,250.0,results/dwikipedia.json,True
+elife,compression_ratio,mean,0.045465,0.04546451317160759,results/elife.json,True
+elife,compression_ratio,median,0.04077,0.040769996463409994,results/elife.json,True
+elife,compression_ratio,n,1000.0,1000.0,results/elife.json,True
+elife,coverage,mean,0.823464,0.8234641751236852,results/elife.json,True
+elife,coverage,median,0.825836,0.8258364938895912,results/elife.json,True
+elife,coverage,n,1000.0,1000.0,results/elife.json,True
+elife,fkgl delta,mean,-1.4747,-1.4747000000000001,results/elife.json,True
+elife,fkgl delta,median,-1.4,-1.4000000000000004,results/elife.json,True
+elife,fkgl delta,n,1000.0,1000.0,results/elife.json,True
+elife,mean_zipf delta,mean,0.547259,0.5472587178068696,results/elife.json,True
+elife,mean_zipf delta,median,0.549567,0.5495669705664563,results/elife.json,True
+elife,mean_zipf delta,n,1000.0,1000.0,results/elife.json,True
+elife,m7 conjunctions delta,mean,0.007922,0.007921865650090721,results/elife.json,True
+elife,m7 conjunctions delta,median,0.007831,0.007831180450695543,results/elife.json,True
+elife,m7 conjunctions delta,n,1000.0,1000.0,results/elife.json,True
+elife,bertscore_f1,mean,-0.002913,-0.0029131387884262947,results/elife.json,True
+elife,bertscore_f1,median,-0.007102,-0.0071015574503690004,results/elife.json,True
+elife,bertscore_f1,n,60.0,60.0,results/elife.json,True
+med_easi,compression_ratio,mean,0.989079,0.9890786897398273,results/med_easi.json,True
+med_easi,compression_ratio,median,0.956522,0.9565217391304348,results/med_easi.json,True
+med_easi,compression_ratio,n,1000.0,1000.0,results/med_easi.json,True
+med_easi,coverage,mean,0.672073,0.6720732223820779,results/med_easi.json,True
+med_easi,coverage,median,0.7,0.7,results/med_easi.json,True
+med_easi,coverage,n,1000.0,1000.0,results/med_easi.json,True
+med_easi,fkgl delta,mean,-2.4041,-2.4041000000000006,results/med_easi.json,True
+med_easi,fkgl delta,median,-1.35,-1.3499999999999988,results/med_easi.json,True
+med_easi,fkgl delta,n,1000.0,1000.0,results/med_easi.json,True
+med_easi,mean_zipf delta,mean,0.108285,0.10828462255936151,results/med_easi.json,True
+med_easi,mean_zipf delta,median,0.07754,0.07753968253968235,results/med_easi.json,True
+med_easi,mean_zipf delta,n,999.0,999.0,results/med_easi.json,True
+med_easi,m7 conjunctions delta,mean,-0.001806,-0.0018058066498350949,results/med_easi.json,True
+med_easi,m7 conjunctions delta,median,0.0,0.0,results/med_easi.json,True
+med_easi,m7 conjunctions delta,n,1000.0,1000.0,results/med_easi.json,True
+med_easi,bertscore_f1,mean,0.632999,0.6329992099665105,results/med_easi.json,True
+med_easi,bertscore_f1,median,0.676232,0.6762318909168243,results/med_easi.json,True
+med_easi,bertscore_f1,n,250.0,250.0,results/med_easi.json,True
+onestop,compression_ratio,mean,0.657258,0.6572583293407732,results/onestop.json,True
+onestop,compression_ratio,median,0.648803,0.6488027366020525,results/onestop.json,True
+onestop,compression_ratio,n,189.0,189.0,results/onestop.json,True
+onestop,coverage,mean,0.912263,0.9122634636724171,results/onestop.json,True
+onestop,coverage,median,0.921536,0.9215358931552587,results/onestop.json,True
+onestop,coverage,n,189.0,189.0,results/onestop.json,True
+onestop,fkgl delta,mean,-2.889418,-2.8894179894179897,results/onestop.json,True
+onestop,fkgl delta,median,-2.8,-2.8000000000000007,results/onestop.json,True
+onestop,fkgl delta,n,189.0,189.0,results/onestop.json,True
+onestop,mean_zipf delta,mean,0.157283,0.15728310011119404,results/onestop.json,True
+onestop,mean_zipf delta,median,0.160123,0.16012285415604666,results/onestop.json,True
+onestop,mean_zipf delta,n,189.0,189.0,results/onestop.json,True
+onestop,m7 conjunctions delta,mean,0.004709,0.0047090425999944075,results/onestop.json,True
+onestop,m7 conjunctions delta,median,0.00407,0.004069952305246413,results/onestop.json,True
+onestop,m7 conjunctions delta,n,189.0,189.0,results/onestop.json,True
+onestop,bertscore_f1,mean,0.463556,0.46355553932251436,results/onestop.json,True
+onestop,bertscore_f1,median,0.470601,0.4706013798713684,results/onestop.json,True
+onestop,bertscore_f1,n,189.0,189.0,results/onestop.json,True
+plos,compression_ratio,mean,0.034099,0.03409925545623613,results/plos.json,True
+plos,compression_ratio,median,0.03108,0.031080122730179804,results/plos.json,True
+plos,compression_ratio,n,1000.0,1000.0,results/plos.json,True
+plos,coverage,mean,0.906753,0.9067529592601677,results/plos.json,True
+plos,coverage,median,0.913043,0.9130434782608695,results/plos.json,True
+plos,coverage,n,1000.0,1000.0,results/plos.json,True
+plos,fkgl delta,mean,1.8753,1.8753,results/plos.json,True
+plos,fkgl delta,median,1.8,1.8000000000000007,results/plos.json,True
+plos,fkgl delta,n,1000.0,1000.0,results/plos.json,True
+plos,mean_zipf delta,mean,0.213593,0.21359278644867088,results/plos.json,True
+plos,mean_zipf delta,median,0.211377,0.21137712713866286,results/plos.json,True
+plos,mean_zipf delta,n,1000.0,1000.0,results/plos.json,True
+plos,m7 conjunctions delta,mean,0.000335,0.0003351006102461651,results/plos.json,True
+plos,m7 conjunctions delta,median,0.000187,0.00018664640358699927,results/plos.json,True
+plos,m7 conjunctions delta,n,1000.0,1000.0,results/plos.json,True
+plos,bertscore_f1,mean,0.180913,0.18091290942005192,results/plos.json,True
+plos,bertscore_f1,median,0.177743,0.17774289101362228,results/plos.json,True
+plos,bertscore_f1,n,60.0,60.0,results/plos.json,True
+swipe,compression_ratio,mean,0.998586,0.9985864680531005,results/swipe.json,True
+swipe,compression_ratio,median,0.686887,0.6868872549019608,results/swipe.json,True
+swipe,compression_ratio,n,1000.0,1000.0,results/swipe.json,True
+swipe,coverage,mean,0.837782,0.8377822526914562,results/swipe.json,True
+swipe,coverage,median,0.875,0.875,results/swipe.json,True
+swipe,coverage,n,1000.0,1000.0,results/swipe.json,True
+swipe,fkgl delta,mean,-1.4011,-1.4011000000000002,results/swipe.json,True
+swipe,fkgl delta,median,-2.6,-2.6000000000000014,results/swipe.json,True
+swipe,fkgl delta,n,1000.0,1000.0,results/swipe.json,True
+swipe,mean_zipf delta,mean,0.05735,0.057349878785933214,results/swipe.json,True
+swipe,mean_zipf delta,median,0.026377,0.026377192982455888,results/swipe.json,True
+swipe,mean_zipf delta,n,1000.0,1000.0,results/swipe.json,True
+swipe,m7 conjunctions delta,mean,-0.007701,-0.007701066368219432,results/swipe.json,True
+swipe,m7 conjunctions delta,median,-0.001508,-0.001507932825593897,results/swipe.json,True
+swipe,m7 conjunctions delta,n,1000.0,1000.0,results/swipe.json,True
+swipe,bertscore_f1,mean,0.521922,0.5219222544729709,results/swipe.json,True
+swipe,bertscore_f1,median,0.495722,0.49572180211544037,results/swipe.json,True
+swipe,bertscore_f1,n,250.0,250.0,results/swipe.json,True
+swipe_gold,compression_ratio,mean,0.997498,0.9974979535207832,results/swipe_gold.json,True
+swipe_gold,compression_ratio,median,0.657393,0.6573932926829269,results/swipe_gold.json,True
+swipe_gold,compression_ratio,n,1000.0,1000.0,results/swipe_gold.json,True
+swipe_gold,coverage,mean,0.821046,0.8210461207413594,results/swipe_gold.json,True
+swipe_gold,coverage,median,0.853333,0.8533333333333334,results/swipe_gold.json,True
+swipe_gold,coverage,n,1000.0,1000.0,results/swipe_gold.json,True
+swipe_gold,fkgl delta,mean,-4.6587,-4.6587,results/swipe_gold.json,True
+swipe_gold,fkgl delta,median,-2.8,-2.8000000000000007,results/swipe_gold.json,True
+swipe_gold,fkgl delta,n,1000.0,1000.0,results/swipe_gold.json,True
+swipe_gold,mean_zipf delta,mean,0.052194,0.052193916522971256,results/swipe_gold.json,True
+swipe_gold,mean_zipf delta,median,0.050851,0.05085054830392033,results/swipe_gold.json,True
+swipe_gold,mean_zipf delta,n,1000.0,1000.0,results/swipe_gold.json,True
+swipe_gold,m7 conjunctions delta,mean,-0.008556,-0.008555500074317572,results/swipe_gold.json,True
+swipe_gold,m7 conjunctions delta,median,-0.003666,-0.0036663303316831104,results/swipe_gold.json,True
+swipe_gold,m7 conjunctions delta,n,1000.0,1000.0,results/swipe_gold.json,True
+swipe_gold,bertscore_f1,mean,0.523337,0.523337242335081,results/swipe_gold.json,True
+swipe_gold,bertscore_f1,median,0.497987,0.4979867935180664,results/swipe_gold.json,True
+swipe_gold,bertscore_f1,n,250.0,250.0,results/swipe_gold.json,True
+ukabs,compression_ratio,mean,0.111986,0.11198560204626506,results/ukabs.json,True
+ukabs,compression_ratio,median,0.103747,0.10374695863746959,results/ukabs.json,True
+ukabs,compression_ratio,n,589.0,589.0,results/ukabs.json,True
+ukabs,coverage,mean,0.96329,0.9632900451644127,results/ukabs.json,True
+ukabs,coverage,median,0.965598,0.965598123534011,results/ukabs.json,True
+ukabs,coverage,n,589.0,589.0,results/ukabs.json,True
+ukabs,fkgl delta,mean,-1.142105,-1.1421052631578947,results/ukabs.json,True
+ukabs,fkgl delta,median,-1.1,-1.1000000000000014,results/ukabs.json,True
+ukabs,fkgl delta,n,589.0,589.0,results/ukabs.json,True
+ukabs,mean_zipf delta,mean,-0.010833,-0.01083285212248886,results/ukabs.json,True
+ukabs,mean_zipf delta,median,-0.007569,-0.007569006582055948,results/ukabs.json,True
+ukabs,mean_zipf delta,n,589.0,589.0,results/ukabs.json,True
+xsum,compression_ratio,mean,0.098099,0.09809875149171787,results/xsum.json,True
+xsum,compression_ratio,median,0.069411,0.06941121743753323,results/xsum.json,True
+xsum,compression_ratio,n,1000.0,1000.0,results/xsum.json,True
+xsum,coverage,mean,0.641101,0.6411005540332316,results/xsum.json,True
+xsum,coverage,median,0.65,0.65,results/xsum.json,True
+xsum,coverage,n,999.0,999.0,results/xsum.json,True
+xsum,fkgl delta,mean,0.5423,0.5423000000000001,results/xsum.json,True
+xsum,fkgl delta,median,0.6,0.5999999999999996,results/xsum.json,True
+xsum,fkgl delta,n,1000.0,1000.0,results/xsum.json,True
+xsum,mean_zipf delta,mean,-0.007546,-0.007545565167748262,results/xsum.json,True
+xsum,mean_zipf delta,median,0.013831,0.01383146067415808,results/xsum.json,True
+xsum,mean_zipf delta,n,999.0,999.0,results/xsum.json,True
+xsum,m7 conjunctions delta,mean,-0.022072,-0.022072066206057672,results/xsum.json,True
+xsum,m7 conjunctions delta,median,-0.029758,-0.029758481886141462,results/xsum.json,True
+xsum,m7 conjunctions delta,n,1000.0,1000.0,results/xsum.json,True
+xsum,bertscore_f1,mean,0.060058,0.060058079504640774,results/xsum.json,True
+xsum,bertscore_f1,median,0.060561,0.06056109629571438,results/xsum.json,True
+xsum,bertscore_f1,n,250.0,250.0,results/xsum.json,True
+xwikis_en,compression_ratio,mean,0.099927,0.09992747179785351,results/xwikis_en.json,True
+xwikis_en,compression_ratio,median,0.082833,0.08283282831926508,results/xwikis_en.json,True
+xwikis_en,compression_ratio,n,1000.0,1000.0,results/xwikis_en.json,True
+xwikis_en,coverage,mean,0.713654,0.7136541860474147,results/xwikis_en.json,True
+xwikis_en,coverage,median,0.721694,0.7216943074854325,results/xwikis_en.json,True
+xwikis_en,coverage,n,1000.0,1000.0,results/xwikis_en.json,True
+xwikis_en,fkgl delta,mean,0.4738,0.47379999999999994,results/xwikis_en.json,True
+xwikis_en,fkgl delta,median,0.2,0.1999999999999993,results/xwikis_en.json,True
+xwikis_en,fkgl delta,n,1000.0,1000.0,results/xwikis_en.json,True
+xwikis_en,mean_zipf delta,mean,-0.068488,-0.06848838051335193,results/xwikis_en.json,True
+xwikis_en,mean_zipf delta,median,-0.023964,-0.023964130180256005,results/xwikis_en.json,True
+xwikis_en,mean_zipf delta,n,1000.0,1000.0,results/xwikis_en.json,True
+xwikis_en,m7 conjunctions delta,mean,-0.006341,-0.006341211728908293,results/xwikis_en.json,True
+xwikis_en,m7 conjunctions delta,median,-0.006227,-0.00622688957718117,results/xwikis_en.json,True
+xwikis_en,m7 conjunctions delta,n,1000.0,1000.0,results/xwikis_en.json,True
+xwikis_en,bertscore_f1,mean,-0.045217,-0.04521728677069768,results/xwikis_en.json,True
+xwikis_en,bertscore_f1,median,-0.030843,-0.030843046493828297,results/xwikis_en.json,True
+xwikis_en,bertscore_f1,n,250.0,250.0,results/xwikis_en.json,True

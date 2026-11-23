@@ -1,0 +1,28 @@
+{
+ "metric": "novel_2gram",
+ "a": "xsum",
+ "b": "cnn_dailymail",
+ "median_a": 0.85,
+ "median_b": 0.5377492877492878,
+ "mean_a": 0.8334175509468915,
+ "mean_b": 0.5212485286420843,
+ "novel_1gram_mean_a": 0.35889944596676837,
+ "novel_1gram_mean_b": 0.12733720119096725,
+ "a12": 0.9307092092092092,
+ "a12_min": 0.71,
+ "pass": true,
+ "published": {
+  "xsum": {
+   "novel_1gram": 0.3576,
+   "novel_2gram": 0.8345
+  },
+  "cnn": {
+   "novel_1gram": 0.1675,
+   "novel_2gram": 0.5433
+  },
+  "dailymail": {
+   "novel_1gram": 0.1703,
+   "novel_2gram": 0.5378
+  }
+ }
+}

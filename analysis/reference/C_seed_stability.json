@@ -1,0 +1,50 @@
+{
+ "paired_outcomes_identical_share": 1.0,
+ "theta_and_exact_p_identical": true,
+ "max_abs_diff_theta_ci_bound_sd": 0.013170355912266661,
+ "prespecified_holm_identical": true,
+ "max_abs_diff_omega2_task": 0.029819516466031037,
+ "max_abs_diff_partition_p": 0.2333333333333334,
+ "max_abs_diff_domain_p": 0.23020000000000002,
+ "partition_p_crossing_0.05": 1,
+ "crossing": "rare_word_rate/target (0.056 vs 0.044)",
+ "largest_partition_p_moves": "syntactic_tree_depth/target (0.533 vs 0.767); syntactic_tree_depth/delta (0.111 vs 0.167); consecutive_entity_distance/target (0.856 vs 0.822); infrequent_words_ratio/target (0.856 vs 0.822); negations_ratio/target (0.333 vs 0.311); density/pair (0.700 vs 0.678)",
+ "profiles": {
+  "pair_metrics": {
+   "p": [
+    0.08888888888888889,
+    0.08888888888888889
+   ],
+   "p_domain": [
+    0.7328,
+    0.7254
+   ],
+   "omega2_task": [
+    0.1376292041430899,
+    0.13752280108781076
+   ],
+   "omega2_domain": [
+    -0.08253688113315047,
+    -0.08219886976339259
+   ]
+  },
+  "paired_delta": {
+   "p": [
+    0.1111111111111111,
+    0.1111111111111111
+   ],
+   "p_domain": [
+    0.0484,
+    0.0474
+   ],
+   "omega2_task": [
+    0.0809009018443225,
+    0.08079248557522654
+   ],
+   "omega2_domain": [
+    0.1483855637051671,
+    0.14868407434913414
+   ]
+  }
+ }
+}
