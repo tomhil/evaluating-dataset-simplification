@@ -158,9 +158,9 @@ confirmation. With a smallest p of 1/90, Holm can carry at most four tests.
 
 Directional hypotheses are tested two-sided, as frozen in v2; switching to one-sided after seeing results is not
 allowed. Every other metric is **exploratory**: exact p, its rank among the 90 labelings, and Benjamini–Hochberg
-q over the metrics with all 13 corpora (m = 49). With a smallest p of 1/90, BH at 0.05 can reject anything only if
-at least 11 of them reach that minimum (p₍ₖ₎ ≤ 0.05·k/49 needs k ≥ 11); this is stated with the results. RESULTS.md's post-hoc candidates
-(`unique_entities_average`, `third_person_pronouns_ratio`) are flagged.
+q over the metrics with all 13 corpora (m = 49). With a smallest p of 1/90, BH at 0.05 can reject anything only
+if at least 11 of them reach that minimum (p₍ₖ₎ ≤ 0.05·k/49 needs k ≥ 11); this is stated with the results.
+RESULTS.md's post-hoc candidates (`unique_entities_average`, `third_person_pronouns_ratio`) are flagged.
 
 ---
 
@@ -263,9 +263,9 @@ SESOI, the test statistics, the run selection, the representative rule, the excl
 expectations. Any forced change is logged in Section 9 with the reason and the result under both versions.
 
 **"Clear" means:** (1) every gate passes and every control behaves as expected, or its failure is explained;
-(2) the production run is stable under the second seed (deterministic quantities identical; tolerances in the PRD);
-(3) each pre-specified hypothesis has a stated outcome: supported, not supported, or not decidable with 90
-labelings. A null or mixed result that meets (1)–(3) is a clear result.
+(2) the production run's deterministic quantities are identical under the second seed, and its seed-dependent rows
+are flagged as above; (3) each pre-specified hypothesis has a stated outcome, supported or not supported (the PRD,
+Section 5.4, defines both). A null or mixed result that meets (1)–(3) is a clear result.
 
 ---
 
